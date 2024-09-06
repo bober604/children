@@ -215,5 +215,28 @@ document.addEventListener("DOMContentLoaded", function() {
                 interval = setInterval(updateCountdown, 1000);
             }
         });
+
+        // Добавляем обработчики для кнопок бонусов и штрафов
+        orderContainer.querySelectorAll(".section-two__box_Child-1__info_end_1").forEach(function(endButton) {
+            endButton.addEventListener("click", function() {
+                var timeAdjustment = endButton.querySelector("h4").textContent.includes("+") ? 300 : -300;
+                adjustCountdownTime(timeAdjustment);
+            });
+        });
+
+        // Функция для изменения времени обратного отсчета
+        function adjustCountdownTime(seconds) {
+            var timeParts = countdownElement.textContent.split(":");
+            var hours = parseInt(timeParts[0], 10);
+            var minutes = parseInt(timeParts[1], 10);
+            var secs = parseInt(timeParts[2], 10);
+
+            var totalSeconds = hours * 3600 + minutes * 60 + secs + seconds;
+
+            countdownDate = new Date();
+            countdownDate.setSeconds(countdownDate.getSeconds() + totalSeconds);
+
+            updateCountdown(); // Обновляем таймер
+        }
     }
 });
