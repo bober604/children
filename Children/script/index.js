@@ -57,7 +57,7 @@ document.addEventListener("DOMContentLoaded", function() {
                     <h3 class="section-two__box_Child-1__info_name">${capitalizeFirstLetter(document.querySelector('.section-one__container_1').value)}</h3>
                     <h3 class="section-two__box_Child-1__info_sag">Осталось:</h3>
                     <h3 class="section-two__box_Child-1__info_time" id="countdown">${calculateCountdownTime(selectedButtons)}</h3>
-                    <div  class="section-two__box_Child-1__info_img"><!-- Пауза/продолжение --></div>
+                    <div class="section-two__box_Child-1__info_img"><!-- Пауза/продолжение --></div>
                     <div class="section-two__box_Child-1__info_counter">
                         <h5 class="section-two__box_Child-1__info_counter_item">0</h5>
                         <h5 class="section-two__box_Child-1__info_counter_item">0</h5>
@@ -69,7 +69,7 @@ document.addEventListener("DOMContentLoaded", function() {
                             <p class="section-two__box_Child-1__info_end_1_par-1">Бонус</p>
                         </div>
                         <div class="section-two__box_Child-1__info_end_line"><!-- Линия --></div>
-                            <div class="section-two__box_Child-1__info_end_1">
+                        <div class="section-two__box_Child-1__info_end_1">
                             <h4 class="section-two__box_Child-1__info_end_1_sag">- 5 минут</h4>
                             <p class="section-two__box_Child-1__info_end_1_par-2">Штраф</p>
                         </div>
@@ -101,13 +101,6 @@ document.addEventListener("DOMContentLoaded", function() {
 
         // Запускаем обратный отсчет
         startCountdown(selectedButtons, orderContainer);
-
-        // Добавляем обработчик события клика по кнопке паузы/продолжения
-        var pauseButton = orderContainer.querySelector(".section-two__box_Child-1__info_img");
-
-        pauseButton.addEventListener("click", function() {
-            pauseButton.classList.toggle("section-two__box_Child-1__info_img-active");
-        });
     });
 
     // Добавляем обработчик события клика по кнопкам выбора времени
@@ -117,18 +110,6 @@ document.addEventListener("DOMContentLoaded", function() {
             button.classList.toggle("selected");
         });
     });
-
-    // Добавляем обработчик события клика по кнопке "По-факту"
-    var factButton = document.querySelector(".section-one__container__parent__fact");
-    factButton.addEventListener("click", function() {
-        // Убираем выделение у всех кнопок времени посещения
-        timeButtons.forEach(function(button) {
-            button.classList.remove("selected");
-        });
-        // Добавляем класс "selected" кнопке "По-факту"
-        factButton.classList.add("selected");
-    });
-
 
     // Функция для получения текущего времени
     function getCurrentTime() {
@@ -169,14 +150,11 @@ document.addEventListener("DOMContentLoaded", function() {
                 var minutes = parseInt(result[0], 10);
             }
 
-
             if(button.classList.contains('hour')) {
                 totalSeconds += minutes * 3600; // Преобразуем часы в секунды
-                
             } else {
                 totalSeconds += minutes * 60; // Преобразуем минуты в секунды
             }
-            
         });
         return totalSeconds;
     }
@@ -193,25 +171,49 @@ document.addEventListener("DOMContentLoaded", function() {
         var countdownDate = new Date();
         countdownDate.setSeconds(countdownDate.getSeconds() + totalSeconds);
 
+        var isPaused = false;
+        var remainingSeconds = totalSeconds;
+
         function updateCountdown() {
-            var currentTime = new Date();
-            var remainingSeconds = Math.floor((countdownDate - currentTime) / 1000);
+            if (!isPaused) {
+                var currentTime = new Date();
+                var remainingTime = countdownDate - currentTime;
+                remainingSeconds = Math.floor(remainingTime / 1000);
 
-            if (remainingSeconds < 0) {
-                clearInterval(interval);
-                countdownElement.textContent = "00:00:00";
-                return;
+                if (remainingSeconds <= 0) {
+                    clearInterval(interval);
+                    countdownElement.textContent = "00:00:00";
+                    return;
+                }
+
+                var hours = Math.floor(remainingSeconds / 3600);
+                var minutes = Math.floor((remainingSeconds % 3600) / 60);
+                var seconds = remainingSeconds % 60;
+
+                countdownElement.textContent = formatTime(hours) + ":" + formatTime(minutes) + ":" + formatTime(seconds);
             }
-
-            var hours = Math.floor(remainingSeconds / 3600);
-            var minutes = Math.floor((remainingSeconds % 3600) / 60);
-            var seconds = remainingSeconds % 60;
-
-            countdownElement.textContent = formatTime(hours) + ":" + formatTime(minutes) + ":" + formatTime(seconds);
         }
 
         updateCountdown(); // Сразу обновляем время
 
         var interval = setInterval(updateCountdown, 1000); // Запускаем обновление каждую секунду
+
+        // Добавляем обработчик события клика по кнопке паузы/продолжения
+        var pauseButton = orderContainer.querySelector(".section-two__box_Child-1__info_img");
+
+        pauseButton.addEventListener("click", function() {
+            pauseButton.classList.toggle("section-two__box_Child-1__info_img-active");
+            isPaused = !isPaused;
+
+            if (isPaused) {
+                // Останавливаем таймер
+                clearInterval(interval);
+            } else {
+                // Перезапускаем таймер с оставшимся временем
+                countdownDate = new Date();
+                countdownDate.setSeconds(countdownDate.getSeconds() + remainingSeconds);
+                interval = setInterval(updateCountdown, 1000);
+            }
+        });
     }
 });
