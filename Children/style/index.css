@@ -5,7 +5,6 @@
 
 .body {
   font-family: "Montserrat", sans-serif;
-  background: rgba(130, 138, 40, 0.3);
 }
 
 .padding {
@@ -20,8 +19,7 @@
 
 .section-one {
   width: 395px;
-  background: #f5f5f5;
-  height: 733px;
+  height: 724px;
   padding-left: 9px;
   padding-top: 9px;
 }
@@ -161,13 +159,12 @@
   color: #6c7b4c;
 }
 .section-one__button {
-  width: 180px;
-  height: 40px;
+  width: 158px;
+  height: 56px;
   background: #9f9f9f;
   display: flex;
   justify-content: center;
   align-items: center;
-  margin-top: 10px;
   gap: 9.7px;
   cursor: pointer;
   transition: all 0.15s;
@@ -190,18 +187,23 @@
   color: #fff;
 }
 
+.stick {
+  width: 14px;
+  height: 724px;
+  background: #d3d5b8;
+  margin-top: 9px;
+}
+
 .section-two {
-  margin-top: 10px;
+  margin-top: 9px;
   width: 1113px;
-  background: #f5f5f5;
-  height: 723px;
+  height: 724px;
   overflow: auto;
 }
 .section-two__nav {
   display: flex;
   gap: 23.26px;
-  padding-left: 23px;
-  padding-top: 18px;
+  padding-left: 5px;
 }
 .section-two__nav_block {
   background: #d9d9d9;
@@ -234,7 +236,7 @@
   width: 255px;
 }
 .section-two__nav_block-4 {
-  width: 170px;
+  width: 265px;
   transition: all 0.4s;
 }
 .section-two__nav_block-4:hover {
@@ -246,7 +248,7 @@
 .section-two__nav_block-4_sag {
   color: #000;
   font-weight: 400;
-  font-size: 20px;
+  font-size: 22px;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -261,14 +263,14 @@
   width: 995px;
   height: 4.5px;
   background: #b2b2b2;
-  margin-left: 23px;
-  margin-top: 8.8px;
+  margin-left: 5px;
+  margin-top: 10px;
 }
 .section-two__box {
   display: flex;
   gap: 14px;
-  margin-left: 23px;
-  margin-top: 12px;
+  margin-left: 5px;
+  margin-top: 10px;
 }
 .section-two__box_Child-1 {
   width: 710px;
