@@ -19,6 +19,7 @@ document.addEventListener("DOMContentLoaded", function() {
     });
 });
 
+console.log(`Vlf`)
 
 
 document.addEventListener("DOMContentLoaded", function() {
@@ -26,8 +27,6 @@ document.addEventListener("DOMContentLoaded", function() {
     function capitalizeFirstLetter(string) {
         return string.charAt(0).toUpperCase() + string.slice(1);
     }
-
-    console.log(`Vlf`)
 
     // Инициализируем переменную для подсчета количества заказов
     var orderCount = 0;
