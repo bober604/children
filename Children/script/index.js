@@ -4,6 +4,8 @@ document.addEventListener("DOMContentLoaded", function() {
         return string.charAt(0).toUpperCase() + string.slice(1);
     }
 
+    console.log(`Vlf`)
+
     // Инициализируем переменную для подсчета количества заказов
     var orderCount = 0;
 
@@ -55,7 +57,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
             // Расчет среднего чека
             var averageCheck = (orderCount > 0) ? (totalRevenue / orderCount).toFixed(0) : 0;
-                
+
             // Находим элемент для отображения среднего чека и обновляем его значение
             var averageCheckElement = document.querySelector(".section-two__nav_block-2 .section-two__nav_block_sag-2");
             averageCheckElement.textContent = averageCheck;
