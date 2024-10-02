@@ -216,11 +216,27 @@ document.addEventListener("DOMContentLoaded", function() {
             }
         });
 
-        // Добавляем обработчики для кнопок бонусов и штрафов
+        // Инициализируем переменные для подсчета бонусов и штрафов
+        var bonusCount = 0;
+        var penaltyCount = 0;
+
         orderContainer.querySelectorAll(".section-two__box_Child-1__info_end_1").forEach(function(endButton) {
             endButton.addEventListener("click", function() {
                 var timeAdjustment = endButton.querySelector("h4").textContent.includes("+") ? 300 : -300;
                 adjustCountdownTime(timeAdjustment);
+        
+                // Определяем, какая кнопка была нажата (бонус или штраф)
+                if (timeAdjustment > 0) {
+                    // Если это бонус
+                    bonusCount++;
+                    // Обновляем значение в <h5> для бонуса
+                    orderContainer.querySelectorAll(".section-two__box_Child-1__info_counter_item")[0].textContent = bonusCount;
+                } else {
+                    // Если это штраф
+                    penaltyCount++;
+                    // Обновляем значение в <h5> для штрафа
+                    orderContainer.querySelectorAll(".section-two__box_Child-1__info_counter_item")[1].textContent = penaltyCount;
+                }
             });
         });
 
