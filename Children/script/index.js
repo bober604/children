@@ -4,104 +4,146 @@ document.addEventListener("DOMContentLoaded", function() {
         return string.charAt(0).toUpperCase() + string.slice(1);
     }
 
+    // Инициализируем переменную для подсчета количества заказов
+    var orderCount = 0;
+
+    // Инициализируем переменную для подсчета общей суммы выручки
+    var totalRevenue = 0;
+
     // Находим кнопку "Добавить"
     var addButton = document.querySelector(".section-one__button");
 
-    // Добавляем обработчик события нажатия на кнопку
-    addButton.addEventListener("click", function() {
-        // Находим выбранные кнопки из секции section-one
-        var selectedButtons = document.querySelectorAll(".section-one__box__button-1.selected, .section-one__box__button-2.selected");
+        // Добавляем обработчик события нажатия на кнопку
+        addButton.addEventListener("click", function() {
+            // Увеличиваем счетчик заказов на 1
+            orderCount++;
+    
+            // Находим элемент с количеством заказов и обновляем его значение
+            var orderCountElement = document.querySelector(".section-two__nav_block_sag-2");
+            orderCountElement.textContent = orderCount;
+    
+            // Находим выбранные кнопки с ценами
+            var selectedButtons = document.querySelectorAll(".section-one__box__button-1.selected, .section-one__box__button-2.selected");
+    
+            // Проверяем, выбраны ли кнопки
+            if (selectedButtons.length === 0) {
+                alert("Пожалуйста, укажите время посещения.");
+                return;
+            }
+    
+            // Переменная для суммы текущего заказа
+            var currentOrderTotal = 0;
+    
+            // Добавляем информацию о сумме заказа
+            selectedButtons.forEach(function(button) {
+                var priceText = button.querySelector(".section-one__box__button-1_sag-3").textContent;
+    
+                // Преобразуем текст цены в число
+                var price = parseFloat(priceText.replace("руб.", "").trim());
+                currentOrderTotal += price;
+    
+                // Удаляем класс selected после добавления заказа
+                button.classList.remove("selected");
+            });
+    
+            // Добавляем текущую сумму к общей выручке
+            totalRevenue += currentOrderTotal;
+    
+            // Находим элемент с отображением выручки и обновляем его значение
+            var revenueElement = document.querySelector(".revenue");
+            revenueElement.textContent = totalRevenue.toFixed(0); // Округляем до целых
 
-        // Проверяем, выбраны ли кнопки
-        if (selectedButtons.length === 0) {
-            alert("Пожалуйста, укажите время посещения.");
-            return;
-        }
-
-        // Создаем контейнер для информации о заказе
-        var orderContainer = document.createElement("div");
-        orderContainer.classList.add("section-two__box");
-
-        // Строим HTML структуру заказа
-        var orderHTML = `
-            <div class="section-two__box_Child-1">
-                <nav class="section-two__box_Child-1__nav">
-                    <div class="section-two__box_Child-1__nav_section">
-                        <p class="section-two__box_Child-1__nav_section_par-1">Сумма</p>`;
-        // Добавляем информацию о сумме заказа
-        selectedButtons.forEach(function(button) {
-            var price = button.querySelector(".section-one__box__button-1_sag-3").textContent;
-            orderHTML += `<p class="section-two__box_Child-1__nav_section_par-2">${price}</p>`;
-            // Удаляем выбранные кнопки
-            button.classList.remove("selected");
-        });
-        orderHTML += `
-                    </div>
-                    <div class="section-two__box_Child-1__nav_section">
-                        <p class="section-two__box_Child-1__nav_section_par-1">Зашёл в</p>
-                        <p class="section-two__box_Child-1__nav_section_par-2">${getCurrentTime()}</p>
-                    </div>
-                    <div class="section-two__box_Child-1__nav_section">
-                        <p class="section-two__box_Child-1__nav_section_par-1">Посещение</p>
-                        <p class="section-two__box_Child-1__nav_section_par-2">${getDuration(selectedButtons)}</p>
-                    </div>
-                </nav>
-                <div class="section-two__box_Child-1_line"><!-- Линия --></div>
-
-                <div class="section-two__box_Child-1__info">
-                    <div class="section-two__box_Child-1__info_parents">
-                        <h5 class="section-two__box_Child-1__info_parents_number">${capitalizeFirstLetter(document.querySelector('.section-one__container_4').value)}</h5>
-                        <p class="section-two__box_Child-1__info_parents_par">${document.querySelector('.section-one__container_3').value}</p>
-                    </div>
-                    <div class="section-two__box_Child-1__info_line-1"><!-- Линия --></div>
-                    <h3 class="section-two__box_Child-1__info_name">${capitalizeFirstLetter(document.querySelector('.section-one__container_1').value)}</h3>
-                    <h3 class="section-two__box_Child-1__info_sag">Осталось:</h3>
-                    <h3 class="section-two__box_Child-1__info_time" id="countdown">${calculateCountdownTime(selectedButtons)}</h3>
-                    <div class="section-two__box_Child-1__info_img"><!-- Пауза/продолжение --></div>
-                    <div class="section-two__box_Child-1__info_counter">
-                        <h5 class="section-two__box_Child-1__info_counter_item">0</h5>
-                        <h5 class="section-two__box_Child-1__info_counter_item">0</h5>
-                    </div>
-                    <div class="section-two__box_Child-1__info_line-2"><!-- Линия --></div>
-                    <div class="section-two__box_Child-1__info_end">
-                        <div class="section-two__box_Child-1__info_end_1">
-                            <h4 class="section-two__box_Child-1__info_end_1_sag">+ 5 минут</h4>
-                            <p class="section-two__box_Child-1__info_end_1_par-1">Бонус</p>
+            // Расчет среднего чека
+            var averageCheck = (orderCount > 0) ? (totalRevenue / orderCount).toFixed(0) : 0;
+                
+            // Находим элемент для отображения среднего чека и обновляем его значение
+            var averageCheckElement = document.querySelector(".section-two__nav_block-2 .section-two__nav_block_sag-2");
+            averageCheckElement.textContent = averageCheck;
+    
+            // Создаем контейнер для информации о заказе
+            var orderContainer = document.createElement("div");
+            orderContainer.classList.add("section-two__box");
+    
+            // Строим HTML структуру заказа
+            var orderHTML = `
+                <div class="section-two__box_Child-1">
+                    <nav class="section-two__box_Child-1__nav">
+                        <div class="section-two__box_Child-1__nav_section">
+                            <p class="section-two__box_Child-1__nav_section_par-1">Сумма</p>`;
+            
+            // Добавляем информацию о сумме заказа
+            selectedButtons.forEach(function(button) {
+                var price = button.querySelector(".section-one__box__button-1_sag-3").textContent;
+                orderHTML += `<p class="section-two__box_Child-1__nav_section_par-2">${price}</p>`;
+            });
+    
+            orderHTML += `
                         </div>
-                        <div class="section-two__box_Child-1__info_end_line"><!-- Линия --></div>
-                        <div class="section-two__box_Child-1__info_end_1">
-                            <h4 class="section-two__box_Child-1__info_end_1_sag">- 5 минут</h4>
-                            <p class="section-two__box_Child-1__info_end_1_par-2">Штраф</p>
+                        <div class="section-two__box_Child-1__nav_section">
+                            <p class="section-two__box_Child-1__nav_section_par-1">Зашёл в</p>
+                            <p class="section-two__box_Child-1__nav_section_par-2">${getCurrentTime()}</p>
+                        </div>
+                        <div class="section-two__box_Child-1__nav_section">
+                            <p class="section-two__box_Child-1__nav_section_par-1">Посещение</p>
+                            <p class="section-two__box_Child-1__nav_section_par-2">${getDuration(selectedButtons)}</p>
+                        </div>
+                    </nav>
+                    <div class="section-two__box_Child-1_line"><!-- Линия --></div>
+    
+                    <div class="section-two__box_Child-1__info">
+                        <div class="section-two__box_Child-1__info_parents">
+                            <h5 class="section-two__box_Child-1__info_parents_number">${capitalizeFirstLetter(document.querySelector('.section-one__container_4').value)}</h5>
+                            <p class="section-two__box_Child-1__info_parents_par">${document.querySelector('.section-one__container_3').value}</p>
+                        </div>
+                        <div class="section-two__box_Child-1__info_line-1"><!-- Линия --></div>
+                        <h3 class="section-two__box_Child-1__info_name">${capitalizeFirstLetter(document.querySelector('.section-one__container_1').value)}</h3>
+                        <h3 class="section-two__box_Child-1__info_sag">Осталось:</h3>
+                        <h3 class="section-two__box_Child-1__info_time" id="countdown">${calculateCountdownTime(selectedButtons)}</h3>
+                        <div class="section-two__box_Child-1__info_img"><!-- Пауза/продолжение --></div>
+                        <div class="section-two__box_Child-1__info_counter">
+                            <h5 class="section-two__box_Child-1__info_counter_item">0</h5>
+                            <h5 class="section-two__box_Child-1__info_counter_item">0</h5>
+                        </div>
+                        <div class="section-two__box_Child-1__info_line-2"><!-- Линия --></div>
+                        <div class="section-two__box_Child-1__info_end">
+                            <div class="section-two__box_Child-1__info_end_1">
+                                <h4 class="section-two__box_Child-1__info_end_1_sag">+ 5 минут</h4>
+                                <p class="section-two__box_Child-1__info_end_1_par-1">Бонус</p>
+                            </div>
+                            <div class="section-two__box_Child-1__info_end_line"><!-- Линия --></div>
+                            <div class="section-two__box_Child-1__info_end_1">
+                                <h4 class="section-two__box_Child-1__info_end_1_sag">- 5 минут</h4>
+                                <p class="section-two__box_Child-1__info_end_1_par-2">Штраф</p>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
+                
+                <div class="section-two__box_Child-2">
+                    <h5 class="section-two__box_Child-2_sag">Ребёнок ушёл</h5>
+                </div>
+
+                <div class="section-two__box_Child-3">
+                    <h5 class="section-two__box_Child-3_sag">Удалить</h5>
+                    <div class="section-two__box_Child-3_img"><!-- img корзины --></div>
+                </div>
             
-            <div class="section-two__box_Child-2">
-                <h5 class="section-two__box_Child-2_sag">Ребёнок ушёл</h5>
-            </div>
-
-            <div class="section-two__box_Child-3">
-                <h5 class="section-two__box_Child-3_sag">Удалить</h5>
-                <div class="section-two__box_Child-3_img"><!-- img корзины --></div>
-            </div>
-            
-            <div class="section-two__box_Child-4">
-                <h5 class="section-two__box_Child-4_sag">Изменить заказ</h5>
-            </div>`;
-        
-        // Добавляем сгенерированный HTML в контейнер
-        orderContainer.innerHTML = orderHTML;
-
-        // Находим блок для добавления информации о заказе
-        var sectionTwoLending = document.querySelector(".section-two_lending");
-
-        // Вставляем созданный контейнер с информацией о заказе в начало списка
-        sectionTwoLending.insertBefore(orderContainer, sectionTwoLending.firstChild);
-
-        // Запускаем обратный отсчет
-        startCountdown(selectedButtons, orderContainer);
-    });
+                <div class="section-two__box_Child-4">
+                    <h5 class="section-two__box_Child-4_sag">Изменить заказ</h5>
+                </div>`;
+    
+            // Добавляем сгенерированный HTML в контейнер
+            orderContainer.innerHTML = orderHTML;
+    
+            // Находим блок для добавления информации о заказе
+            var sectionTwoLending = document.querySelector(".section-two_lending");
+    
+            // Вставляем созданный контейнер с информацией о заказе в начало списка
+            sectionTwoLending.insertBefore(orderContainer, sectionTwoLending.firstChild);
+    
+            // Запускаем обратный отсчет
+            startCountdown(selectedButtons, orderContainer);
+        });
 
     // Добавляем обработчик события клика по кнопкам выбора времени
     var timeButtons = document.querySelectorAll(".section-one__box__button-1, .section-one__box__button-2");
