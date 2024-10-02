@@ -1,4 +1,27 @@
 document.addEventListener("DOMContentLoaded", function() {
+    // Находим все ваши поля ввода
+    var inputs = document.querySelectorAll(".section-one__container_1, .section-one__container_4, .section-one__container__parent_2.section-one__container_3");
+
+    inputs.forEach(function(input, index) {
+        input.addEventListener("keydown", function(event) {
+            // Проверяем, нажата ли клавиша Enter
+            if (event.key === "Enter") {
+                event.preventDefault(); // Отменяем стандартное поведение
+                // Если есть следующее поле, перемещаем фокус на него
+                if (index < inputs.length - 1) {
+                    inputs[index + 1].focus();
+                } else {
+                    // Если это последнее поле, можно переместить фокус обратно на первое
+                    inputs[0].focus();
+                }
+            }
+        });
+    });
+});
+
+
+
+document.addEventListener("DOMContentLoaded", function() {
     // Функция для преобразования первой буквы строки в заглавную
     function capitalizeFirstLetter(string) {
         return string.charAt(0).toUpperCase() + string.slice(1);
