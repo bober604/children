@@ -17,12 +17,8 @@ document.addEventListener("DOMContentLoaded", function() {
             }
         });
     });
-});
-
-console.log(`Vlf`)
 
 
-document.addEventListener("DOMContentLoaded", function() {
     // Функция для преобразования первой буквы строки в заглавную
     function capitalizeFirstLetter(string) {
         return string.charAt(0).toUpperCase() + string.slice(1);
@@ -83,6 +79,7 @@ document.addEventListener("DOMContentLoaded", function() {
             // Находим элемент для отображения среднего чека и обновляем его значение
             var averageCheckElement = document.querySelector(".section-two__nav_block-2 .section-two__nav_block_sag-2");
             averageCheckElement.textContent = averageCheck;
+
     
             // Создаем контейнер для информации о заказе
             var orderContainer = document.createElement("div");
@@ -167,8 +164,107 @@ document.addEventListener("DOMContentLoaded", function() {
     
             // Запускаем обратный отсчет
             startCountdown(selectedButtons, orderContainer);
-        });
 
+
+            // // Добавляем интерактивность для изменения стилей
+            // var changeStyleButton = orderContainer.querySelector(".section-two__box_Child-2");
+            // changeStyleButton.addEventListener("click", function() {
+            //     // Получаем блок, который нужно изменить
+            //     var targetBlock = orderContainer.querySelector(".section-two__box");
+                
+            //     // Проверяем, есть ли классы для изменённых стилей
+            //     if (targetBlock.classList.contains("in-section-two__box")) {
+            //         // Если есть, убираем новые стили
+            //         targetBlock.classList.remove("in-section-two__box");
+            //         targetBlock.querySelector(".section-two__box_Child-1").classList.remove("in-section-two__box_Child-1");
+            //         targetBlock.querySelector(".section-two__box_Child-1_line").classList.remove("in-section-two__box_Child-1_line");
+            //         targetBlock.querySelector(".section-two__box_Child-1__info_line-1").classList.remove("in-section-two__box_Child-1__info_line-1");
+            //         targetBlock.querySelector(".section-two__box_Child-1__info_line-2").classList.remove("in-section-two__box_Child-1__info_line-2");
+            //         targetBlock.querySelector(".section-two__box_Child-1__info_end_1").classList.remove("in-section-two__box_Child-1__info_end_1");
+            //         targetBlock.querySelector(".section-two__box_Child-1__info_end_line").classList.remove("in-section-two__box_Child-1__info_end_line");
+                    
+            //         targetBlock.querySelector(".section-two__box_Child-2").classList.remove("in-section-two__box_Child-2");
+            //         targetBlock.querySelector(".section-two__box_Child-2_sag").classList.remove("in-section-two__box_Child-2_sag");
+
+            //         targetBlock.querySelector(".section-two__box_Child-3").classList.remove("in-section-two__box_Child-3");
+            //         targetBlock.querySelector(".section-two__box_Child-3_sag").classList.remove("in-section-two__box_Child-3_sag");
+                    
+            //         targetBlock.querySelector(".section-two__box_Child-4").classList.remove("in-section-two__box_Child-4");
+            //         targetBlock.querySelector(".section-two__box_Child-4_sag").classList.remove("in-section-two__box_Child-4_sag");
+            //     } else {
+            //         // Если классов нет, добавляем новые стили
+            //         targetBlock.classList.add("in-section-two__box");
+            //         targetBlock.querySelector(".section-two__box_Child-1").classList.add("in-section-two__box_Child-1");
+            //         targetBlock.querySelector(".section-two__box_Child-1_line").classList.add("in-section-two__box_Child-1_line");
+            //         targetBlock.querySelector(".section-two__box_Child-1__info_line-1").classList.add("in-section-two__box_Child-1__info_line-1");
+            //         targetBlock.querySelector(".section-two__box_Child-1__info_line-2").classList.add("in-section-two__box_Child-1__info_line-2");
+            //         targetBlock.querySelector(".section-two__box_Child-1__info_end_1").classList.add("in-section-two__box_Child-1__info_end_1");
+            //         targetBlock.querySelector(".section-two__box_Child-1__info_end_line").classList.add("in-section-two__box_Child-1__info_end_line");
+                    
+            //         targetBlock.querySelector(".section-two__box_Child-2").classList.add("in-section-two__box_Child-2");
+            //         targetBlock.querySelector(".section-two__box_Child-2_sag").classList.add("in-section-two__box_Child-2_sag");
+
+            //         targetBlock.querySelector(".section-two__box_Child-3").classList.add("in-section-two__box_Child-3");
+            //         targetBlock.querySelector(".section-two__box_Child-3_sag").classList.add("in-section-two__box_Child-3_sag");
+                    
+            //         targetBlock.querySelector(".section-two__box_Child-4").classList.add("in-section-two__box_Child-4");
+            //         targetBlock.querySelector(".section-two__box_Child-4_sag").classList.add("in-section-two__box_Child-4_sag");
+            //     }
+            // });
+            
+
+            // Добавляем интерактивность для удаления блока
+            addDeleteFunctionality(orderContainer, currentOrderTotal);
+        });
+        
+
+        function addDeleteFunctionality(orderContainer, currentOrderTotal) {
+            var deleteButton = orderContainer.querySelector(".section-two__box_Child-3");
+        
+            deleteButton.addEventListener("click", function() {
+                // Первое всплывающее окно подтверждения
+                var confirmation = confirm("Хотите удалить заказ?");
+                
+                // Если пользователь подтвердил первое уведомление
+                if (confirmation) {
+                    // Второе всплывающее окно подтверждения
+                    var secondConfirmation = confirm("Вы точно уверены?");
+                    
+                    // Если пользователь подтвердил и второе уведомление
+                    if (secondConfirmation) {
+                        // Получаем сумму текущего заказа, которую нужно вычесть
+                        var orderTotal = currentOrderTotal; // Используем сохранённое значение
+
+                        orderContainer.remove(); // Удаляем блок
+
+                        // Уменьшаем количество заказов
+                        orderCount--;
+
+                        // Обновляем элемент с количеством заказов
+                        var orderCountElement = document.querySelector(".section-two__nav_block-1 .section-two__nav_block_sag-2");
+                        orderCountElement.textContent = orderCount;
+
+                        // Уменьшаем общую выручку на сумму удалённого заказа
+                        totalRevenue -= orderTotal;
+
+                        // Обновляем элемент с общей выручкой
+                        var revenueElement = document.querySelector(".section-two__nav_block-3 .revenue");
+                        revenueElement.textContent = totalRevenue.toFixed(0);
+
+                        // Пересчитываем средний чек
+                        var averageCheck = (orderCount > 0) ? (totalRevenue / orderCount).toFixed(0) : 0;
+
+                        // Обновляем элемент со средним чеком
+                        var averageCheckElement = document.querySelector(".section-two__nav_block-2 .section-two__nav_block_sag-2");
+                        averageCheckElement.textContent = averageCheck;
+                    }
+                }
+            });
+        }
+        
+        
+
+    
     // Добавляем обработчик события клика по кнопкам выбора времени
     var timeButtons = document.querySelectorAll(".section-one__box__button-1, .section-one__box__button-2");
     timeButtons.forEach(function(button) {
