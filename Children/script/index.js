@@ -132,7 +132,7 @@ document.addEventListener("DOMContentLoaded", function() {
                                 <p class="section-two__box_Child-1__info_end_1_par-1">Бонус</p>
                             </div>
                             <div class="section-two__box_Child-1__info_end_line"><!-- Линия --></div>
-                            <div class="section-two__box_Child-1__info_end_1">
+                            <div class="section-two__box_Child-1__info_end_1 section-two__box_Child-1__info_end_2">
                                 <h4 class="section-two__box_Child-1__info_end_1_sag">- 5 минут</h4>
                                 <p class="section-two__box_Child-1__info_end_1_par-2">Штраф</p>
                             </div>
@@ -141,7 +141,7 @@ document.addEventListener("DOMContentLoaded", function() {
                 </div>
                 
                 <div class="section-two__box_Child-2">
-                    <h5 class="section-two__box_Child-2_sag">Ребёнок ушёл</h5>
+                    <h5 class="section-two__box_Child-2_sag">Ребенок ушёл</h5>
                 </div>
 
                 <div class="section-two__box_Child-3">
@@ -166,51 +166,52 @@ document.addEventListener("DOMContentLoaded", function() {
             startCountdown(selectedButtons, orderContainer);
 
 
-            // // Добавляем интерактивность для изменения стилей
-            // var changeStyleButton = orderContainer.querySelector(".section-two__box_Child-2");
-            // changeStyleButton.addEventListener("click", function() {
-            //     // Получаем блок, который нужно изменить
-            //     var targetBlock = orderContainer.querySelector(".section-two__box");
+            // Добавляем интерактивность для изменения стилей
+            var changeStyleButton = orderContainer.querySelector(".section-two__box_Child-2");
+            changeStyleButton.addEventListener("click", function() {
+                // Получаем блок, который нужно изменить
+                var targetBlock = orderContainer.closest(".section-two__box");
                 
-            //     // Проверяем, есть ли классы для изменённых стилей
-            //     if (targetBlock.classList.contains("in-section-two__box")) {
-            //         // Если есть, убираем новые стили
-            //         targetBlock.classList.remove("in-section-two__box");
-            //         targetBlock.querySelector(".section-two__box_Child-1").classList.remove("in-section-two__box_Child-1");
-            //         targetBlock.querySelector(".section-two__box_Child-1_line").classList.remove("in-section-two__box_Child-1_line");
-            //         targetBlock.querySelector(".section-two__box_Child-1__info_line-1").classList.remove("in-section-two__box_Child-1__info_line-1");
-            //         targetBlock.querySelector(".section-two__box_Child-1__info_line-2").classList.remove("in-section-two__box_Child-1__info_line-2");
-            //         targetBlock.querySelector(".section-two__box_Child-1__info_end_1").classList.remove("in-section-two__box_Child-1__info_end_1");
-            //         targetBlock.querySelector(".section-two__box_Child-1__info_end_line").classList.remove("in-section-two__box_Child-1__info_end_line");
+                // Проверяем, есть ли классы для изменённых стилей
+                if (targetBlock.classList.contains("in-section-two__box")) {
+                    // Если есть, убираем новые стили
+                    targetBlock.classList.remove("in-section-two__box");
+                    targetBlock.querySelector(".section-two__box_Child-1").classList.remove("in-section-two__box_Child-1");
+                    targetBlock.querySelector(".section-two__box_Child-1_line").classList.remove("in-section-two__box_Child-1_line");
+                    targetBlock.querySelector(".section-two__box_Child-1__info_line-1").classList.remove("in-section-two__box_Child-1__info_line-1");
+                    targetBlock.querySelector(".section-two__box_Child-1__info_line-2").classList.remove("in-section-two__box_Child-1__info_line-2");
+                    targetBlock.querySelector(".section-two__box_Child-1__info_end_1").classList.remove("in-section-two__box_Child-1__info_end_1");
+                    targetBlock.querySelector(".section-two__box_Child-1__info_end_line").classList.remove("in-section-two__box_Child-1__info_end_line");
                     
-            //         targetBlock.querySelector(".section-two__box_Child-2").classList.remove("in-section-two__box_Child-2");
-            //         targetBlock.querySelector(".section-two__box_Child-2_sag").classList.remove("in-section-two__box_Child-2_sag");
+                    targetBlock.querySelector(".section-two__box_Child-2").classList.remove("in-section-two__box_Child-2");
+                    targetBlock.querySelector(".section-two__box_Child-2_sag").classList.remove("in-section-two__box_Child-2_sag");
 
-            //         targetBlock.querySelector(".section-two__box_Child-3").classList.remove("in-section-two__box_Child-3");
-            //         targetBlock.querySelector(".section-two__box_Child-3_sag").classList.remove("in-section-two__box_Child-3_sag");
+                    targetBlock.querySelector(".section-two__box_Child-3").classList.remove("in-section-two__box_Child-3");
+                    targetBlock.querySelector(".section-two__box_Child-3_sag").classList.remove("in-section-two__box_Child-3_sag");
                     
-            //         targetBlock.querySelector(".section-two__box_Child-4").classList.remove("in-section-two__box_Child-4");
-            //         targetBlock.querySelector(".section-two__box_Child-4_sag").classList.remove("in-section-two__box_Child-4_sag");
-            //     } else {
-            //         // Если классов нет, добавляем новые стили
-            //         targetBlock.classList.add("in-section-two__box");
-            //         targetBlock.querySelector(".section-two__box_Child-1").classList.add("in-section-two__box_Child-1");
-            //         targetBlock.querySelector(".section-two__box_Child-1_line").classList.add("in-section-two__box_Child-1_line");
-            //         targetBlock.querySelector(".section-two__box_Child-1__info_line-1").classList.add("in-section-two__box_Child-1__info_line-1");
-            //         targetBlock.querySelector(".section-two__box_Child-1__info_line-2").classList.add("in-section-two__box_Child-1__info_line-2");
-            //         targetBlock.querySelector(".section-two__box_Child-1__info_end_1").classList.add("in-section-two__box_Child-1__info_end_1");
-            //         targetBlock.querySelector(".section-two__box_Child-1__info_end_line").classList.add("in-section-two__box_Child-1__info_end_line");
+                    targetBlock.querySelector(".section-two__box_Child-4").classList.remove("in-section-two__box_Child-4");
+                    targetBlock.querySelector(".section-two__box_Child-4_sag").classList.remove("in-section-two__box_Child-4_sag");
+                } else {
+                    // Если классов нет, добавляем новые стили
+                    targetBlock.classList.add("in-section-two__box");
+                    targetBlock.querySelector(".section-two__box_Child-1").classList.add("in-section-two__box_Child-1");
+                    targetBlock.querySelector(".section-two__box_Child-1_line").classList.add("in-section-two__box_Child-1_line");
+                    targetBlock.querySelector(".section-two__box_Child-1__info_line-1").classList.add("in-section-two__box_Child-1__info_line-1");
+                    targetBlock.querySelector(".section-two__box_Child-1__info_line-2").classList.add("in-section-two__box_Child-1__info_line-2");
+                    targetBlock.querySelector(".section-two__box_Child-1__info_end_1").classList.add("in-section-two__box_Child-1__info_end_1");
+                    targetBlock.querySelector(".section-two__box_Child-1__info_end_2").classList.add("in-section-two__box_Child-1__info_end_1");
+                    targetBlock.querySelector(".section-two__box_Child-1__info_end_line").classList.add("in-section-two__box_Child-1__info_end_line");
                     
-            //         targetBlock.querySelector(".section-two__box_Child-2").classList.add("in-section-two__box_Child-2");
-            //         targetBlock.querySelector(".section-two__box_Child-2_sag").classList.add("in-section-two__box_Child-2_sag");
+                    targetBlock.querySelector(".section-two__box_Child-2").classList.add("in-section-two__box_Child-2");
+                    targetBlock.querySelector(".section-two__box_Child-2_sag").classList.add("in-section-two__box_Child-2_sag");
 
-            //         targetBlock.querySelector(".section-two__box_Child-3").classList.add("in-section-two__box_Child-3");
-            //         targetBlock.querySelector(".section-two__box_Child-3_sag").classList.add("in-section-two__box_Child-3_sag");
+                    targetBlock.querySelector(".section-two__box_Child-3").classList.add("in-section-two__box_Child-3");
+                    targetBlock.querySelector(".section-two__box_Child-3_sag").classList.add("in-section-two__box_Child-3_sag");
                     
-            //         targetBlock.querySelector(".section-two__box_Child-4").classList.add("in-section-two__box_Child-4");
-            //         targetBlock.querySelector(".section-two__box_Child-4_sag").classList.add("in-section-two__box_Child-4_sag");
-            //     }
-            // });
+                    targetBlock.querySelector(".section-two__box_Child-4").classList.add("in-section-two__box_Child-4");
+                    targetBlock.querySelector(".section-two__box_Child-4_sag").classList.add("in-section-two__box_Child-4_sag");
+                }
+            });
             
 
             // Добавляем интерактивность для удаления блока
