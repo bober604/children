@@ -179,8 +179,10 @@ document.addEventListener("DOMContentLoaded", function() {
                     targetBlock.querySelector(".section-two__box_Child-1").classList.remove("in-section-two__box_Child-1");
                     targetBlock.querySelector(".section-two__box_Child-1_line").classList.remove("in-section-two__box_Child-1_line");
                     targetBlock.querySelector(".section-two__box_Child-1__info_line-1").classList.remove("in-section-two__box_Child-1__info_line-1");
+                    targetBlock.querySelector(".section-two__box_Child-1__info_name").classList.remove("in-section-two__box_Child-1__info_name");
                     targetBlock.querySelector(".section-two__box_Child-1__info_line-2").classList.remove("in-section-two__box_Child-1__info_line-2");
                     targetBlock.querySelector(".section-two__box_Child-1__info_end_1").classList.remove("in-section-two__box_Child-1__info_end_1");
+                    targetBlock.querySelector(".section-two__box_Child-1__info_end_2").classList.remove("in-section-two__box_Child-1__info_end_1");
                     targetBlock.querySelector(".section-two__box_Child-1__info_end_line").classList.remove("in-section-two__box_Child-1__info_end_line");
                     
                     targetBlock.querySelector(".section-two__box_Child-2").classList.remove("in-section-two__box_Child-2");
@@ -197,6 +199,7 @@ document.addEventListener("DOMContentLoaded", function() {
                     targetBlock.querySelector(".section-two__box_Child-1").classList.add("in-section-two__box_Child-1");
                     targetBlock.querySelector(".section-two__box_Child-1_line").classList.add("in-section-two__box_Child-1_line");
                     targetBlock.querySelector(".section-two__box_Child-1__info_line-1").classList.add("in-section-two__box_Child-1__info_line-1");
+                    targetBlock.querySelector(".section-two__box_Child-1__info_name").classList.add("in-section-two__box_Child-1__info_name");
                     targetBlock.querySelector(".section-two__box_Child-1__info_line-2").classList.add("in-section-two__box_Child-1__info_line-2");
                     targetBlock.querySelector(".section-two__box_Child-1__info_end_1").classList.add("in-section-two__box_Child-1__info_end_1");
                     targetBlock.querySelector(".section-two__box_Child-1__info_end_2").classList.add("in-section-two__box_Child-1__info_end_1");
