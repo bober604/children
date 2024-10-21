@@ -182,6 +182,7 @@ document.addEventListener("DOMContentLoaded", function() {
                     targetBlock.querySelector(".section-two__box_Child-1__info_name").classList.remove("in-section-two__box_Child-1__info_name");
                     targetBlock.querySelector(".section-two__box_Child-1__info_line-2").classList.remove("in-section-two__box_Child-1__info_line-2");
                     targetBlock.querySelector(".section-two__box_Child-1__info_end_1").classList.remove("in-section-two__box_Child-1__info_end_1");
+                    targetBlock.querySelector(".section-two__box_Child-1__info_end_1_par-1").classList.remove("in-section-two__box_Child-1__info_end_1_par-1");
                     targetBlock.querySelector(".section-two__box_Child-1__info_end_2").classList.remove("in-section-two__box_Child-1__info_end_1");
                     targetBlock.querySelector(".section-two__box_Child-1__info_end_line").classList.remove("in-section-two__box_Child-1__info_end_line");
                     
@@ -202,6 +203,7 @@ document.addEventListener("DOMContentLoaded", function() {
                     targetBlock.querySelector(".section-two__box_Child-1__info_name").classList.add("in-section-two__box_Child-1__info_name");
                     targetBlock.querySelector(".section-two__box_Child-1__info_line-2").classList.add("in-section-two__box_Child-1__info_line-2");
                     targetBlock.querySelector(".section-two__box_Child-1__info_end_1").classList.add("in-section-two__box_Child-1__info_end_1");
+                    targetBlock.querySelector(".section-two__box_Child-1__info_end_1_par-1").classList.add("in-section-two__box_Child-1__info_end_1_par-1");
                     targetBlock.querySelector(".section-two__box_Child-1__info_end_2").classList.add("in-section-two__box_Child-1__info_end_1");
                     targetBlock.querySelector(".section-two__box_Child-1__info_end_line").classList.add("in-section-two__box_Child-1__info_end_line");
                     
