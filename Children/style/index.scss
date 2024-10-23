@@ -1,5 +1,5 @@
 * {margin: 0;
-    padding: 0;}
+   padding: 0;}
  
 .body {font-family: 'Montserrat', sans-serif;}
   
@@ -933,3 +933,10 @@
         }
     }
 }
+
+.mobile-global_section {
+    display: none;
+}
+
+
+@import './mobile-index';
