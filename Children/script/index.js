@@ -35,12 +35,6 @@ document.addEventListener("DOMContentLoaded", function() {
 
         // Добавляем обработчик события нажатия на кнопку
         addButton.addEventListener("click", function() {
-            // Увеличиваем счетчик заказов на 1
-            orderCount++;
-    
-            // Находим элемент с количеством заказов и обновляем его значение
-            var orderCountElement = document.querySelector(".section-two__nav_block_sag-2");
-            orderCountElement.textContent = orderCount;
     
             // Находим выбранные кнопки с ценами
             var selectedButtons = document.querySelectorAll(".section-one__box__button-1.selected, .section-one__box__button-2.selected");
@@ -50,7 +44,14 @@ document.addEventListener("DOMContentLoaded", function() {
                 alert("Пожалуйста, укажите время посещения.");
                 return;
             }
-    
+            
+            // Увеличиваем счетчик заказов на 1 только после того, как кнопки выбраны
+            orderCount++;
+
+            // Находим элемент с количеством заказов и обновляем его значение
+            var orderCountElement = document.querySelector(".section-two__nav_block_sag-2");
+            orderCountElement.textContent = orderCount;
+
             // Переменная для суммы текущего заказа
             var currentOrderTotal = 0;
     
