@@ -167,6 +167,124 @@ document.addEventListener("DOMContentLoaded", function() {
             startCountdown(selectedButtons, orderContainer);
 
 
+            // Получаем кнопку изменения заказа
+            var editOrderButton = document.querySelector(".section-two__box_Child-4");
+
+            // Добавляем обработчик события для кнопки
+            editOrderButton.addEventListener("click", function() {
+                // Находим контейнер section-one, куда добавим новый блок
+                var sectionOne = document.querySelector(".section-one");
+
+                // Извлекаем значения из указанных элементов
+                const nameValue = document.querySelector('.section-two__box_Child-1__info_name').textContent.trim();
+                const phoneValue = document.querySelector('.section-two__box_Child-1__info_parents_number').textContent.trim();
+                const noteValue = document.querySelector('.section-two__box_Child-1__info_parents_par').textContent.trim();
+
+                // Находим значение времени посещения
+                const durationValue = orderContainer.querySelector(".section-two__box_Child-1__nav_section_par-2").textContent.trim();
+
+                // Создаём новый блок с учётом времени посещения
+                const newOrderBlock = document.createElement("div");
+                newOrderBlock.classList.add("section-one__orderChange__box__buttons_block-1__counter");
+
+                // Настраиваем содержимое нового блока
+                newOrderBlock.innerHTML = `
+                    <div class="section-one__orderChange">
+                        <div class="section-one__orderChange_line"></div> <!-- линия -->
+                        <h1 class="section-one__orderChange_sag">Изменить заказ</h1>
+                        <div class="section-one__orderChange__box">
+                            <div class="section-one__orderChange__box__input">
+                                <input id="order-1" class="section-one__orderChange__box__input_item" placeholder="Имя" type="text" value="${nameValue}">
+                                <input id="order-2" class="section-one__orderChange__box__input_item" placeholder="Номер телефона" type="tel" value="${phoneValue}">
+                                <input id="order-3" class="section-one__orderChange__box__input_item" placeholder="Примечание" type="text" value="${noteValue}">
+                            </div>
+
+                            <div class="section-one__orderChange__box__buttons">
+                                ${generateButtonBlocks(durationValue)}
+                            </div>
+
+                            <div class="section-one__orderChange__box_save">
+                                <h2 class="section-one__orderChange__box_save_sag">Сохранить</h2>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                // Добавляем созданный блок в секцию
+                document.querySelector(".section-one").appendChild(newOrderBlock);
+
+                // Находим кнопку "Сохранить" и добавляем обработчик для обновления значений
+                const saveButton = newOrderBlock.querySelector(".section-one__orderChange__box_save");
+                saveButton.addEventListener("click", function() {
+                    // Получаем новые значения из полей ввода
+                    const newName = document.getElementById("order-1").value;
+                    const newPhone = document.getElementById("order-2").value;
+                    const newNote = document.getElementById("order-3").value;
+
+                    // Обновляем текст в исходных элементах
+                    document.querySelector('.section-two__box_Child-1__info_name').textContent = newName;
+                    document.querySelector('.section-two__box_Child-1__info_parents_number').textContent = newPhone;
+                    document.querySelector('.section-two__box_Child-1__info_parents_par').textContent = newNote;
+
+                    // Удаляем блок изменения заказа
+                    newOrderBlock.remove();
+                });
+
+                // Находим все кнопки с изображениями плюс и минус
+                document.querySelectorAll(".section-one__orderChange__box__buttons_block-1__counter_img").forEach(button => {
+                    button.addEventListener("click", function() {
+                        // Находим родительский элемент блока счетчика
+                        const counterContainer = this.parentElement;
+                        
+                        // Находим элемент <h4> внутри блока, чтобы изменить его значение
+                        const counterDisplay = counterContainer.querySelector(".section-one__orderChange__box__buttons_block-1__counter_input");
+                        
+                        // Получаем текущее значение счетчика и преобразуем его в число
+                        let currentValue = parseInt(counterDisplay.textContent);
+
+                        // Проверяем, какую кнопку нажали, и увеличиваем или уменьшаем значение
+                        if (this.getAttribute("alt") === "plus") {
+                            currentValue++;
+                        } else if (this.getAttribute("alt") === "minus") {
+                            currentValue = Math.max(0, currentValue - 1); // Уменьшаем, но не допускаем значение ниже 0
+                        }
+                        
+                        // Обновляем значение в <h4>
+                        counterDisplay.textContent = currentValue;
+                    });
+                });
+            });
+
+            // Функция для создания кнопок с нужными значениями счётчика и стилями
+            function generateButtonBlocks(durationValue) {
+                const times = [
+                    { label: "15 мин.", duration: "15 мин.", styleClass: "section-one__orderChange__box__buttons_block-1" },
+                    { label: "1 час", duration: "1 час", styleClass: "section-one__orderChange__box__buttons_block-1" },
+                    { label: "Аренда 1 час", duration: "Аренда 1 час", styleClass: "section-one__orderChange__box__buttons_block-2" },
+                    { label: "30 мин.", duration: "30 мин.", styleClass: "section-one__orderChange__box__buttons_block-1" },
+                    { label: "2 часа", duration: "2 часа", styleClass: "section-one__orderChange__box__buttons_block-1" },
+                    { label: "Аренда 2 часа", duration: "Аренда 2 часа", styleClass: "section-one__orderChange__box__buttons_block-2" },
+                ];
+
+                // Генерируем HTML для кнопок с учётом выбранного времени посещения
+                return times.map(time => `
+                    <div class="${time.styleClass}">
+                        <h2 class="section-one__orderChange__box__buttons_block-1_sag">${time.label}</h2>
+                        <div class="section-one__orderChange__box__buttons_block-1__counter">
+                            <img class="section-one__orderChange__box__buttons_block-1__counter_img" src="./img/order-plus.svg" alt="plus">
+                            <h4 class="section-one__orderChange__box__buttons_block-1__counter_input">${time.duration === durationValue ? '1' : '0'}</h4>
+                            <img class="section-one__orderChange__box__buttons_block-1__counter_img" src="./img/order-minus.svg" alt="minus">
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+                
+
+            
+
+
+
             // Добавляем интерактивность для изменения стилей
             var changeStyleButton = orderContainer.querySelector(".section-two__box_Child-2");
             changeStyleButton.addEventListener("click", function() {
