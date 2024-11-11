@@ -181,7 +181,7 @@ document.addEventListener("DOMContentLoaded", function() {
                 const noteValue = document.querySelector('.section-two__box_Child-1__info_parents_par').textContent.trim();
 
                 // Находим значение времени посещения
-                const durationValue = orderContainer.querySelector(".section-two__box_Child-1__nav_section_par-2").textContent.trim();
+                const durationValue = document.querySelector(".section-two__box_Child-1__nav_section_par-2").textContent.trim();
 
                 // Создаём новый блок с учётом времени посещения
                 const newOrderBlock = document.createElement("div");
@@ -200,11 +200,39 @@ document.addEventListener("DOMContentLoaded", function() {
                             </div>
 
                             <div class="section-one__orderChange__box__buttons">
-                                ${generateButtonBlocks(durationValue)}
-                            </div>
+                                <div class="section-one__orderChange__box__buttons_block-1">
+                                    <h2 class="section-one__orderChange__box__buttons_block-1_sag">15 мин.</h2>
+                                    <div class="${durationValue === '15 мин.' ? 'section-one__orderChange__box__buttons_block-1_active' : 'section-one__orderChange__box__buttons_block-1_inactive'}"></div>
+                                </div>
 
-                            <div class="section-one__orderChange__box_save">
-                                <h2 class="section-one__orderChange__box_save_sag">Сохранить</h2>
+                                <div class="section-one__orderChange__box__buttons_block-1">
+                                    <h2 class="section-one__orderChange__box__buttons_block-1_sag">30 мин.</h2>
+                                    <div class="${durationValue === '30 мин.' ? 'section-one__orderChange__box__buttons_block-1_active' : 'section-one__orderChange__box__buttons_block-1_inactive'}"></div>
+                                </div>
+
+                                <div class="section-one__orderChange__box__buttons_block-1">
+                                    <h2 class="section-one__orderChange__box__buttons_block-1_sag">1 час</h2>
+                                    <div class="${durationValue === '1 час' ? 'section-one__orderChange__box__buttons_block-1_active' : 'section-one__orderChange__box__buttons_block-1_inactive'}"></div>
+                                </div>
+
+                                <div class="section-one__orderChange__box__buttons_block-1">
+                                    <h2 class="section-one__orderChange__box__buttons_block-1_sag">2 часа</h2>
+                                    <div class="${durationValue === '2 часа' ? 'section-one__orderChange__box__buttons_block-1_active' : 'section-one__orderChange__box__buttons_block-1_inactive'}"></div>
+                                </div>
+
+                                <div class="section-one__orderChange__box__buttons_block-2">
+                                    <h2 class="section-one__orderChange__box__buttons_block-1_sag">Аренда 1 час</h2>
+                                    <div class="${durationValue === 'Аренда 1 час' ? 'section-one__orderChange__box__buttons_block-1_active' : 'section-one__orderChange__box__buttons_block-1_inactive'}"></div>
+                                </div>
+                                
+                                <div class="section-one__orderChange__box_save">
+                                    <h2 class="section-one__orderChange__box_save_sag">Сохранить</h2>
+                                </div>
+
+                                <div class="section-one__orderChange__box__buttons_block-3">
+                                    <h2 class="section-one__orderChange__box__buttons_block-1_sag">Аренда 2 часа</h2>
+                                    <div class="${durationValue === 'Аренда 2 часа' ? 'section-one__orderChange__box__buttons_block-1_active' : 'section-one__orderChange__box__buttons_block-1_inactive'}"></div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -212,6 +240,15 @@ document.addEventListener("DOMContentLoaded", function() {
 
                 // Добавляем созданный блок в секцию
                 document.querySelector(".section-one").appendChild(newOrderBlock);
+
+                // Добавляем обработчики клика для активации кнопок
+                newOrderBlock.querySelectorAll(".section-one__orderChange__box__buttons_block-1_inactive").forEach(button => {
+                    button.addEventListener("click", function() {
+                        // Переключаем класс с неактивного на активный и обратно
+                        this.classList.toggle("section-one__orderChange__box__buttons_block-1_active");
+                        this.classList.toggle("section-one__orderChange__box__buttons_block-1_inactive");
+                    });
+                });
 
                 // Находим кнопку "Сохранить" и добавляем обработчик для обновления значений
                 const saveButton = newOrderBlock.querySelector(".section-one__orderChange__box_save");
@@ -229,59 +266,8 @@ document.addEventListener("DOMContentLoaded", function() {
                     // Удаляем блок изменения заказа
                     newOrderBlock.remove();
                 });
-
-                // Находим все кнопки с изображениями плюс и минус
-                document.querySelectorAll(".section-one__orderChange__box__buttons_block-1__counter_img").forEach(button => {
-                    button.addEventListener("click", function() {
-                        // Находим родительский элемент блока счетчика
-                        const counterContainer = this.parentElement;
-                        
-                        // Находим элемент <h4> внутри блока, чтобы изменить его значение
-                        const counterDisplay = counterContainer.querySelector(".section-one__orderChange__box__buttons_block-1__counter_input");
-                        
-                        // Получаем текущее значение счетчика и преобразуем его в число
-                        let currentValue = parseInt(counterDisplay.textContent);
-
-                        // Проверяем, какую кнопку нажали, и увеличиваем или уменьшаем значение
-                        if (this.getAttribute("alt") === "plus") {
-                            currentValue++;
-                        } else if (this.getAttribute("alt") === "minus") {
-                            currentValue = Math.max(0, currentValue - 1); // Уменьшаем, но не допускаем значение ниже 0
-                        }
-                        
-                        // Обновляем значение в <h4>
-                        counterDisplay.textContent = currentValue;
-                    });
-                });
             });
 
-            // Функция для создания кнопок с нужными значениями счётчика и стилями
-            function generateButtonBlocks(durationValue) {
-                const times = [
-                    { label: "15 мин.", duration: "15 мин.", styleClass: "section-one__orderChange__box__buttons_block-1" },
-                    { label: "1 час", duration: "1 час", styleClass: "section-one__orderChange__box__buttons_block-1" },
-                    { label: "Аренда 1 час", duration: "Аренда 1 час", styleClass: "section-one__orderChange__box__buttons_block-2" },
-                    { label: "30 мин.", duration: "30 мин.", styleClass: "section-one__orderChange__box__buttons_block-1" },
-                    { label: "2 часа", duration: "2 часа", styleClass: "section-one__orderChange__box__buttons_block-1" },
-                    { label: "Аренда 2 часа", duration: "Аренда 2 часа", styleClass: "section-one__orderChange__box__buttons_block-2" },
-                ];
-
-                // Генерируем HTML для кнопок с учётом выбранного времени посещения
-                return times.map(time => `
-                    <div class="${time.styleClass}">
-                        <h2 class="section-one__orderChange__box__buttons_block-1_sag">${time.label}</h2>
-                        <div class="section-one__orderChange__box__buttons_block-1__counter">
-                            <img class="section-one__orderChange__box__buttons_block-1__counter_img" src="./img/order-plus.svg" alt="plus">
-                            <h4 class="section-one__orderChange__box__buttons_block-1__counter_input">${time.duration === durationValue ? '1' : '0'}</h4>
-                            <img class="section-one__orderChange__box__buttons_block-1__counter_img" src="./img/order-minus.svg" alt="minus">
-                        </div>
-                    </div>
-                `).join('');
-            }
-
-                
-
-            
 
 
 
