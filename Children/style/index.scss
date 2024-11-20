@@ -424,6 +424,10 @@
             }
             
         }
+
+        &_button {
+            display: none;
+        }
     }
 
     &_line {
@@ -513,17 +517,28 @@
                     margin-right: 10px;
                 }
 
+                &_container-sag {
+                    width: 117.65px;
+                    height: 45.7px;
+                    display: flex;
+                    align-items: center;
+                    margin-top: 5.5px;
+                }
+
                 &_name {
                     font-weight: 500;
                     font-size: 17px;
                     line-height: normal;
                     color: #6c3f00;
-                    width: 117.65px;
-                    height: 45.7px;
-                    display: flex;
-                    justify-content: center;
-                    align-items: center;
-                    margin-top: 5.5px;
+
+                    max-height: 20px; /* Высота для 1 строки текста */
+                    overflow: hidden;
+                    cursor: pointer;
+                }
+
+                &_name.expanded {
+                    max-height: 40px; /* Увеличенная высота для прокрутки */
+                    overflow-y: auto; /* Добавляем вертикальную прокрутку */
                 }
 
                 &_sag {
@@ -543,6 +558,10 @@
                     margin-left: 13.25px;
                     margin-top: 18px;
                     width: 80px;
+                }
+
+                &_line-mobile {
+                    display: none;
                 }
 
                 &_img {
@@ -656,6 +675,14 @@
                         width: 66px;
                         height: 0px;
                     }
+                }
+
+                &_line-3-mobile {
+                    display: none;
+                }
+
+                &_burger {
+                    display: none;
                 }
             }
         }
@@ -852,7 +879,6 @@
                 width: 117.65px;
                 height: 45.7px;
                 display: flex;
-                justify-content: center;
                 align-items: center;
                 margin-top: 5.5px;
             }
@@ -988,6 +1014,14 @@
                     height: 0px;
                 }
             }
+
+            &_line-3-mobile {
+                display: none;
+            }
+
+            &_burger {
+                display: none;
+            }
         }
     }
 
@@ -1096,10 +1130,5 @@
         }
     }
 }
-
-.mobile-global_section {
-    display: none;
-}
-
 
 @import './mobile-index';

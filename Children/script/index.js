@@ -118,7 +118,9 @@ document.addEventListener("DOMContentLoaded", function() {
                             <p class="section-two__box_Child-1__info_parents_par">${document.querySelector('.section-one__container_3').value}</p>
                         </div>
                         <div class="section-two__box_Child-1__info_line-1"><!-- Линия --></div>
-                        <h3 class="section-two__box_Child-1__info_name">${capitalizeFirstLetter(document.querySelector('.section-one__container_1').value)}</h3>
+                        <div class="section-two__box_Child-1__info_container-sag">
+                            <h3 class="section-two__box_Child-1__info_name">${capitalizeFirstLetter(document.querySelector('.section-one__container_1').value)}</h3>
+                        </div>
                         <h3 class="section-two__box_Child-1__info_sag">Осталось:</h3>
                         <h3 class="section-two__box_Child-1__info_time" id="countdown">${calculateCountdownTime(selectedButtons)}</h3>
                         <div class="section-two__box_Child-1__info_img"><!-- Пауза/продолжение --></div>
@@ -138,6 +140,8 @@ document.addEventListener("DOMContentLoaded", function() {
                                 <p class="section-two__box_Child-1__info_end_1_par-2">Штраф</p>
                             </div>
                         </div>
+                        <div class="section-two__box_Child-1__info_line-3-mobile"><!-- Линия для моб. версии --></div>
+                        <img class="section-two__box_Child-1__info_burger" src="./img/burger.svg" alt="burger">
                     </div>
                 </div>
                 
@@ -165,6 +169,35 @@ document.addEventListener("DOMContentLoaded", function() {
     
             // Запускаем обратный отсчет
             startCountdown(selectedButtons, orderContainer);
+
+
+            // Функция для обрезки строки до первых 20 символов с "..."
+            function truncateText(text) {
+                return text.length > 20 ? text.slice(0, 20) + '...' : text;
+            }
+
+            // Получаем элемент с именем
+            const nameElement = document.querySelector('.section-two__box_Child-1__info_name');
+            const inputText = document.querySelector('.section-one__container_1').value;
+            const fullName = capitalizeFirstLetter(inputText);
+            const truncatedName = truncateText(fullName);
+            const maxLength = 20;
+
+            // Устанавливаем начальный текст с обрезкой
+            nameElement.textContent = truncatedName;
+
+            // Добавляем обработчик клика для переключения прокрутки
+            nameElement.addEventListener("click", function () {
+                if (nameElement.classList.contains('expanded')) {
+                    nameElement.classList.remove('expanded');
+                    nameElement.textContent = truncatedName;
+                } else {
+                    nameElement.classList.add('expanded');
+                    nameElement.textContent = fullName;
+                }
+            });
+
+
 
 
             // Получаем кнопку изменения заказа
