@@ -61,6 +61,9 @@
   text-align: center;
   color: #fff;
 }
+.section-one__box__button-1.scaled {
+  transform: scale(0.8);
+}
 .section-one__box__button-2 {
   width: 170px;
   height: 60px;

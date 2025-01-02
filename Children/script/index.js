@@ -408,157 +408,165 @@ document.addEventListener("DOMContentLoaded", function() {
         
         
 
-    
-    // Добавляем обработчик события клика по кнопкам выбора времени
-    var timeButtons = document.querySelectorAll(".section-one__box__button-1, .section-one__box__button-2");
-    timeButtons.forEach(function(button) {
-        button.addEventListener("click", function() {
-            button.classList.toggle("selected");
+// Добавляем обработчик события клика по кнопкам выбора времени
+var timeButtons = document.querySelectorAll(".section-one__box__button-1, .section-one__box__button-2");
+timeButtons.forEach(function(button) {
+    button.addEventListener("click", function() {
+        button.classList.toggle("selected");
+    });
+});
+
+// Функция для получения текущего времени
+function getCurrentTime() {
+    var currentTime = new Date();
+    var hours = currentTime.getHours();
+    var minutes = currentTime.getMinutes();
+    if (minutes < 10) {
+        minutes = "0" + minutes;
+    }
+    return hours + ":" + minutes;
+}
+
+// Функция для получения времени пребывания
+function getDuration(selectedButtons) {
+    var durationTime = "";
+    selectedButtons.forEach(function(button) {
+        var timeText = button.querySelector("h2").textContent.trim(); // Получаем текст времени и удаляем лишние пробелы
+        durationTime += timeText + ", ";
+    });
+    return durationTime.slice(0, -2); // Удаляем последнюю запятую
+}
+
+// Функция для расчета времени обратного отсчета
+function calculateCountdownTime(selectedButtons) {
+    var totalSeconds = getTotalDurationInSeconds(selectedButtons);
+    var countdownDate = new Date();
+    countdownDate.setSeconds(countdownDate.getSeconds() + totalSeconds);
+    return formatTime(countdownDate.getHours()) + ":" + formatTime(countdownDate.getMinutes()) + ":" + formatTime(countdownDate.getSeconds());
+}
+
+// Функция для получения общей продолжительности заказа в секундах
+function getTotalDurationInSeconds(selectedButtons) {
+    var totalSeconds = 0;
+    selectedButtons.forEach(function(button) {
+        var timeText = button.textContent.trim(); // Получаем текст времени и удаляем лишние пробелы
+        var result = timeText.match(/\d+/); // Найти первое целое число
+        if (result) {
+            var minutes = parseInt(result[0], 10);
+        }
+
+        if (button.classList.contains('hour')) {
+            totalSeconds += minutes * 3600; // Преобразуем часы в секунды
+        } else {
+            totalSeconds += minutes * 60; // Преобразуем минуты в секунды
+        }
+    });
+    return totalSeconds;
+}
+
+// Функция для форматирования времени (добавление нуля при необходимости)
+function formatTime(time) {
+    return time < 10 ? "0" + time : time;
+}
+
+// Функция для запуска обратного отсчета
+function startCountdown(selectedButtons, orderContainer) {
+    var countdownElement = orderContainer.querySelector(".section-two__box_Child-1__info_time");
+    var totalSeconds = getTotalDurationInSeconds(selectedButtons);
+    var countdownDate = new Date();
+    countdownDate.setSeconds(countdownDate.getSeconds() + totalSeconds);
+
+    var isPaused = false;
+    var remainingSeconds = totalSeconds;
+
+    function updateCountdown() {
+        if (!isPaused) {
+            var currentTime = new Date();
+            var remainingTime = countdownDate - currentTime;
+            remainingSeconds = Math.floor(remainingTime / 1000);
+
+            if (remainingSeconds <= 0) {
+                clearInterval(interval);
+                countdownElement.textContent = "00:00:00";
+                return;
+            }
+
+            var hours = Math.floor(remainingSeconds / 3600);
+            var minutes = Math.floor((remainingSeconds % 3600) / 60);
+            var seconds = remainingSeconds % 60;
+
+            countdownElement.textContent = formatTime(hours) + ":" + formatTime(minutes) + ":" + formatTime(seconds);
+        }
+    }
+
+    updateCountdown(); // Сразу обновляем время
+
+    var interval = setInterval(updateCountdown, 1000); // Запускаем обновление каждую секунду
+
+    // Добавляем обработчик события клика по кнопке паузы/продолжения
+    var pauseButton = orderContainer.querySelector(".section-two__box_Child-1__info_img");
+
+    pauseButton.addEventListener("click", function() {
+        pauseButton.classList.toggle("section-two__box_Child-1__info_img-active");
+        isPaused = !isPaused;
+
+        if (isPaused) {
+            // Останавливаем таймер
+            clearInterval(interval);
+        } else {
+            // Перезапускаем таймер с оставшимся временем
+            countdownDate = new Date();
+            countdownDate.setSeconds(countdownDate.getSeconds() + remainingSeconds);
+            interval = setInterval(updateCountdown, 1000);
+        }
+    });
+
+    // Инициализируем переменные для подсчета бонусов и штрафов
+    var bonusCount = 0;
+    var penaltyCount = 0;
+
+    orderContainer.querySelectorAll(".section-two__box_Child-1__info_end_1").forEach(function(endButton) {
+        endButton.addEventListener("click", function() {
+            var timeAdjustment = endButton.querySelector("h4").textContent.includes("+") ? 300 : -300;
+
+            adjustCountdownTime(timeAdjustment);
+
+            // Определяем, какая кнопка была нажата (бонус или штраф)
+            if (timeAdjustment > 0) {
+                // Если это бонус
+                bonusCount++;
+                // Обновляем значение в <h5> для бонуса
+                orderContainer.querySelectorAll(".section-two__box_Child-1__info_counter_item")[0].textContent = bonusCount;
+            } else {
+                // Если это штраф
+                penaltyCount++;
+                // Обновляем значение в <h5> для штрафа
+                orderContainer.querySelectorAll(".section-two__box_Child-1__info_counter_item")[1].textContent = penaltyCount;
+            }
         });
     });
 
-    // Функция для получения текущего времени
-    function getCurrentTime() {
-        var currentTime = new Date();
-        var hours = currentTime.getHours();
-        var minutes = currentTime.getMinutes();
-        if (minutes < 10) {
-            minutes = "0" + minutes;
-        }
-        return hours + ":" + minutes;
-    }
+    // Функция для изменения времени обратного отсчета
+    function adjustCountdownTime(seconds) {
+        remainingSeconds += seconds;
 
-    // Функция для получения времени пребывания
-    function getDuration(selectedButtons) {
-        var durationTime = "";
-        selectedButtons.forEach(function(button) {
-            var timeText = button.querySelector("h2").textContent.trim(); // Получаем текст времени и удаляем лишние пробелы
-            durationTime += timeText + ", ";
-        });
-        return durationTime.slice(0, -2); // Удаляем последнюю запятую
-    }
-
-    // Функция для расчета времени обратного отсчета
-    function calculateCountdownTime(selectedButtons) {
-        var totalSeconds = getTotalDurationInSeconds(selectedButtons);
-        var countdownDate = new Date();
-        countdownDate.setSeconds(countdownDate.getSeconds() + totalSeconds);
-        return formatTime(countdownDate.getHours()) + ":" + formatTime(countdownDate.getMinutes()) + ":" + formatTime(countdownDate.getSeconds());
-    }
-
-    // Функция для получения общей продолжительности заказа в секундах
-    function getTotalDurationInSeconds(selectedButtons) {
-        var totalSeconds = 0;
-        selectedButtons.forEach(function(button) {
-            var timeText = button.textContent.trim(); // Получаем текст времени и удаляем лишние пробелы
-            var result = timeText.match(/\d+/); // Найти первое целое число
-            if (result) {
-                var minutes = parseInt(result[0], 10);
-            }
-
-            if(button.classList.contains('hour')) {
-                totalSeconds += minutes * 3600; // Преобразуем часы в секунды
-            } else {
-                totalSeconds += minutes * 60; // Преобразуем минуты в секунды
-            }
-        });
-        return totalSeconds;
-    }
-
-    // Функция для форматирования времени (добавление нуля при необходимости)
-    function formatTime(time) {
-        return time < 10 ? "0" + time : time;
-    }
-
-    // Функция для запуска обратного отсчета
-    function startCountdown(selectedButtons, orderContainer) {
-        var countdownElement = orderContainer.querySelector(".section-two__box_Child-1__info_time");
-        var totalSeconds = getTotalDurationInSeconds(selectedButtons);
-        var countdownDate = new Date();
-        countdownDate.setSeconds(countdownDate.getSeconds() + totalSeconds);
-
-        var isPaused = false;
-        var remainingSeconds = totalSeconds;
-
-        function updateCountdown() {
-            if (!isPaused) {
-                var currentTime = new Date();
-                var remainingTime = countdownDate - currentTime;
-                remainingSeconds = Math.floor(remainingTime / 1000);
-
-                if (remainingSeconds <= 0) {
-                    clearInterval(interval);
-                    countdownElement.textContent = "00:00:00";
-                    return;
-                }
-
-                var hours = Math.floor(remainingSeconds / 3600);
-                var minutes = Math.floor((remainingSeconds % 3600) / 60);
-                var seconds = remainingSeconds % 60;
-
-                countdownElement.textContent = formatTime(hours) + ":" + formatTime(minutes) + ":" + formatTime(seconds);
-            }
+        if (remainingSeconds <= 0) {
+            remainingSeconds = 0;
+            countdownElement.textContent = "00:00:00";
+            clearInterval(interval);
+            return;
         }
 
-        updateCountdown(); // Сразу обновляем время
+        var hours = Math.floor(remainingSeconds / 3600);
+        var minutes = Math.floor((remainingSeconds % 3600) / 60);
+        var secs = remainingSeconds % 60;
 
-        var interval = setInterval(updateCountdown, 1000); // Запускаем обновление каждую секунду
+        countdownElement.textContent = formatTime(hours) + ":" + formatTime(minutes) + ":" + formatTime(secs);
 
-        // Добавляем обработчик события клика по кнопке паузы/продолжения
-        var pauseButton = orderContainer.querySelector(".section-two__box_Child-1__info_img");
-
-        pauseButton.addEventListener("click", function() {
-            pauseButton.classList.toggle("section-two__box_Child-1__info_img-active");
-            isPaused = !isPaused;
-
-            if (isPaused) {
-                // Останавливаем таймер
-                clearInterval(interval);
-            } else {
-                // Перезапускаем таймер с оставшимся временем
-                countdownDate = new Date();
-                countdownDate.setSeconds(countdownDate.getSeconds() + remainingSeconds);
-                interval = setInterval(updateCountdown, 1000);
-            }
-        });
-
-        // Инициализируем переменные для подсчета бонусов и штрафов
-        var bonusCount = 0;
-        var penaltyCount = 0;
-
-        orderContainer.querySelectorAll(".section-two__box_Child-1__info_end_1").forEach(function(endButton) {
-            endButton.addEventListener("click", function() {
-                var timeAdjustment = endButton.querySelector("h4").textContent.includes("+") ? 300 : -300;
-                adjustCountdownTime(timeAdjustment);
-        
-                // Определяем, какая кнопка была нажата (бонус или штраф)
-                if (timeAdjustment > 0) {
-                    // Если это бонус
-                    bonusCount++;
-                    // Обновляем значение в <h5> для бонуса
-                    orderContainer.querySelectorAll(".section-two__box_Child-1__info_counter_item")[0].textContent = bonusCount;
-                } else {
-                    // Если это штраф
-                    penaltyCount++;
-                    // Обновляем значение в <h5> для штрафа
-                    orderContainer.querySelectorAll(".section-two__box_Child-1__info_counter_item")[1].textContent = penaltyCount;
-                }
-            });
-        });
-
-        // Функция для изменения времени обратного отсчета
-        function adjustCountdownTime(seconds) {
-            var timeParts = countdownElement.textContent.split(":");
-            var hours = parseInt(timeParts[0], 10);
-            var minutes = parseInt(timeParts[1], 10);
-            var secs = parseInt(timeParts[2], 10);
-
-            var totalSeconds = hours * 3600 + minutes * 60 + secs + seconds;
-
+        if (!isPaused) {
             countdownDate = new Date();
-            countdownDate.setSeconds(countdownDate.getSeconds() + totalSeconds);
-
-            updateCountdown(); // Обновляем таймер
+            countdownDate.setSeconds(countdownDate.getSeconds() + remainingSeconds);
         }
     }
+}
 });
