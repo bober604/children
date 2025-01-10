@@ -19,6 +19,18 @@ document.addEventListener("DOMContentLoaded", function() {
     });
 
 
+    // Находим кнопку по классу
+    const button = document.querySelectorAll('.section-one__box__button-1');
+
+    // Добавляем обработчик события для клика
+    button.forEach(peremennaya => {
+        peremennaya.addEventListener('click', () => {
+            // Добавляем или удаляем класс .scaled
+            peremennaya.classList.toggle('scaled');
+        });
+    });
+
+
     // Функция для преобразования первой буквы строки в заглавную
     function capitalizeFirstLetter(string) {
         return string.charAt(0).toUpperCase() + string.slice(1);
@@ -35,7 +47,22 @@ document.addEventListener("DOMContentLoaded", function() {
 
         // Добавляем обработчик события нажатия на кнопку
         addButton.addEventListener("click", function() {
-    
+
+            
+            // Находим кнопку по классу
+            const button = document.querySelectorAll('.section-one__box__button-1');
+
+            // Добавляем обработчик события для клика
+            button.forEach(peremennaya => {
+                peremennaya.addEventListener('click', () => {
+                    // Добавляем или удаляем класс .scaled
+                    if(peremennaya.classList.contains('scaled')){
+                        peremennaya.classList.toggle('scaled');
+                    }
+                });
+            });
+
+
             // Находим выбранные кнопки с ценами
             var selectedButtons = document.querySelectorAll(".section-one__box__button-1.selected, .section-one__box__button-2.selected");
     
@@ -52,27 +79,72 @@ document.addEventListener("DOMContentLoaded", function() {
             var orderCountElement = document.querySelector(".section-two__nav_block_sag-2");
             orderCountElement.textContent = orderCount;
 
+            
+            
             // Переменная для суммы текущего заказа
             var currentOrderTotal = 0;
-    
+
             // Добавляем информацию о сумме заказа
             selectedButtons.forEach(function(button) {
                 var priceText = button.querySelector(".section-one__box__button-1_sag-3").textContent;
-    
+
                 // Преобразуем текст цены в число
                 var price = parseFloat(priceText.replace("руб.", "").trim());
                 currentOrderTotal += price;
-    
+
                 // Удаляем класс selected после добавления заказа
                 button.classList.remove("selected");
             });
-    
+
             // Добавляем текущую сумму к общей выручке
             totalRevenue += currentOrderTotal;
-    
+
             // Находим элемент с отображением выручки и обновляем его значение
             var revenueElement = document.querySelector(".revenue");
             revenueElement.textContent = totalRevenue.toFixed(0); // Округляем до целых
+
+            // Обработчик для подсчета количества имён из текстового поля
+            var nameInput = document.querySelector("#namesInput"); // Поле ввода для имен
+            var countButton = document.querySelector("#countButton"); // Кнопка для подсчета
+            var nameCountElement = document.querySelector("#nameCount"); // Элемент для отображения количества имён
+            console.log()
+
+            countButton.addEventListener("click", function() {
+                // Получаем текст из поля ввода
+                const inputText = nameInput.value;
+
+                // Убираем лишние пробелы и разделяем текст на слова
+                const words = inputText.trim().split(/\s+/);
+
+                // Считаем количество слов
+                const nameCount = words.filter(word => word.length > 0).length;
+
+                // Отображаем результат
+                nameCountElement.textContent = nameCount;
+            });
+
+            
+            // // Переменная для суммы текущего заказа
+            // var currentOrderTotal = 0;
+    
+            // // Добавляем информацию о сумме заказа
+            // selectedButtons.forEach(function(button) {
+            //     var priceText = button.querySelector(".section-one__box__button-1_sag-3").textContent;
+    
+            //     // Преобразуем текст цены в число
+            //     var price = parseFloat(priceText.replace("руб.", "").trim());
+            //     currentOrderTotal += price;
+    
+            //     // Удаляем класс selected после добавления заказа
+            //     button.classList.remove("selected");
+            // });
+    
+            // // Добавляем текущую сумму к общей выручке
+            // totalRevenue += currentOrderTotal;
+    
+            // // Находим элемент с отображением выручки и обновляем его значение
+            // var revenueElement = document.querySelector(".revenue");
+            // revenueElement.textContent = totalRevenue.toFixed(0); // Округляем до целых
 
             // Расчет среднего чека
             var averageCheck = (orderCount > 0) ? (totalRevenue / orderCount).toFixed(0) : 0;
@@ -119,7 +191,7 @@ document.addEventListener("DOMContentLoaded", function() {
                         </div>
                         <div class="section-two__box_Child-1__info_line-1"><!-- Линия --></div>
                         <div class="section-two__box_Child-1__info_container-sag">
-                            <h3 class="section-two__box_Child-1__info_name">${capitalizeFirstLetter(document.querySelector('.section-one__container_1').value)}</h3>
+                            <h3 class="section-two__box_Child-1__info_container-sag_name">${capitalizeFirstLetter(document.querySelector('.section-one__container_1').value)}</h3>
                         </div>
                         <h3 class="section-two__box_Child-1__info_sag">Осталось:</h3>
                         <h3 class="section-two__box_Child-1__info_time" id="countdown">${calculateCountdownTime(selectedButtons)}</h3>
@@ -169,34 +241,6 @@ document.addEventListener("DOMContentLoaded", function() {
     
             // Запускаем обратный отсчет
             startCountdown(selectedButtons, orderContainer);
-
-
-            // Функция для обрезки строки до первых 20 символов с "..."
-            function truncateText(text) {
-                return text.length > 20 ? text.slice(0, 20) + '...' : text;
-            }
-
-            // Получаем элемент с именем
-            const nameElement = document.querySelector('.section-two__box_Child-1__info_name');
-            const inputText = document.querySelector('.section-one__container_1').value;
-            const fullName = capitalizeFirstLetter(inputText);
-            const truncatedName = truncateText(fullName);
-            const maxLength = 20;
-
-            // Устанавливаем начальный текст с обрезкой
-            nameElement.textContent = truncatedName;
-
-            // Добавляем обработчик клика для переключения прокрутки
-            nameElement.addEventListener("click", function () {
-                if (nameElement.classList.contains('expanded')) {
-                    nameElement.classList.remove('expanded');
-                    nameElement.textContent = truncatedName;
-                } else {
-                    nameElement.classList.add('expanded');
-                    nameElement.textContent = fullName;
-                }
-            });
-
 
 
 
@@ -343,7 +387,7 @@ document.addEventListener("DOMContentLoaded", function() {
                     targetBlock.querySelector(".section-two__box_Child-1__info_end_1").classList.add("in-section-two__box_Child-1__info_end_1");
                     targetBlock.querySelector(".section-two__box_Child-1__info_end_1_par-1").classList.add("in-section-two__box_Child-1__info_end_1_par-1");
                     targetBlock.querySelector(".section-two__box_Child-1__info_end_2").classList.add("in-section-two__box_Child-1__info_end_1");
-                    targetBlock.querySelector(".section-two__box_Child-1__info_end_line").classList.add("in-section-two__box_Child-1__info_end_line");
+                    targetBlock.querySelector(".section-two__box_Child-1__info_end_line").classList.add("in-section-two__box_Child-1__info_end_line");                    
                     
                     targetBlock.querySelector(".section-two__box_Child-2").classList.add("in-section-two__box_Child-2");
                     targetBlock.querySelector(".section-two__box_Child-2_sag").classList.add("in-section-two__box_Child-2_sag");
