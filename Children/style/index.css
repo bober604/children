@@ -1,3 +1,4 @@
+@charset "UTF-8";
 * {
   margin: 0;
   padding: 0;
@@ -62,6 +63,7 @@
 }
 .section-one__box__button-1.scaled {
   transform: scale(0.87);
+  box-shadow: 0 0 15px 0 rgb(124, 122, 113); /* Добавляем тень */
 }
 .section-one__box__button-2 {
   width: 170px;
@@ -79,6 +81,10 @@
 }
 .section-one__box__button-2:active {
   background: #8e9da3;
+}
+.section-one__box__button-2.scaled {
+  transform: scale(0.87);
+  box-shadow: 0 0 15px 0 rgb(124, 122, 113); /* Добавляем тень */
 }
 .section-one__container {
   margin-top: 18px;

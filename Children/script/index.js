@@ -19,14 +19,14 @@ document.addEventListener("DOMContentLoaded", function() {
     });
 
 
-    // Находим кнопку по классу
-    const button = document.querySelectorAll('.section-one__box__button-1');
+    // Находим все кнопки по классу
+    const buttons = document.querySelectorAll('.section-one__box__button-1, .section-one__box__button-2');
 
     // Добавляем обработчик события для клика
-    button.forEach(peremennaya => {
-        peremennaya.addEventListener('click', () => {
+    buttons.forEach(button => {
+        button.addEventListener('click', () => {
             // Добавляем или удаляем класс .scaled
-            peremennaya.classList.toggle('scaled');
+            button.classList.toggle('scaled');
         });
     });
 
@@ -47,21 +47,13 @@ document.addEventListener("DOMContentLoaded", function() {
 
         // Добавляем обработчик события нажатия на кнопку
         addButton.addEventListener("click", function() {
-
             
-            // Находим кнопку по классу
-            const button = document.querySelectorAll('.section-one__box__button-1');
-
-            // Добавляем обработчик события для клика
-            button.forEach(peremennaya => {
-                peremennaya.addEventListener('click', () => {
-                    // Добавляем или удаляем класс .scaled
-                    if(peremennaya.classList.contains('scaled')){
-                        peremennaya.classList.toggle('scaled');
-                    }
-                });
+            // Сбрасываем классы .scaled для всех кнопок
+            buttons.forEach(button => {
+                if (button.classList.contains('scaled')) {
+                    button.classList.remove('scaled');
+                }
             });
-
 
             // Находим выбранные кнопки с ценами
             var selectedButtons = document.querySelectorAll(".section-one__box__button-1.selected, .section-one__box__button-2.selected");

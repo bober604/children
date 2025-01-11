@@ -57,6 +57,7 @@
 
         &__button-1.scaled {
             transform: scale(0.87);
+            box-shadow: 0 0 15px 0 rgb(124 122 113); /* Добавляем тень */
         }
 
         &__button-2 {
@@ -75,6 +76,11 @@
             &:active {
                 background: #8e9da3;
             }
+        }
+
+        &__button-2.scaled {
+            transform: scale(0.87);
+            box-shadow: 0 0 15px 0 rgb(124 122 113); /* Добавляем тень */
         }
     }
 
