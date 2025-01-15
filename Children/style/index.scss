@@ -242,7 +242,8 @@
             &__buttons {
                 display: flex;
                 flex-wrap: wrap;
-                gap: 5px;
+                row-gap: 5px;
+                column-gap: 15px;
                 &_block-1 {
                     width: 114px;
                     height: 40px;
@@ -324,7 +325,6 @@
                     display: flex;
                     align-items: center;
                     justify-content: space-between;
-                    margin-top: -45px;
                     padding-left: 10px;
                     padding-right: 10px;
                 }
@@ -333,19 +333,38 @@
             &_save {
                 border-radius: 4px;
                 width: 166px;
-                height: 49px;
+                height: 39px;
                 background: #539f6c;
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                margin-left: 10px;
-                margin-top: 37px;
                 transition: all 0.3s;
                 &:hover {
                     background: #45835a;
                 }
                 &:active {
                     background: #539f6c;
+                }
+                &_sag {
+                    font-weight: 600;
+                    font-size: 22px;
+                    color: #fff;
+                }
+            }
+
+            &_cancellation {
+                border-radius: 4px;
+                width: 166px;
+                height: 39px;
+                background: #9f9f9f;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: all 0.3s;
+                &:hover {
+                    background: #777676;                }
+                &:active {
+                    background: #9f9f9f;
                 }
                 &_sag {
                     font-weight: 600;
@@ -875,17 +894,20 @@
                 margin-right: 10px;
             }
 
-            &_name {
-                font-weight: 500;
-                font-size: 17px;
-                line-height: normal;
-                color: #000;
-                width: 117.65px;
-                min-height: 45.7px;
-                display: flex;
-                align-items: center;
-                margin-top: 5.5px;
+            &_container-sag {
+                &_name {
+                    font-weight: 500;
+                    font-size: 17px;
+                    line-height: normal;
+                    color: #000;
+                    width: 117.65px;
+                    min-height: 45.7px;
+                    display: flex;
+                    align-items: center;
+                    margin-top: 5.5px;
+                }
             }
+            
 
             &_sag {
                 font-weight: 400;

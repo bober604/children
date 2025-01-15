@@ -243,7 +243,9 @@
 .section-one__orderChange__box__buttons {
   display: flex;
   flex-wrap: wrap;
-  gap: 5px;
+  row-gap: 5px;
+  -moz-column-gap: 15px;
+       column-gap: 15px;
 }
 .section-one__orderChange__box__buttons_block-1 {
   width: 114px;
@@ -319,20 +321,17 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-top: -45px;
   padding-left: 10px;
   padding-right: 10px;
 }
 .section-one__orderChange__box_save {
   border-radius: 4px;
   width: 166px;
-  height: 49px;
+  height: 39px;
   background: #539f6c;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-left: 10px;
-  margin-top: 37px;
   transition: all 0.3s;
 }
 .section-one__orderChange__box_save:hover {
@@ -342,6 +341,27 @@
   background: #539f6c;
 }
 .section-one__orderChange__box_save_sag {
+  font-weight: 600;
+  font-size: 22px;
+  color: #fff;
+}
+.section-one__orderChange__box_cancellation {
+  border-radius: 4px;
+  width: 166px;
+  height: 39px;
+  background: #9f9f9f;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s;
+}
+.section-one__orderChange__box_cancellation:hover {
+  background: #777676;
+}
+.section-one__orderChange__box_cancellation:active {
+  background: #9f9f9f;
+}
+.section-one__orderChange__box_cancellation_sag {
   font-weight: 600;
   font-size: 22px;
   color: #fff;
@@ -805,7 +825,7 @@
   margin-left: 20px;
   margin-right: 10px;
 }
-.in-section-two__box_Child-1__info_name {
+.in-section-two__box_Child-1__info_container-sag_name {
   font-weight: 500;
   font-size: 17px;
   line-height: normal;
@@ -1267,12 +1287,11 @@
   .in-section-two__box_Child-1__info_container-sag {
     width: 96px;
     min-height: 27px;
-    margin-left: -126px;
   }
   .in-section-two__box_Child-1__info_container-sag_name {
     font-weight: 300;
-    font-size: 17px;
-    margin-top: -4px;
+    font-size: 16px;
+    margin-left: -127px;
     position: relative;
     width: 97px;
     min-height: 30px;
