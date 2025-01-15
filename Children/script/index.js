@@ -160,7 +160,7 @@ document.addEventListener("DOMContentLoaded", function() {
             // Добавляем информацию о сумме заказа
             selectedButtons.forEach(function(button) {
                 var price = button.querySelector(".section-one__box__button-1_sag-3").textContent;
-                orderHTML += `<p class="section-two__box_Child-1__nav_section_par-2">${price}</p>`;
+                orderHTML += `<p id="price" class="section-two__box_Child-1__nav_section_par-2">${price}</p>`;
             });
     
             orderHTML += `
@@ -382,28 +382,105 @@ document.addEventListener("DOMContentLoaded", function() {
                     });
                 });
 
+                // Идентификатор текущего таймера
+                let currentTimerId = null;
+
+                // Функция для остановки текущего таймера
+                function stopCurrentTimer() {
+                    if (currentTimerId !== null) {
+                        clearInterval(currentTimerId);
+                        currentTimerId = null;
+                    }
+                }
+
+                // Функция для запуска нового таймера
+                function startNewTimer(durationInMinutes, countdownElement) {
+                    // Останавливаем текущий таймер
+                    stopCurrentTimer();
+
+                    let remainingSeconds = durationInMinutes * 60;
+
+                    function updateTimerDisplay() {
+                        const hours = Math.floor(remainingSeconds / 3600);
+                        const minutes = Math.floor((remainingSeconds % 3600) / 60);
+                        const seconds = remainingSeconds % 60;
+
+                        countdownElement.textContent = `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
+                    }
+
+                    // Обновляем дисплей сразу
+                    updateTimerDisplay();
+
+                    // Устанавливаем интервал для таймера
+                    currentTimerId = setInterval(() => {
+                        if (remainingSeconds > 0) {
+                            remainingSeconds--;
+                            updateTimerDisplay();
+                        } else {
+                            // Таймер завершён
+                            stopCurrentTimer();
+                        }
+                    }, 1000);
+                }
+
+                // Сопоставление времени и стоимости
+                const timePrices = {
+                    "15 мин.": 50,
+                    "30 мин.": 100,
+                    "1 час": 150,
+                    "2 часа": 250,
+                    "Аренда 1 час": 2000,
+                    "Аренда 2 часа": 4000,
+                };
+
                 // Обработка сохранения изменений
                 const saveButton = newOrderBlock.querySelector(".section-one__orderChange__box_save");
                 saveButton.addEventListener("click", function () {
                     const selectedButtons = newOrderBlock.querySelectorAll(".section-one__orderChange__box__buttons_block-1_active");
-                    const newDurationMinutes = Array.from(selectedButtons).reduce((total, button) => {
-                        const timeText = button.previousElementSibling.textContent;
-                        if (timeText.includes("мин")) return total + parseInt(timeText);
-                        if (timeText.includes("час")) return total + parseInt(timeText) * 60;
-                        return total;
-                    }, 0);
 
-                    const adjustedDuration = Math.max(newDurationMinutes - Math.floor(elapsedSeconds / 60), 0);
+                    // Суммируем время из выбранных кнопок
+                    let totalMinutes = 0;
+                    let totalPrice = 0; // Переменная для суммы
+                    const selectedDurations = Array.from(selectedButtons).map(button => {
+                        const timeText = button.previousElementSibling.textContent.trim();
 
+                        // Считаем минуты
+                        if (timeText.includes("мин")) {
+                            totalMinutes += parseInt(timeText);
+                        } else if (timeText.includes("час")) {
+                            totalMinutes += parseInt(timeText) * 60;
+                        }
+
+                        // Считаем стоимость
+                        totalPrice += timePrices[timeText] || 0;
+
+                        return timeText; // Сохраняем текстовое значение для отображения
+                    });
+
+                    // Учитываем прошедшее время
+                    const adjustedMinutes = Math.max(totalMinutes - Math.floor(elapsedSeconds / 60), 0);
+
+                    // Формируем текст для id="duration"
+                    const durationText = selectedDurations.join(", ");
+                    document.getElementById("duration").textContent = durationText;
+
+                    // Обновляем сумму заказа
+                    document.getElementById("price").textContent = `${totalPrice} руб.`;
+
+                    // Запускаем новый таймер
+                    const countdownElement = document.querySelector(".section-two__box_Child-1__info_time");
+                    startNewTimer(adjustedMinutes, countdownElement);
+
+                    // Обновляем дополнительные данные (имя, телефон, примечания)
                     document.querySelector(".section-two__box_Child-1__info_container-sag_name").textContent = document.getElementById("order-1").value;
                     document.querySelector(".section-two__box_Child-1__info_parents_number").textContent = document.getElementById("order-2").value;
                     document.querySelector(".section-two__box_Child-1__info_parents_par").textContent = document.getElementById("order-3").value;
-                    document.getElementById("duration").textContent = 
-                        `${Math.floor(adjustedDuration / 60)} ч ${adjustedDuration % 60} мин`; // заменяет значение выбранного времени посещения после редактирования заказа
 
-
+                    // Удаляем блок изменения заказа
                     newOrderBlock.remove();
                 });
+
+
 
                 // Обработка нажатия кнопки "Отмена"
                 const cancelButton = newOrderBlock.querySelector(".section-one__orderChange__box_cancellation");
