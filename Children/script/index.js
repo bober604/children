@@ -42,6 +42,25 @@ document.addEventListener("DOMContentLoaded", function() {
     // Инициализируем переменную для подсчета общей суммы выручки
     var totalRevenue = 0;
 
+    // // Обработчик для подсчета количества имён из текстового поля
+    // var nameInput = document.querySelector("#namesInput"); // Поле ввода для имен
+    // var countButton = document.querySelector("#countButton"); // Кнопка для подсчета
+    // var nameCountElement = document.querySelector("#nameCount"); // Элемент для отображения количества имён
+
+    // countButton.addEventListener("click", function () {
+    //     // Получаем текст из поля ввода
+    //     const inputText = nameInput.value;
+
+    //     // Убираем лишние пробелы и разделяем текст на слова
+    //     const words = inputText.trim().split(/\s+/);
+
+    //     // Считаем количество слов
+    //     const nameCount = words.filter(word => word.length > 0).length;
+
+    //     // Отображаем результат
+    //     nameCountElement.textContent = nameCount;
+    // });
+
     // Находим кнопку "Добавить"
     var addButton = document.querySelector(".section-one__button");
 
@@ -70,80 +89,41 @@ document.addEventListener("DOMContentLoaded", function() {
             // Находим элемент с количеством заказов и обновляем его значение
             var orderCountElement = document.querySelector(".section-two__nav_block_sag-2");
             orderCountElement.textContent = orderCount;
-
-            
             
             // Переменная для суммы текущего заказа
             var currentOrderTotal = 0;
 
-            // Добавляем информацию о сумме заказа
-            selectedButtons.forEach(function(button) {
-                var priceText = button.querySelector(".section-one__box__button-1_sag-3").textContent;
 
-                // Преобразуем текст цены в число
+            // Переменная для проверки, выбрана ли аренда
+            let isRental = false;
+
+            // Подсчёт общей суммы заказа
+            selectedButtons.forEach(function (button) {
+                var priceText = button.querySelector(".section-one__box__button-1_sag-3").textContent;
                 var price = parseFloat(priceText.replace("руб.", "").trim());
+
+                // Проверяем, выбрана ли аренда
+                if (price === 2000 || price === 4000) {
+                    isRental = true;
+                }
+
                 currentOrderTotal += price;
 
                 // Удаляем класс selected после добавления заказа
                 button.classList.remove("selected");
             });
 
-            // Добавляем текущую сумму к общей выручке
-            totalRevenue += currentOrderTotal;
+            // Подсчёт количества имён
+            var nameInput = document.querySelector("#namesInput").value.trim();
+            var names = nameInput.split(/\s+/); // Убираем лишние пробелы и разделяем текст на слова
+            var nameCount = names.filter(name => name.length > 0).length; // Считаем только непустые слова
 
-            // Находим элемент с отображением выручки и обновляем его значение
-            var revenueElement = document.querySelector(".revenue");
-            revenueElement.textContent = totalRevenue.toFixed(0); // Округляем до целых
-
-            // Обработчик для подсчета количества имён из текстового поля
-            var nameInput = document.querySelector("#namesInput"); // Поле ввода для имен
-            var countButton = document.querySelector("#countButton"); // Кнопка для подсчета
-            var nameCountElement = document.querySelector("#nameCount"); // Элемент для отображения количества имён
-            console.log()
-
-            countButton.addEventListener("click", function() {
-                // Получаем текст из поля ввода
-                const inputText = nameInput.value;
-
-                // Убираем лишние пробелы и разделяем текст на слова
-                const words = inputText.trim().split(/\s+/);
-
-                // Считаем количество слов
-                const nameCount = words.filter(word => word.length > 0).length;
-
-                // Отображаем результат
-                nameCountElement.textContent = nameCount;
-            });
+            // Если это не аренда, умножаем количество имён на стоимость времени посещения
+            if (!isRental) {
+                currentOrderTotal *= nameCount;
+            }
 
             
-            // // Переменная для суммы текущего заказа
-            // var currentOrderTotal = 0;
-    
-            // // Добавляем информацию о сумме заказа
-            // selectedButtons.forEach(function(button) {
-            //     var priceText = button.querySelector(".section-one__box__button-1_sag-3").textContent;
-    
-            //     // Преобразуем текст цены в число
-            //     var price = parseFloat(priceText.replace("руб.", "").trim());
-            //     currentOrderTotal += price;
-    
-            //     // Удаляем класс selected после добавления заказа
-            //     button.classList.remove("selected");
-            // });
-    
-            // // Добавляем текущую сумму к общей выручке
-            // totalRevenue += currentOrderTotal;
-    
-            // // Находим элемент с отображением выручки и обновляем его значение
-            // var revenueElement = document.querySelector(".revenue");
-            // revenueElement.textContent = totalRevenue.toFixed(0); // Округляем до целых
-
-            // Расчет среднего чека
-            var averageCheck = (orderCount > 0) ? (totalRevenue / orderCount).toFixed(0) : 0;
-
-            // Находим элемент для отображения среднего чека и обновляем его значение
-            var averageCheckElement = document.querySelector(".section-two__nav_block-2 .section-two__nav_block_sag-2");
-            averageCheckElement.textContent = averageCheck;
 
     
             // Создаем контейнер для информации о заказе
@@ -158,10 +138,14 @@ document.addEventListener("DOMContentLoaded", function() {
                             <p class="section-two__box_Child-1__nav_section_par-1">Сумма</p>`;
             
             // Добавляем информацию о сумме заказа
-            selectedButtons.forEach(function(button) {
-                var price = button.querySelector(".section-one__box__button-1_sag-3").textContent;
-                orderHTML += `<p id="price" class="section-two__box_Child-1__nav_section_par-2">${price}</p>`;
-            });
+            if (selectedButtons.length > 0) {
+                selectedButtons.forEach(function (button) {
+                    var price = button.querySelector(".section-one__box__button-1_sag-3").textContent;
+                    orderHTML += `<p class="section-two__box_Child-1__nav_section_par-2 price">${price}</p>`;
+                });
+            } else {
+                orderHTML += `<p class="section-two__box_Child-1__nav_section_par-2 price">0 руб.</p>`;
+            }
     
             orderHTML += `
                         </div>
@@ -230,12 +214,42 @@ document.addEventListener("DOMContentLoaded", function() {
     
             // Вставляем созданный контейнер с информацией о заказе в начало списка
             sectionTwoLending.insertBefore(orderContainer, sectionTwoLending.firstChild);
+
+            // Обновляем общую сумму заказа
+            var priceElement = orderContainer.querySelector(".price");
+            priceElement.textContent = currentOrderTotal.toFixed(0) + " руб.";
+
+            // Добавляем текущую сумму к общей выручке
+            totalRevenue += currentOrderTotal;
+
+            // Обновляем значение выручки
+            var revenueElement = document.querySelector(".revenue");
+            revenueElement.textContent = totalRevenue.toFixed(0);
+
+            // Расчёт среднего чека
+            var averageCheck = (orderCount > 0) ? (totalRevenue / orderCount).toFixed(0) : 0;
+            var averageCheckElement = document.querySelector(".section-two__nav_block-2 .section-two__nav_block_sag-2");
+            averageCheckElement.textContent = averageCheck;
+
+            // Находим элемент для отображения среднего чека и обновляем его значение
+            var averageCheckElement = document.querySelector(".section-two__nav_block-2 .section-two__nav_block_sag-2");
+            averageCheckElement.textContent = averageCheck;
+
+            // Находим элемент с классом .price
+            var priceElement = orderContainer.querySelector(".price");
+
+            // Обновляем сумму заказа
+            if (priceElement) {
+                priceElement.textContent = currentOrderTotal.toFixed(0) + " руб.";
+            } else {
+                console.error("Элемент с классом 'price' не найден.");
+            }
     
             // Запускаем обратный отсчет
             startCountdown(selectedButtons, orderContainer);
 
 
-
+            
 
             // Получаем кнопку изменения заказа
             const editOrderButton = document.querySelector(".section-two__box_Child-4");
@@ -382,28 +396,30 @@ document.addEventListener("DOMContentLoaded", function() {
                     });
                 });
 
-                // Идентификатор текущего таймера
+                // Идентификатор текущего таймера и оставшееся время
                 let currentTimerId = null;
+                let remainingTime = 0; // В секундах
 
                 // Функция для остановки текущего таймера
                 function stopCurrentTimer() {
                     if (currentTimerId !== null) {
-                        clearInterval(currentTimerId);
+                        clearInterval(currentTimerId); // Удаляем старый таймер
                         currentTimerId = null;
                     }
                 }
 
                 // Функция для запуска нового таймера
                 function startNewTimer(durationInMinutes, countdownElement) {
-                    // Останавливаем текущий таймер
-                    stopCurrentTimer();
+                    stopCurrentTimer(); // Останавливаем текущий таймер
 
-                    let remainingSeconds = durationInMinutes * 60;
+                    remainingTime = durationInMinutes * 60; // Обновляем оставшееся время (в секундах)
+
+                    remainingTime = durationInMinutes * 60; // Устанавливаем новое время (в секундах)
 
                     function updateTimerDisplay() {
-                        const hours = Math.floor(remainingSeconds / 3600);
-                        const minutes = Math.floor((remainingSeconds % 3600) / 60);
-                        const seconds = remainingSeconds % 60;
+                        const hours = Math.floor(remainingTime / 3600);
+                        const minutes = Math.floor((remainingTime % 3600) / 60);
+                        const seconds = remainingTime % 60;
 
                         countdownElement.textContent = `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
                     }
@@ -411,10 +427,10 @@ document.addEventListener("DOMContentLoaded", function() {
                     // Обновляем дисплей сразу
                     updateTimerDisplay();
 
-                    // Устанавливаем интервал для таймера
+                    // Устанавливаем интервал для нового таймера
                     currentTimerId = setInterval(() => {
-                        if (remainingSeconds > 0) {
-                            remainingSeconds--;
+                        if (remainingTime > 0) {
+                            remainingTime--;
                             updateTimerDisplay();
                         } else {
                             // Таймер завершён
@@ -433,6 +449,12 @@ document.addEventListener("DOMContentLoaded", function() {
                     "Аренда 2 часа": 4000,
                 };
 
+                // Функция для обработки бонусов/штрафов
+                function adjustTimer(minutes) {
+                    remainingTime += minutes * 60; // Добавляем/вычитаем время (в секундах)
+                    if (remainingTime < 0) remainingTime = 0; // Убеждаемся, что время не уходит в отрицательные значения
+                }
+
                 // Обработка сохранения изменений
                 const saveButton = newOrderBlock.querySelector(".section-one__orderChange__box_save");
                 saveButton.addEventListener("click", function () {
@@ -440,7 +462,6 @@ document.addEventListener("DOMContentLoaded", function() {
 
                     // Суммируем время из выбранных кнопок
                     let totalMinutes = 0;
-                    let totalPrice = 0; // Переменная для суммы
                     const selectedDurations = Array.from(selectedButtons).map(button => {
                         const timeText = button.previousElementSibling.textContent.trim();
 
@@ -450,9 +471,6 @@ document.addEventListener("DOMContentLoaded", function() {
                         } else if (timeText.includes("час")) {
                             totalMinutes += parseInt(timeText) * 60;
                         }
-
-                        // Считаем стоимость
-                        totalPrice += timePrices[timeText] || 0;
 
                         return timeText; // Сохраняем текстовое значение для отображения
                     });
@@ -465,8 +483,9 @@ document.addEventListener("DOMContentLoaded", function() {
                     document.getElementById("duration").textContent = durationText;
 
                     // Обновляем сумму заказа
-                    document.getElementById("price").textContent = `${totalPrice} руб.`;
-
+                    let totalPrice = 0;
+                    document.querySelector(".price").textContent = `${totalPrice} руб.`;
+            
                     // Запускаем новый таймер
                     const countdownElement = document.querySelector(".section-two__box_Child-1__info_time");
                     startNewTimer(adjustedMinutes, countdownElement);
@@ -480,7 +499,18 @@ document.addEventListener("DOMContentLoaded", function() {
                     newOrderBlock.remove();
                 });
 
+                // Изменяем обработчики для бонуса/штрафа
+                document.querySelector(".section-two__box_Child-1__info_end_1_par-1").addEventListener("click", () => adjustTimer(5)); // +5 минут
+                document.querySelector(".section-two__box_Child-1__info_end_1_par-2").addEventListener("click", () => adjustTimer(-5)); // -5 минут
 
+                // Изменяем обработчик для паузы/продолжения
+                document.querySelector(".section-two__box_Child-1__info_img").addEventListener("click", () => {
+                    if (currentTimerId !== null) {
+                        stopCurrentTimer(); // Останавливаем текущий таймер
+                    } else {
+                        startNewTimer(Math.ceil(remainingTime / 60), document.querySelector(".section-two__box_Child-1__info_time")); // Возобновляем таймер
+                    }
+                });
 
                 // Обработка нажатия кнопки "Отмена"
                 const cancelButton = newOrderBlock.querySelector(".section-one__orderChange__box_cancellation");
