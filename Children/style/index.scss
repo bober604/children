@@ -17,6 +17,10 @@
     padding-left: 9px;
     padding-top: 9px;
 
+    &__mobile {
+        display: none;
+    }
+
     &__box {
         display: flex;
         flex-wrap: wrap;

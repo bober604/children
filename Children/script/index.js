@@ -42,24 +42,6 @@ document.addEventListener("DOMContentLoaded", function() {
     // Инициализируем переменную для подсчета общей суммы выручки
     var totalRevenue = 0;
 
-    // // Обработчик для подсчета количества имён из текстового поля
-    // var nameInput = document.querySelector("#namesInput"); // Поле ввода для имен
-    // var countButton = document.querySelector("#countButton"); // Кнопка для подсчета
-    // var nameCountElement = document.querySelector("#nameCount"); // Элемент для отображения количества имён
-
-    // countButton.addEventListener("click", function () {
-    //     // Получаем текст из поля ввода
-    //     const inputText = nameInput.value;
-
-    //     // Убираем лишние пробелы и разделяем текст на слова
-    //     const words = inputText.trim().split(/\s+/);
-
-    //     // Считаем количество слов
-    //     const nameCount = words.filter(word => word.length > 0).length;
-
-    //     // Отображаем результат
-    //     nameCountElement.textContent = nameCount;
-    // });
 
     // Находим кнопку "Добавить"
     var addButton = document.querySelector(".section-one__button");
@@ -123,7 +105,6 @@ document.addEventListener("DOMContentLoaded", function() {
                 currentOrderTotal *= nameCount;
             }
 
-            
 
     
             // Создаем контейнер для информации о заказе
@@ -248,6 +229,27 @@ document.addEventListener("DOMContentLoaded", function() {
             // Запускаем обратный отсчет
             startCountdown(selectedButtons, orderContainer);
 
+
+
+
+            // Следующий код для мобильной интерактивности
+
+            // Находим изображение
+            const burgerImage = document.querySelector('.section-two__box_Child-1__info_burger');
+
+            // Проверяем, существует ли элемент
+            if (burgerImage) {
+                // Добавляем обработчик события клика
+                burgerImage.addEventListener('click', () => {
+                    // Переключаем класс
+                    burgerImage.classList.toggle('section-two__box_Child-1__info_burger-active');
+                });
+            } else {
+                console.error('Элемент с классом .section-two__box_Child-1__info_burger не найден.');
+            }
+
+
+            // Код для мобильной интерактивности окончен
 
             
 
@@ -521,7 +523,6 @@ document.addEventListener("DOMContentLoaded", function() {
 
 
 
-
             // Добавляем интерактивность для изменения стилей
             var changeStyleButton = orderContainer.querySelector(".section-two__box_Child-2");
             changeStyleButton.addEventListener("click", function() {
@@ -624,167 +625,219 @@ document.addEventListener("DOMContentLoaded", function() {
             });
         }
         
-        
 
-// Добавляем обработчик события клика по кнопкам выбора времени
-var timeButtons = document.querySelectorAll(".section-one__box__button-1, .section-one__box__button-2");
-timeButtons.forEach(function(button) {
-    button.addEventListener("click", function() {
-        button.classList.toggle("selected");
-    });
-});
+        // Добавляем обработчик события клика по кнопкам выбора времени
+        var timeButtons = document.querySelectorAll(".section-one__box__button-1, .section-one__box__button-2");
+        timeButtons.forEach(function(button) {
+            button.addEventListener("click", function() {
+                button.classList.toggle("selected");
+            });
+        });
 
-// Функция для получения текущего времени
-function getCurrentTime() {
-    var currentTime = new Date();
-    var hours = currentTime.getHours();
-    var minutes = currentTime.getMinutes();
-    if (minutes < 10) {
-        minutes = "0" + minutes;
-    }
-    return hours + ":" + minutes;
-}
-
-// Функция для получения времени пребывания
-function getDuration(selectedButtons) {
-    var durationTime = "";
-    selectedButtons.forEach(function(button) {
-        var timeText = button.querySelector("h2").textContent.trim(); // Получаем текст времени и удаляем лишние пробелы
-        durationTime += timeText + ", ";
-    });
-    return durationTime.slice(0, -2); // Удаляем последнюю запятую
-}
-
-// Функция для расчета времени обратного отсчета
-function calculateCountdownTime(selectedButtons) {
-    var totalSeconds = getTotalDurationInSeconds(selectedButtons);
-    var countdownDate = new Date();
-    countdownDate.setSeconds(countdownDate.getSeconds() + totalSeconds);
-    return formatTime(countdownDate.getHours()) + ":" + formatTime(countdownDate.getMinutes()) + ":" + formatTime(countdownDate.getSeconds());
-}
-
-// Функция для получения общей продолжительности заказа в секундах
-function getTotalDurationInSeconds(selectedButtons) {
-    var totalSeconds = 0;
-    selectedButtons.forEach(function(button) {
-        var timeText = button.textContent.trim(); // Получаем текст времени и удаляем лишние пробелы
-        var result = timeText.match(/\d+/); // Найти первое целое число
-        if (result) {
-            var minutes = parseInt(result[0], 10);
-        }
-
-        if (button.classList.contains('hour')) {
-            totalSeconds += minutes * 3600; // Преобразуем часы в секунды
-        } else {
-            totalSeconds += minutes * 60; // Преобразуем минуты в секунды
-        }
-    });
-    return totalSeconds;
-}
-
-// Функция для форматирования времени (добавление нуля при необходимости)
-function formatTime(time) {
-    return time < 10 ? "0" + time : time;
-}
-
-// Функция для запуска обратного отсчета
-function startCountdown(selectedButtons, orderContainer) {
-    var countdownElement = orderContainer.querySelector(".section-two__box_Child-1__info_time");
-    var totalSeconds = getTotalDurationInSeconds(selectedButtons);
-    var countdownDate = new Date();
-    countdownDate.setSeconds(countdownDate.getSeconds() + totalSeconds);
-
-    var isPaused = false;
-    var remainingSeconds = totalSeconds;
-
-    function updateCountdown() {
-        if (!isPaused) {
+        // Функция для получения текущего времени
+        function getCurrentTime() {
             var currentTime = new Date();
-            var remainingTime = countdownDate - currentTime;
-            remainingSeconds = Math.floor(remainingTime / 1000);
+            var hours = currentTime.getHours();
+            var minutes = currentTime.getMinutes();
+            if (minutes < 10) {
+                minutes = "0" + minutes;
+            }
+            return hours + ":" + minutes;
+        }
+
+        // Функция для получения времени пребывания
+        function getDuration(selectedButtons) {
+            var durationTime = "";
+            selectedButtons.forEach(function(button) {
+                var timeText = button.querySelector("h2").textContent.trim(); // Получаем текст времени и удаляем лишние пробелы
+                durationTime += timeText + ", ";
+            });
+            return durationTime.slice(0, -2); // Удаляем последнюю запятую
+        }
+
+        // Функция для расчета времени обратного отсчета
+        function calculateCountdownTime(selectedButtons) {
+            var totalSeconds = getTotalDurationInSeconds(selectedButtons);
+            var countdownDate = new Date();
+            countdownDate.setSeconds(countdownDate.getSeconds() + totalSeconds);
+            return formatTime(countdownDate.getHours()) + ":" + formatTime(countdownDate.getMinutes()) + ":" + formatTime(countdownDate.getSeconds());
+        }
+
+        // Функция для получения общей продолжительности заказа в секундах
+        function getTotalDurationInSeconds(selectedButtons) {
+            var totalSeconds = 0;
+            selectedButtons.forEach(function(button) {
+                var timeText = button.textContent.trim(); // Получаем текст времени и удаляем лишние пробелы
+                var result = timeText.match(/\d+/); // Найти первое целое число
+                if (result) {
+                    var minutes = parseInt(result[0], 10);
+                }
+
+                if (button.classList.contains('hour')) {
+                    totalSeconds += minutes * 3600; // Преобразуем часы в секунды
+                } else {
+                    totalSeconds += minutes * 60; // Преобразуем минуты в секунды
+                }
+            });
+            return totalSeconds;
+        }
+
+        // Функция для форматирования времени (добавление нуля при необходимости)
+        function formatTime(time) {
+            return time < 10 ? "0" + time : time;
+        }
+
+    // Функция для запуска обратного отсчета
+    function startCountdown(selectedButtons, orderContainer) {
+        var countdownElement = orderContainer.querySelector(".section-two__box_Child-1__info_time");
+        var totalSeconds = getTotalDurationInSeconds(selectedButtons);
+        var countdownDate = new Date();
+        countdownDate.setSeconds(countdownDate.getSeconds() + totalSeconds);
+
+        var isPaused = false;
+        var remainingSeconds = totalSeconds;
+
+        function updateCountdown() {
+            if (!isPaused) {
+                var currentTime = new Date();
+                var remainingTime = countdownDate - currentTime;
+                remainingSeconds = Math.floor(remainingTime / 1000);
+
+                if (remainingSeconds <= 0) {
+                    clearInterval(interval);
+                    countdownElement.textContent = "00:00:00";
+                    return;
+                }
+
+                var hours = Math.floor(remainingSeconds / 3600);
+                var minutes = Math.floor((remainingSeconds % 3600) / 60);
+                var seconds = remainingSeconds % 60;
+
+                countdownElement.textContent = formatTime(hours) + ":" + formatTime(minutes) + ":" + formatTime(seconds);
+            }
+        }
+
+        updateCountdown(); // Сразу обновляем время
+
+        var interval = setInterval(updateCountdown, 1000); // Запускаем обновление каждую секунду
+
+        // Добавляем обработчик события клика по кнопке паузы/продолжения
+        var pauseButton = orderContainer.querySelector(".section-two__box_Child-1__info_img");
+
+        pauseButton.addEventListener("click", function() {
+            pauseButton.classList.toggle("section-two__box_Child-1__info_img-active");
+            isPaused = !isPaused;
+
+            if (isPaused) {
+                // Останавливаем таймер
+                clearInterval(interval);
+            } else {
+                // Перезапускаем таймер с оставшимся временем
+                countdownDate = new Date();
+                countdownDate.setSeconds(countdownDate.getSeconds() + remainingSeconds);
+                interval = setInterval(updateCountdown, 1000);
+            }
+        });
+
+        // Инициализируем переменные для подсчета бонусов и штрафов
+        var bonusCount = 0;
+        var penaltyCount = 0;
+
+        orderContainer.querySelectorAll(".section-two__box_Child-1__info_end_1").forEach(function(endButton) {
+            endButton.addEventListener("click", function() {
+                var timeAdjustment = endButton.querySelector("h4").textContent.includes("+") ? 300 : -300;
+
+                adjustCountdownTime(timeAdjustment);
+
+                // Определяем, какая кнопка была нажата (бонус или штраф)
+                if (timeAdjustment > 0) {
+                    // Если это бонус
+                    bonusCount++;
+                    // Обновляем значение в <h5> для бонуса
+                    orderContainer.querySelectorAll(".section-two__box_Child-1__info_counter_item")[0].textContent = bonusCount;
+                } else {
+                    // Если это штраф
+                    penaltyCount++;
+                    // Обновляем значение в <h5> для штрафа
+                    orderContainer.querySelectorAll(".section-two__box_Child-1__info_counter_item")[1].textContent = penaltyCount;
+                }
+            });
+        });
+
+        // Функция для изменения времени обратного отсчета
+        function adjustCountdownTime(seconds) {
+            remainingSeconds += seconds;
 
             if (remainingSeconds <= 0) {
-                clearInterval(interval);
+                remainingSeconds = 0;
                 countdownElement.textContent = "00:00:00";
+                clearInterval(interval);
                 return;
             }
 
             var hours = Math.floor(remainingSeconds / 3600);
             var minutes = Math.floor((remainingSeconds % 3600) / 60);
-            var seconds = remainingSeconds % 60;
+            var secs = remainingSeconds % 60;
 
-            countdownElement.textContent = formatTime(hours) + ":" + formatTime(minutes) + ":" + formatTime(seconds);
-        }
-    }
+            countdownElement.textContent = formatTime(hours) + ":" + formatTime(minutes) + ":" + formatTime(secs);
 
-    updateCountdown(); // Сразу обновляем время
-
-    var interval = setInterval(updateCountdown, 1000); // Запускаем обновление каждую секунду
-
-    // Добавляем обработчик события клика по кнопке паузы/продолжения
-    var pauseButton = orderContainer.querySelector(".section-two__box_Child-1__info_img");
-
-    pauseButton.addEventListener("click", function() {
-        pauseButton.classList.toggle("section-two__box_Child-1__info_img-active");
-        isPaused = !isPaused;
-
-        if (isPaused) {
-            // Останавливаем таймер
-            clearInterval(interval);
-        } else {
-            // Перезапускаем таймер с оставшимся временем
-            countdownDate = new Date();
-            countdownDate.setSeconds(countdownDate.getSeconds() + remainingSeconds);
-            interval = setInterval(updateCountdown, 1000);
-        }
-    });
-
-    // Инициализируем переменные для подсчета бонусов и штрафов
-    var bonusCount = 0;
-    var penaltyCount = 0;
-
-    orderContainer.querySelectorAll(".section-two__box_Child-1__info_end_1").forEach(function(endButton) {
-        endButton.addEventListener("click", function() {
-            var timeAdjustment = endButton.querySelector("h4").textContent.includes("+") ? 300 : -300;
-
-            adjustCountdownTime(timeAdjustment);
-
-            // Определяем, какая кнопка была нажата (бонус или штраф)
-            if (timeAdjustment > 0) {
-                // Если это бонус
-                bonusCount++;
-                // Обновляем значение в <h5> для бонуса
-                orderContainer.querySelectorAll(".section-two__box_Child-1__info_counter_item")[0].textContent = bonusCount;
-            } else {
-                // Если это штраф
-                penaltyCount++;
-                // Обновляем значение в <h5> для штрафа
-                orderContainer.querySelectorAll(".section-two__box_Child-1__info_counter_item")[1].textContent = penaltyCount;
+            if (!isPaused) {
+                countdownDate = new Date();
+                countdownDate.setSeconds(countdownDate.getSeconds() + remainingSeconds);
             }
-        });
-    });
-
-    // Функция для изменения времени обратного отсчета
-    function adjustCountdownTime(seconds) {
-        remainingSeconds += seconds;
-
-        if (remainingSeconds <= 0) {
-            remainingSeconds = 0;
-            countdownElement.textContent = "00:00:00";
-            clearInterval(interval);
-            return;
-        }
-
-        var hours = Math.floor(remainingSeconds / 3600);
-        var minutes = Math.floor((remainingSeconds % 3600) / 60);
-        var secs = remainingSeconds % 60;
-
-        countdownElement.textContent = formatTime(hours) + ":" + formatTime(minutes) + ":" + formatTime(secs);
-
-        if (!isPaused) {
-            countdownDate = new Date();
-            countdownDate.setSeconds(countdownDate.getSeconds() + remainingSeconds);
         }
     }
-}
+
+
+
+
+    //Дальнейший код только для мобильной версии
+
+    // Находим кнопку .section-two__nav_button-1
+    const creatureButton = document.querySelector(".section-two__nav_button-1");
+
+    // Добавляем обработчик клика для первой кнопки
+    creatureButton.addEventListener("click", function () {
+        const sectionOne = document.querySelector(".section-one");
+
+        if (sectionOne) {
+            // Проверяем текущее значение display и меняем только его
+            if (sectionOne.style.display === "none" || sectionOne.style.display === "") {
+                sectionOne.style.display = "block";
+            } else {
+                sectionOne.style.display = "none";
+            }
+        }
+    });
+
+    // Находим изображение для закрытия
+    const backImage = document.querySelector(".section-one__mobile__container_img");
+
+    // Добавляем обработчик клика на изображение
+    backImage.addEventListener("click", function () {
+        const sectionOne = document.querySelector(".section-one");
+
+        if (sectionOne) {
+            sectionOne.style.display = "none";
+        }
+    });
+
+    // Находим кнопку добавления
+    var addButton = document.querySelector(".section-one__button");
+
+    // Добавляем обработчик клика на кнопку добавления
+    addButton.addEventListener("click", function () {
+        const sectionOne = document.querySelector(".section-one");
+
+        if (sectionOne) {
+            // Проверяем ширину экрана и меняем свойство display на none только если экран меньше 480px
+            if (window.innerWidth < 480) {
+                sectionOne.style.display = "none";
+            }
+        }
+    });
+
+
+    
+
 });
