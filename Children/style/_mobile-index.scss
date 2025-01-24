@@ -163,6 +163,7 @@
             margin-top: 0;
             margin-left: 0;
             margin-bottom: 3.5px;
+            flex-direction: column;
             &_Child-1 {
                 border-radius: 5px;
                 width: 346px;
@@ -192,7 +193,7 @@
                         &_name {
                             font-weight: 300;
                             font-size: 16px;
-                            // margin-top: -35px;
+                            margin-top: -30px;
                             position: relative;
                             width: 97px;
                             min-height: 30px;
@@ -271,15 +272,101 @@
             }
 
             &_Child-2 {
-                display: none;
+                // display: none;
+                position: fixed;
+                margin-left: 300px;
+                margin-top: 10px;
+                width: 45px;
+                min-height: 0;
+                height: 45px;
+                background: #fff;
+                border-radius: 10px;
+                border: 2px solid #0ebc01;
+                z-index: 10;
+                background: white url(../img/Child-2.png) no-repeat center center;
+                background-size: 70% 70%;
+                opacity: 0;
+                pointer-events: none; /* Делает элементы не кликабельными, пока они скрыты */
+                transition: opacity 0.5s, margin-top 0.5s;
+                &_sag {
+                    display: none;
+                }
+                &:hover {
+                    background: white url(../img/Child-2.png) no-repeat center center;
+                    background-size: 70% 70%;
+                }
+            }
+
+            &_Child-2.active {
+                margin-top: 60px;
+                opacity: 1;
+                pointer-events: all; /* Делает элементы снова кликабельными */
             }
 
             &_Child-3 {
-                display: none;
+                // display: none;
+                position: fixed;
+                margin-left: 300px;
+                margin-top: 10px;
+                width: 45px;
+                min-height: 0;
+                height: 45px;
+                background: #fff;
+                border-radius: 10px;
+                border: 2px solid #af3131;
+                z-index: 9;
+                opacity: 0;
+                pointer-events: none; /* Делает элементы не кликабельными, пока они скрыты */
+                transition: opacity 0.5s, margin-top 0.5s;
+                &_sag {
+                    display: none;
+                }
+                &_img {
+                    width: 28px;
+                    height: 28px;
+                    margin-top: 8px;
+                    margin-left: calc(17%);
+                }
+                &:hover {
+                    background: #fff;
+                }
+            }
+
+            &_Child-3.active {
+                margin-top: 110px;
+                opacity: 1;
+                pointer-events: all; /* Делает элементы снова кликабельными */
             }
 
             &_Child-4 {
-                display: none;
+                // display: none;
+                position: fixed;
+                margin-left: 300px;
+                margin-top: 10px;
+                width: 45px;
+                min-height: 0;
+                height: 45px;
+                border-radius: 10px;
+                border: 2px solid #1d00ff;
+                z-index: 8;
+                background: white url(../img/changeMobile.png) no-repeat calc(50% + 2px) center;
+                background-size: 72% 72%;
+                opacity: 0;
+                pointer-events: none; /* Делает элементы не кликабельными, пока они скрыты */
+                transition: opacity 0.5s, margin-top 0.5s;
+                &_sag {
+                    display: none;
+                }
+                &:hover {
+                    background: white url(../img/changeMobile.png) no-repeat calc(50% + 2px) center;
+                    background-size: 72% 72%;
+                }
+            }
+
+            &_Child-4.active {
+                margin-top: 161px;
+                opacity: 1;
+                pointer-events: all; /* Делает элементы снова кликабельными */
             }
         }
     }
@@ -437,15 +524,101 @@
             }
 
             &_Child-2 {
-                display: none;
+                // display: none;
+                position: fixed;
+                margin-left: 300px;
+                margin-top: 10px;
+                width: 45px;
+                min-height: 0;
+                height: 45px;
+                background: #fff;
+                border-radius: 10px;
+                border: 2px solid #0ebc01;
+                z-index: 10;
+                background: white url(../img/Child-2.png) no-repeat center center;
+                background-size: 70% 70%;
+                opacity: 0;
+                pointer-events: none; /* Делает элементы не кликабельными, пока они скрыты */
+                transition: opacity 0.5s, margin-top 0.5s;
+                &_sag {
+                    display: none;
+                }
+                &:hover {
+                    background: white url(../img/Child-2.png) no-repeat center center;
+                    background-size: 70% 70%;
+                }
+            }
+
+            &_Child-2.active {
+                margin-top: 60px;
+                opacity: 1;
+                pointer-events: all; /* Делает элементы снова кликабельными */
             }
 
             &_Child-3 {
-                display: none;
+                // display: none;
+                position: fixed;
+                margin-left: 300px;
+                margin-top: 10px;
+                width: 45px;
+                min-height: 0;
+                height: 45px;
+                background: #fff;
+                border-radius: 10px;
+                border: 2px solid #af3131;
+                z-index: 9;
+                opacity: 0;
+                pointer-events: none; /* Делает элементы не кликабельными, пока они скрыты */
+                transition: opacity 0.5s, margin-top 0.5s;
+                &_sag {
+                    display: none;
+                }
+                &_img {
+                    width: 28px;
+                    height: 28px;
+                    margin-top: 8px;
+                    margin-left: calc(17%);
+                }
+                &:hover {
+                    background: #fff;
+                }
+            }
+
+            &_Child-3.active {
+                margin-top: 110px;
+                opacity: 1;
+                pointer-events: all; /* Делает элементы снова кликабельными */
             }
 
             &_Child-4 {
-                display: none;
+                // display: none;
+                position: fixed;
+                margin-left: 300px;
+                margin-top: 10px;
+                width: 45px;
+                min-height: 0;
+                height: 45px;
+                border-radius: 10px;
+                border: 2px solid #1d00ff;
+                z-index: 8;
+                background: white url(../img/changeMobile.png) no-repeat calc(50% + 2px) center;
+                background-size: 72% 72%;
+                opacity: 0;
+                pointer-events: none; /* Делает элементы не кликабельными, пока они скрыты */
+                transition: opacity 0.5s, margin-top 0.5s;
+                &_sag {
+                    display: none;
+                }
+                &:hover {
+                    background: white url(../img/changeMobile.png) no-repeat calc(50% + 2px) center;
+                    background-size: 72% 72%;
+                }
+            }
+
+            &_Child-4.active {
+                margin-top: 161px;
+                opacity: 1;
+                pointer-events: all; /* Делает элементы снова кликабельными */
             }
         }
     }

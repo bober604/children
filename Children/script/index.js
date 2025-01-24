@@ -234,24 +234,72 @@ document.addEventListener("DOMContentLoaded", function() {
 
             // Следующий код для мобильной интерактивности
 
-            // Находим изображение
-            const burgerImage = document.querySelector('.section-two__box_Child-1__info_burger');
+            // Делегирование событий для элементов с классом .section-two__box
+            document.addEventListener('click', (event) => {
+                // Проверяем, был ли клик по .section-two__box_Child-1__info_burger
+                if (event.target.closest('.section-two__box_Child-1__info_burger')) {
+                    const burger = event.target.closest('.section-two__box_Child-1__info_burger');
 
-            // Проверяем, существует ли элемент
-            if (burgerImage) {
-                // Добавляем обработчик события клика
-                burgerImage.addEventListener('click', () => {
-                    // Переключаем класс
-                    burgerImage.classList.toggle('section-two__box_Child-1__info_burger-active');
-                });
-            } else {
-                console.error('Элемент с классом .section-two__box_Child-1__info_burger не найден.');
-            }
+                    // Переключаем класс у нажатого бургера
+                    burger.classList.toggle('section-two__box_Child-1__info_burger-active');
+
+                    // Находим родительский контейнер
+                    const parentContainer = burger.closest('.section-two__box');
+
+                    if (parentContainer) {
+                        // Находим элементы .section-two__box_Child-2, .section-two__box_Child-3, .section-two__box_Child-4
+                        const children = parentContainer.querySelectorAll('.section-two__box_Child-2, .section-two__box_Child-3, .section-two__box_Child-4');
+
+                        children.forEach((child, index) => {
+                            // Переключаем класс active
+                            child.classList.toggle('active');
+
+                            // Устанавливаем margin-top для активных элементов
+                            if (child.classList.contains('active')) {
+                                child.style.marginTop = `${60 + 50 * index}px`; // Расчёт margin-top: 60px, 110px, 161px
+                            } else {
+                                child.style.marginTop = '0'; // Возврат в исходное состояние
+                            }
+                        });
+                    }
+                }
+            });
+
+            // Делегирование событий для элементов с классом .in-section-two__box
+            document.addEventListener('click', (event) => {
+                // Проверяем, был ли клик по .in-section-two__box_Child-1__info_burger
+                if (event.target.closest('.in-section-two__box_Child-1__info_burger')) {
+                    const burger = event.target.closest('.in-section-two__box_Child-1__info_burger');
+
+                    // Переключаем класс у нажатого бургера
+                    burger.classList.toggle('in-section-two__box_Child-1__info_burger-active');
+
+                    // Находим родительский контейнер
+                    const parentContainer = burger.closest('.in-section-two__box');
+
+                    if (parentContainer) {
+                        // Находим элементы .in-section-two__box_Child-2, .in-section-two__box_Child-3, .in-section-two__box_Child-4
+                        const children = parentContainer.querySelectorAll('.in-section-two__box_Child-2, .in-section-two__box_Child-3, .in-section-two__box_Child-4');
+
+                        children.forEach((child, index) => {
+                            // Переключаем класс active
+                            child.classList.toggle('active');
+
+                            // Устанавливаем margin-top для активных элементов
+                            if (child.classList.contains('active')) {
+                                child.style.marginTop = `${60 + 50 * index}px`; // Расчёт margin-top: 60px, 110px, 161px
+                            } else {
+                                child.style.marginTop = '0'; // Возврат в исходное состояние
+                            }
+                        });
+                    }
+                }
+            });
 
 
             // Код для мобильной интерактивности окончен
 
-            
+
 
             // Получаем кнопку изменения заказа
             const editOrderButton = document.querySelector(".section-two__box_Child-4");
@@ -284,7 +332,7 @@ document.addEventListener("DOMContentLoaded", function() {
             }
             
 
-           // Функция для вычисления прошедшего времени
+            // Функция для вычисления прошедшего времени
             const calculateElapsedTime = (initialDuration, currentCountdown) => {
                 const initialSeconds = timeToSeconds(initialDuration); // Преобразуем начальное время в секунды
                 const currentSeconds = timeToSeconds(currentCountdown); // Преобразуем текущее оставшееся время в секунды
@@ -387,7 +435,7 @@ document.addEventListener("DOMContentLoaded", function() {
                         </div>
                     </div>
                 `;
-
+                
                 sectionOne.appendChild(newOrderBlock);
 
                 // Обработка клика по кнопкам времени

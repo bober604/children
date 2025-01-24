@@ -1204,6 +1204,7 @@
     margin-top: 0;
     margin-left: 0;
     margin-bottom: 3.5px;
+    flex-direction: column;
   }
   .section-two__box_Child-1 {
     border-radius: 5px;
@@ -1233,6 +1234,7 @@
   .section-two__box_Child-1__info_container-sag_name {
     font-weight: 300;
     font-size: 16px;
+    margin-top: -30px;
     position: relative;
     width: 97px;
     min-height: 30px;
@@ -1298,13 +1300,93 @@
     margin-left: 5px;
   }
   .section-two__box_Child-2 {
+    position: fixed;
+    margin-left: 300px;
+    margin-top: 10px;
+    width: 45px;
+    min-height: 0;
+    height: 45px;
+    background: #fff;
+    border-radius: 10px;
+    border: 2px solid #0ebc01;
+    z-index: 10;
+    background: white url(../img/Child-2.png) no-repeat center center;
+    background-size: 70% 70%;
+    opacity: 0;
+    pointer-events: none; /* Делает элементы не кликабельными, пока они скрыты */
+    transition: opacity 0.5s, margin-top 0.5s;
+  }
+  .section-two__box_Child-2_sag {
     display: none;
+  }
+  .section-two__box_Child-2:hover {
+    background: white url(../img/Child-2.png) no-repeat center center;
+    background-size: 70% 70%;
+  }
+  .section-two__box_Child-2.active {
+    margin-top: 60px;
+    opacity: 1;
+    pointer-events: all; /* Делает элементы снова кликабельными */
   }
   .section-two__box_Child-3 {
+    position: fixed;
+    margin-left: 300px;
+    margin-top: 10px;
+    width: 45px;
+    min-height: 0;
+    height: 45px;
+    background: #fff;
+    border-radius: 10px;
+    border: 2px solid #af3131;
+    z-index: 9;
+    opacity: 0;
+    pointer-events: none; /* Делает элементы не кликабельными, пока они скрыты */
+    transition: opacity 0.5s, margin-top 0.5s;
+  }
+  .section-two__box_Child-3_sag {
     display: none;
   }
+  .section-two__box_Child-3_img {
+    width: 28px;
+    height: 28px;
+    margin-top: 8px;
+    margin-left: 17%;
+  }
+  .section-two__box_Child-3:hover {
+    background: #fff;
+  }
+  .section-two__box_Child-3.active {
+    margin-top: 110px;
+    opacity: 1;
+    pointer-events: all; /* Делает элементы снова кликабельными */
+  }
   .section-two__box_Child-4 {
+    position: fixed;
+    margin-left: 300px;
+    margin-top: 10px;
+    width: 45px;
+    min-height: 0;
+    height: 45px;
+    border-radius: 10px;
+    border: 2px solid #1d00ff;
+    z-index: 8;
+    background: white url(../img/changeMobile.png) no-repeat calc(50% + 2px) center;
+    background-size: 72% 72%;
+    opacity: 0;
+    pointer-events: none; /* Делает элементы не кликабельными, пока они скрыты */
+    transition: opacity 0.5s, margin-top 0.5s;
+  }
+  .section-two__box_Child-4_sag {
     display: none;
+  }
+  .section-two__box_Child-4:hover {
+    background: white url(../img/changeMobile.png) no-repeat calc(50% + 2px) center;
+    background-size: 72% 72%;
+  }
+  .section-two__box_Child-4.active {
+    margin-top: 161px;
+    opacity: 1;
+    pointer-events: all; /* Делает элементы снова кликабельными */
   }
   .in-section-two {
     margin-top: 0;
@@ -1444,12 +1526,92 @@
     margin-left: 5px;
   }
   .in-section-two__box_Child-2 {
+    position: fixed;
+    margin-left: 300px;
+    margin-top: 10px;
+    width: 45px;
+    min-height: 0;
+    height: 45px;
+    background: #fff;
+    border-radius: 10px;
+    border: 2px solid #0ebc01;
+    z-index: 10;
+    background: white url(../img/Child-2.png) no-repeat center center;
+    background-size: 70% 70%;
+    opacity: 0;
+    pointer-events: none; /* Делает элементы не кликабельными, пока они скрыты */
+    transition: opacity 0.5s, margin-top 0.5s;
+  }
+  .in-section-two__box_Child-2_sag {
     display: none;
+  }
+  .in-section-two__box_Child-2:hover {
+    background: white url(../img/Child-2.png) no-repeat center center;
+    background-size: 70% 70%;
+  }
+  .in-section-two__box_Child-2.active {
+    margin-top: 60px;
+    opacity: 1;
+    pointer-events: all; /* Делает элементы снова кликабельными */
   }
   .in-section-two__box_Child-3 {
+    position: fixed;
+    margin-left: 300px;
+    margin-top: 10px;
+    width: 45px;
+    min-height: 0;
+    height: 45px;
+    background: #fff;
+    border-radius: 10px;
+    border: 2px solid #af3131;
+    z-index: 9;
+    opacity: 0;
+    pointer-events: none; /* Делает элементы не кликабельными, пока они скрыты */
+    transition: opacity 0.5s, margin-top 0.5s;
+  }
+  .in-section-two__box_Child-3_sag {
     display: none;
   }
+  .in-section-two__box_Child-3_img {
+    width: 28px;
+    height: 28px;
+    margin-top: 8px;
+    margin-left: 17%;
+  }
+  .in-section-two__box_Child-3:hover {
+    background: #fff;
+  }
+  .in-section-two__box_Child-3.active {
+    margin-top: 110px;
+    opacity: 1;
+    pointer-events: all; /* Делает элементы снова кликабельными */
+  }
   .in-section-two__box_Child-4 {
+    position: fixed;
+    margin-left: 300px;
+    margin-top: 10px;
+    width: 45px;
+    min-height: 0;
+    height: 45px;
+    border-radius: 10px;
+    border: 2px solid #1d00ff;
+    z-index: 8;
+    background: white url(../img/changeMobile.png) no-repeat calc(50% + 2px) center;
+    background-size: 72% 72%;
+    opacity: 0;
+    pointer-events: none; /* Делает элементы не кликабельными, пока они скрыты */
+    transition: opacity 0.5s, margin-top 0.5s;
+  }
+  .in-section-two__box_Child-4_sag {
     display: none;
+  }
+  .in-section-two__box_Child-4:hover {
+    background: white url(../img/changeMobile.png) no-repeat calc(50% + 2px) center;
+    background-size: 72% 72%;
+  }
+  .in-section-two__box_Child-4.active {
+    margin-top: 161px;
+    opacity: 1;
+    pointer-events: all; /* Делает элементы снова кликабельными */
   }
 }/*# sourceMappingURL=index.css.map */
