@@ -429,7 +429,7 @@
             &_Child-1 {
                 border-radius: 5px;
                 width: 346px;
-                height: 66px;
+                min-height: 66px;
                 &__nav {
                     display: none;
                 }
@@ -454,7 +454,6 @@
                         &_name {
                             font-weight: 300;
                             font-size: 16px;
-                            margin-left: -127px;
                             margin-top: -45.5px;
                             position: relative;
                             width: 97px;
@@ -524,7 +523,6 @@
             }
 
             &_Child-2 {
-                // display: none;
                 position: fixed;
                 margin-left: 300px;
                 margin-top: 10px;
@@ -556,7 +554,6 @@
             }
 
             &_Child-3 {
-                // display: none;
                 position: fixed;
                 margin-left: 300px;
                 margin-top: 10px;
@@ -591,7 +588,6 @@
             }
 
             &_Child-4 {
-                // display: none;
                 position: fixed;
                 margin-left: 300px;
                 margin-top: 10px;
