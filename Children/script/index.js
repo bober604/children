@@ -234,20 +234,20 @@ document.addEventListener("DOMContentLoaded", function() {
 
             // Следующий код для мобильной интерактивности
 
-            // Делегирование событий для элементов с классом .section-two__box
+            // Делегирование событий для всех бургеров и связанных блоков
             document.addEventListener('click', (event) => {
-                // Проверяем, был ли клик по .section-two__box_Child-1__info_burger
+                // Обработка для .section-two__box_Child-1__info_burger
                 if (event.target.closest('.section-two__box_Child-1__info_burger')) {
                     const burger = event.target.closest('.section-two__box_Child-1__info_burger');
 
-                    // Переключаем класс у нажатого бургера
+                    // Переключаем класс active для бургера
                     burger.classList.toggle('section-two__box_Child-1__info_burger-active');
 
                     // Находим родительский контейнер
                     const parentContainer = burger.closest('.section-two__box');
 
                     if (parentContainer) {
-                        // Находим элементы .section-two__box_Child-2, .section-two__box_Child-3, .section-two__box_Child-4
+                        // Находим связанные блоки
                         const children = parentContainer.querySelectorAll('.section-two__box_Child-2, .section-two__box_Child-3, .section-two__box_Child-4');
 
                         children.forEach((child, index) => {
@@ -256,29 +256,46 @@ document.addEventListener("DOMContentLoaded", function() {
 
                             // Устанавливаем margin-top для активных элементов
                             if (child.classList.contains('active')) {
-                                child.style.marginTop = `${60 + 50 * index}px`; // Расчёт margin-top: 60px, 110px, 161px
+                                child.style.marginTop = `${60 + 50 * index}px`; // Расчёт margin-top
                             } else {
                                 child.style.marginTop = '0'; // Возврат в исходное состояние
                             }
                         });
                     }
                 }
-            });
 
-            // Делегирование событий для элементов с классом .in-section-two__box
-            document.addEventListener('click', (event) => {
-                // Проверяем, был ли клик по .in-section-two__box_Child-1__info_burger
+                // Обработка для .section-two__box_Child-2.active
+                if (event.target.closest('.section-two__box_Child-2.active')) {
+                    const child = event.target.closest('.section-two__box_Child-2.active');
+                    const parentContainer = child.closest('.section-two__box');
+
+                    if (parentContainer) {
+                        const burger = parentContainer.querySelector('.section-two__box_Child-1__info_burger');
+                        const children = parentContainer.querySelectorAll('.section-two__box_Child-2, .section-two__box_Child-3, .section-two__box_Child-4');
+
+                        // Убираем класс active у всех связанных блоков
+                        children.forEach(child => {
+                            child.classList.remove('active');
+                            child.style.marginTop = '0';
+                        });
+
+                        // Снимаем active у бургера
+                        if (burger) burger.classList.remove('section-two__box_Child-1__info_burger-active');
+                    }
+                }
+
+                // Обработка для .in-section-two__box_Child-1__info_burger
                 if (event.target.closest('.in-section-two__box_Child-1__info_burger')) {
                     const burger = event.target.closest('.in-section-two__box_Child-1__info_burger');
 
-                    // Переключаем класс у нажатого бургера
+                    // Переключаем класс active для бургера
                     burger.classList.toggle('in-section-two__box_Child-1__info_burger-active');
 
                     // Находим родительский контейнер
                     const parentContainer = burger.closest('.in-section-two__box');
 
                     if (parentContainer) {
-                        // Находим элементы .in-section-two__box_Child-2, .in-section-two__box_Child-3, .in-section-two__box_Child-4
+                        // Находим связанные блоки
                         const children = parentContainer.querySelectorAll('.in-section-two__box_Child-2, .in-section-two__box_Child-3, .in-section-two__box_Child-4');
 
                         children.forEach((child, index) => {
@@ -287,14 +304,35 @@ document.addEventListener("DOMContentLoaded", function() {
 
                             // Устанавливаем margin-top для активных элементов
                             if (child.classList.contains('active')) {
-                                child.style.marginTop = `${60 + 50 * index}px`; // Расчёт margin-top: 60px, 110px, 161px
+                                child.style.marginTop = `${60 + 50 * index}px`; // Расчёт margin-top
                             } else {
                                 child.style.marginTop = '0'; // Возврат в исходное состояние
                             }
                         });
                     }
                 }
+
+                // Обработка для .in-section-two__box_Child-2.active
+                if (event.target.closest('.in-section-two__box_Child-2.active')) {
+                    const child = event.target.closest('.in-section-two__box_Child-2.active');
+                    const parentContainer = child.closest('.in-section-two__box');
+
+                    if (parentContainer) {
+                        const burger = parentContainer.querySelector('.in-section-two__box_Child-1__info_burger');
+                        const children = parentContainer.querySelectorAll('.in-section-two__box_Child-2, .in-section-two__box_Child-3, .in-section-two__box_Child-4');
+
+                        // Убираем класс active у всех связанных блоков
+                        children.forEach(child => {
+                            child.classList.remove('active');
+                            child.style.marginTop = '0';
+                        });
+
+                        // Снимаем active у бургера
+                        if (burger) burger.classList.remove('in-section-two__box_Child-1__info_burger-active');
+                    }
+                }
             });
+
 
 
             // Код для мобильной интерактивности окончен
