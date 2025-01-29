@@ -264,75 +264,124 @@ document.addEventListener("DOMContentLoaded", function() {
                     }
                 }
 
-                // Обработка для .section-two__box_Child-2.active
-                if (event.target.closest('.section-two__box_Child-2.active')) {
-                    const child = event.target.closest('.section-two__box_Child-2.active');
-                    const parentContainer = child.closest('.section-two__box');
 
-                    if (parentContainer) {
-                        const burger = parentContainer.querySelector('.section-two__box_Child-1__info_burger');
-                        const children = parentContainer.querySelectorAll('.section-two__box_Child-2, .section-two__box_Child-3, .section-two__box_Child-4');
+            // Обработка для .section-two__box_Child-2.active
+            if (event.target.closest(".section-two__box_Child-2.active")) {
+                const child = event.target.closest(".section-two__box_Child-2.active");
+                const parentContainer = child.closest(".section-two__box");
 
-                        // Убираем класс active у всех связанных блоков
-                        children.forEach(child => {
-                            child.classList.remove('active');
-                            child.style.marginTop = '0';
-                        });
+                if (parentContainer) {
+                    const burger = parentContainer.querySelector(".section-two__box_Child-1__info_burger");
+                    const children = parentContainer.querySelectorAll(
+                        ".section-two__box_Child-2, .section-two__box_Child-3, .section-two__box_Child-4"
+                    );
 
-                        // Снимаем active у бургера
-                        if (burger) burger.classList.remove('section-two__box_Child-1__info_burger-active');
-                    }
+                    // Убираем класс active у всех связанных блоков
+                    children.forEach((child) => {
+                        child.classList.remove("active");
+                        child.style.marginTop = "0";
+                    });
+
+                    // Снимаем active у бургера
+                    if (burger) burger.classList.remove("section-two__box_Child-1__info_burger-active");
                 }
+            }
 
-                // Обработка для .in-section-two__box_Child-1__info_burger
-                if (event.target.closest('.in-section-two__box_Child-1__info_burger')) {
-                    const burger = event.target.closest('.in-section-two__box_Child-1__info_burger');
+            // Обработка для .section-two__box_Child-4.active
+            if (event.target.closest(".section-two__box_Child-4.active")) {
+                const child = event.target.closest(".section-two__box_Child-4.active");
+                const parentContainer = child.closest(".section-two__box");
+
+                if (parentContainer) {
+                    const burger = parentContainer.querySelector(".section-two__box_Child-1__info_burger");
+                    const children = parentContainer.querySelectorAll(
+                        ".section-two__box_Child-2, .section-two__box_Child-3, .section-two__box_Child-4"
+                    );
+
+                    // Убираем класс active у всех связанных блоков
+                    children.forEach((child) => {
+                        child.classList.remove("active");
+                        child.style.marginTop = "0";
+                    });
+
+                    // Снимаем active у бургера
+                    if (burger) burger.classList.remove("section-two__box_Child-1__info_burger-active");
+                }
+            }
+
+            // Обработка для .in-section-two__box_Child-1__info_burger
+            if (event.target.closest(".in-section-two__box_Child-1__info_burger")) {
+                const burger = event.target.closest(".in-section-two__box_Child-1__info_burger");
+                const parentContainer = burger.closest(".in-section-two__box");
+
+                if (parentContainer) {
+                    const children = parentContainer.querySelectorAll(
+                        ".in-section-two__box_Child-2, .in-section-two__box_Child-3, .in-section-two__box_Child-4"
+                    );
+
+                    children.forEach((child, index) => {
+                        // Переключаем класс active
+                        child.classList.toggle("active");
+
+                        // Устанавливаем margin-top для активных элементов
+                        if (child.classList.contains("active")) {
+                            child.style.marginTop = `${60 + 50 * index}px`; // Расчёт margin-top
+                        } else {
+                            child.style.marginTop = "0"; // Возврат в исходное состояние
+                        }
+                    });
 
                     // Переключаем класс active для бургера
-                    burger.classList.toggle('in-section-two__box_Child-1__info_burger-active');
-
-                    // Находим родительский контейнер
-                    const parentContainer = burger.closest('.in-section-two__box');
-
-                    if (parentContainer) {
-                        // Находим связанные блоки
-                        const children = parentContainer.querySelectorAll('.in-section-two__box_Child-2, .in-section-two__box_Child-3, .in-section-two__box_Child-4');
-
-                        children.forEach((child, index) => {
-                            // Переключаем класс active
-                            child.classList.toggle('active');
-
-                            // Устанавливаем margin-top для активных элементов
-                            if (child.classList.contains('active')) {
-                                child.style.marginTop = `${60 + 50 * index}px`; // Расчёт margin-top
-                            } else {
-                                child.style.marginTop = '0'; // Возврат в исходное состояние
-                            }
-                        });
-                    }
+                    burger.classList.toggle("in-section-two__box_Child-1__info_burger-active");
                 }
+            }
 
-                // Обработка для .in-section-two__box_Child-2.active
-                if (event.target.closest('.in-section-two__box_Child-2.active')) {
-                    const child = event.target.closest('.in-section-two__box_Child-2.active');
-                    const parentContainer = child.closest('.in-section-two__box');
+            // Обработка для .in-section-two__box_Child-2.active
+            if (event.target.closest(".in-section-two__box_Child-2.active")) {
+                const child = event.target.closest(".in-section-two__box_Child-2.active");
+                const parentContainer = child.closest(".in-section-two__box");
 
-                    if (parentContainer) {
-                        const burger = parentContainer.querySelector('.in-section-two__box_Child-1__info_burger');
-                        const children = parentContainer.querySelectorAll('.in-section-two__box_Child-2, .in-section-two__box_Child-3, .in-section-two__box_Child-4');
+                if (parentContainer) {
+                    const burger = parentContainer.querySelector(".in-section-two__box_Child-1__info_burger");
+                    const children = parentContainer.querySelectorAll(
+                        ".in-section-two__box_Child-2, .in-section-two__box_Child-3, .in-section-two__box_Child-4"
+                    );
 
-                        // Убираем класс active у всех связанных блоков
-                        children.forEach(child => {
-                            child.classList.remove('active');
-                            child.style.marginTop = '0';
-                        });
+                    // Убираем класс active у всех связанных блоков
+                    children.forEach((child) => {
+                        child.classList.remove("active");
+                        child.style.marginTop = "0";
+                    });
 
-                        // Снимаем active у бургера
-                        if (burger) burger.classList.remove('in-section-two__box_Child-1__info_burger-active');
-                    }
+                    // Снимаем active у бургера
+                    if (burger) burger.classList.remove("in-section-two__box_Child-1__info_burger-active");
                 }
+            }
+
+            // Обработка для .in-section-two__box_Child-4.active
+            if (event.target.closest(".in-section-two__box_Child-4.active")) {
+                const child = event.target.closest(".in-section-two__box_Child-4.active");
+                const parentContainer = child.closest(".in-section-two__box");
+
+                if (parentContainer) {
+                    const burger = parentContainer.querySelector(".in-section-two__box_Child-1__info_burger");
+                    const children = parentContainer.querySelectorAll(
+                        ".in-section-two__box_Child-2, .in-section-two__box_Child-3, .in-section-two__box_Child-4"
+                    );
+
+                    // Убираем класс active у всех связанных блоков
+                    children.forEach((child) => {
+                        child.classList.remove("active");
+                        child.style.marginTop = "0";
+                    });
+
+                    // Снимаем active у бургера
+                    if (burger) burger.classList.remove("in-section-two__box_Child-1__info_burger-active");
+                }
+            }
             });
 
+            
 
 
             // Код для мобильной интерактивности окончен
@@ -423,50 +472,54 @@ document.addEventListener("DOMContentLoaded", function() {
                 newOrderBlock.innerHTML = `
                     <div class="section-one__orderChange">
                         <div class="section-one__orderChange_line"></div> <!-- линия -->
-                        <h1 class="section-one__orderChange_sag">Изменить заказ</h1>
+                        <div class="section-one__orderChange_header">
+                            <img class="section-one__orderChange_img" src="./img/back.svg" alt="back">
+                            <h1 class="section-one__orderChange_sag">Изменить заказ</h1>
+                        </div>
+                        <div class="section-one__orderChange_line-mobile"></div> <!-- линия -->
                         <div class="section-one__orderChange__box">
                             <div class="section-one__orderChange__box__input">
                                 <input id="order-1" class="section-one__orderChange__box__input_item" placeholder="Имя" type="text" value="${nameValue}">
                                 <input id="order-2" class="section-one__orderChange__box__input_item" placeholder="Номер телефона" type="tel" value="${phoneValue}">
-                                <input id="order-3" class="section-one__orderChange__box__input_item" placeholder="Примечание" type="text" value="${noteValue}">
+                                <input id="order-3" class="section-one__orderChange__box__input_item section-one__orderChange__box__input_item-mobile" placeholder="Примечание" type="text" value="${noteValue}">
                             </div>
 
                             <div class="section-one__orderChange__box__buttons">
-                                <div class="section-one__orderChange__box__buttons_block-1">
+                                <div class="section-one__orderChange__box__buttons_block-1 section-one__orderChange__box__buttons_block-mobile">
                                     <h2 class="section-one__orderChange__box__buttons_block-1_sag">15 мин.</h2>
                                     <div class="${durationValue === '15 мин.' ? 'section-one__orderChange__box__buttons_block-1_active' : 'section-one__orderChange__box__buttons_block-1_inactive'}"></div>
                                 </div>
 
-                                <div class="section-one__orderChange__box__buttons_block-1">
+                                <div class="section-one__orderChange__box__buttons_block-1 section-one__orderChange__box__buttons_element-1">
                                     <h2 class="section-one__orderChange__box__buttons_block-1_sag">30 мин.</h2>
                                     <div class="${durationValue === '30 мин.' ? 'section-one__orderChange__box__buttons_block-1_active' : 'section-one__orderChange__box__buttons_block-1_inactive'}"></div>
                                 </div>
 
-                                <div class="section-one__orderChange__box__buttons_block-1">
+                                <div class="section-one__orderChange__box__buttons_block-1 section-one__orderChange__box__buttons_element-2">
                                     <h2 class="section-one__orderChange__box__buttons_block-1_sag">1 час</h2>
                                     <div class="${durationValue === '1 час' ? 'section-one__orderChange__box__buttons_block-1_active' : 'section-one__orderChange__box__buttons_block-1_inactive'}"></div>
                                 </div>
 
-                                <div class="section-one__orderChange__box__buttons_block-1">
+                                <div class="section-one__orderChange__box__buttons_block-1 section-one__orderChange__box__buttons_element-3">
                                     <h2 class="section-one__orderChange__box__buttons_block-1_sag">2 часа</h2>
                                     <div class="${durationValue === '2 часа' ? 'section-one__orderChange__box__buttons_block-1_active' : 'section-one__orderChange__box__buttons_block-1_inactive'}"></div>
                                 </div>
 
-                                <div class="section-one__orderChange__box__buttons_block-2">
-                                    <h2 class="section-one__orderChange__box__buttons_block-1_sag">Аренда 1 час</h2>
+                                <div class="section-one__orderChange__box__buttons_block-2 section-one__orderChange__box__buttons_element-4">
+                                    <h2 class="section-one__orderChange__box__buttons_block-1_sag section-one__orderChange__box__buttons_block-2_sag">Аренда 1 час</h2>
                                     <div class="${durationValue === 'Аренда 1 час' ? 'section-one__orderChange__box__buttons_block-1_active' : 'section-one__orderChange__box__buttons_block-1_inactive'}"></div>
                                 </div>
                                 
-                                <div class="section-one__orderChange__box_cancellation">
+                                <div class="section-one__orderChange__box_cancellation section-one__orderChange__box__buttons_element-5">
                                     <h2 class="section-one__orderChange__box_cancellation_sag">Отмена</h2>
                                 </div>
 
-                                <div class="section-one__orderChange__box__buttons_block-3">
-                                    <h2 class="section-one__orderChange__box__buttons_block-1_sag">Аренда 2 часа</h2>
+                                <div class="section-one__orderChange__box__buttons_block-3 section-one__orderChange__box__buttons_element-6">
+                                    <h2 class="section-one__orderChange__box__buttons_block-1_sag section-one__orderChange__box__buttons_block-2_sag">Аренда 2 часа</h2>
                                     <div class="${durationValue === 'Аренда 2 часа' ? 'section-one__orderChange__box__buttons_block-1_active' : 'section-one__orderChange__box__buttons_block-1_inactive'}"></div>
                                 </div>
 
-                                <div class="section-one__orderChange__box_save">
+                                <div class="section-one__orderChange__box_save section-one__orderChange__box__buttons_element-7">
                                     <h2 class="section-one__orderChange__box_save_sag">Сохранить</h2>
                                 </div>
                             </div>
@@ -882,17 +935,33 @@ document.addEventListener("DOMContentLoaded", function() {
     // Находим кнопку .section-two__nav_button-1
     const creatureButton = document.querySelector(".section-two__nav_button-1");
 
-    // Добавляем обработчик клика для первой кнопки
+    // Добавляем обработчик клика для кнопки создания заказа
     creatureButton.addEventListener("click", function () {
         const sectionOne = document.querySelector(".section-one");
+        const sectionOneBox = document.querySelector(".section-one__box");
+        const sectionOneContainer = document.querySelector(".section-one__container");
+        const sectionOneMobile = document.querySelector(".section-one__mobile ");
 
         if (sectionOne) {
-            // Проверяем текущее значение display и меняем только его
-            if (sectionOne.style.display === "none" || sectionOne.style.display === "") {
-                sectionOne.style.display = "block";
+            // Проверяем ширину экрана
+            if (window.innerWidth < 480) {
+                // Логика для мобильной версии
+                sectionOne.style.display = sectionOne.style.display === "none" || sectionOne.style.display === "" ? "block" : "none";
             } else {
-                sectionOne.style.display = "none";
+                // На десктопной версии .section-one всегда должно быть "block"
+                sectionOne.style.display = "block";
             }
+        }
+
+        // Устанавливаем видимость для блоков .section-one__box и .section-one__container
+        if (sectionOneBox) {
+            sectionOneBox.style.display = "flex";
+        }
+        if (sectionOneContainer) {
+            sectionOneContainer.style.display = "flex";
+        }
+        if (sectionOneMobile) {
+            sectionOneMobile.style.display = "block";
         }
     });
 
@@ -904,9 +973,13 @@ document.addEventListener("DOMContentLoaded", function() {
         const sectionOne = document.querySelector(".section-one");
 
         if (sectionOne) {
-            sectionOne.style.display = "none";
+            // Скрываем только на мобильной версии
+            if (window.innerWidth < 480) {
+                sectionOne.style.display = "none";
+            }
         }
     });
+
 
     // Находим кнопку добавления
     var addButton = document.querySelector(".section-one__button");
@@ -916,7 +989,7 @@ document.addEventListener("DOMContentLoaded", function() {
         const sectionOne = document.querySelector(".section-one");
 
         if (sectionOne) {
-            // Проверяем ширину экрана и меняем свойство display на none только если экран меньше 480px
+            // Скрываем только на мобильной версии
             if (window.innerWidth < 480) {
                 sectionOne.style.display = "none";
             }
@@ -924,6 +997,117 @@ document.addEventListener("DOMContentLoaded", function() {
     });
 
 
-    
+    // Гарантия отображения .section-one на десктопе при изменении размера окна
+    window.addEventListener("resize", function () {
+        const sectionOne = document.querySelector(".section-one");
 
+        if (sectionOne) {
+            // Если ширина экрана >= 480px, всегда отображаем .section-one
+            if (window.innerWidth >= 480) {
+                sectionOne.style.display = "block";
+            }
+        }
+    });
+
+    // Сохраняем состояние при нажатии на кнопку .section-two__box_Child-4.active
+    let isOrderChangeActive = false;
+
+    // Обработчик для .section-two__box_Child-4.active
+    const container = document.querySelector(".section-two");
+
+    if (container) {
+        container.addEventListener("click", function (event) {
+            const activeButton = event.target.closest(".section-two__box_Child-4.active");
+            if (activeButton) {
+                const sectionOne = document.querySelector(".section-one");
+                const sectionOneMobile = document.querySelector(".section-one__mobile");
+                const sectionOneBox = document.querySelector(".section-one__box");
+                const sectionOneContainer = document.querySelector(".section-one__container");
+
+                // Установка состояния для orderChange
+                isOrderChangeActive = true;
+
+                if (sectionOne) {
+                    sectionOne.style.display = "block"; // Показываем блок на всех устройствах
+                }
+
+                // Логика для мобильной версии
+                if (window.innerWidth < 480) {
+                    [sectionOneMobile, sectionOneBox, sectionOneContainer].forEach((block) => {
+                        if (block) block.style.display = "none";
+                    });
+                }
+            }
+        });
+    }
+
+
+    // Обработчики для кнопок section-one__orderChange__box_save и section-one__orderChange__box_cancellation
+    document.addEventListener("click", function (event) {
+        const saveButton = event.target.closest(".section-one__orderChange__box_save");
+        const cancelButton = event.target.closest(".section-one__orderChange__box_cancellation");
+        const orderChangeImage = event.target.closest(".section-one__orderChange_img");
+
+        if (saveButton || cancelButton || orderChangeImage) {
+            const sectionOne = document.querySelector(".section-one");
+            const sectionOneMobile = document.querySelector(".section-one__mobile");
+            const sectionOneBox = document.querySelector(".section-one__box");
+            const sectionOneContainer = document.querySelector(".section-one__container");
+
+            // Проверяем ширину экрана для мобильной версии
+            if (window.innerWidth < 480) {
+                // Скрываем только .section-one (остальные блоки остаются неизменными)
+                if (sectionOne) {
+                    sectionOne.style.display = "none";
+                }
+            } else {
+                // Для десктопной версии показываем только .section-one__box и .section-one__container
+                if (sectionOneBox) {
+                    sectionOneBox.style.display = "flex";
+                }
+                if (sectionOneContainer) {
+                    sectionOneContainer.style.display = "flex";
+                }
+            }
+        }
+    }); 
+
+
+    // Обработчик изменения ширины экрана
+    window.addEventListener("resize", function () {
+        const sectionOne = document.querySelector(".section-one");
+        const sectionOneMobile = document.querySelector(".section-one__mobile");
+        const sectionOneBox = document.querySelector(".section-one__box");
+        const sectionOneContainer = document.querySelector(".section-one__container");
+
+        if (sectionOne) {
+            if (window.innerWidth >= 480) {
+                // На десктопе показываем все основные блоки
+                sectionOne.style.display = "block";
+
+                if (isOrderChangeActive) {
+                    // Если активен orderChange, сохраняем блок orderChange
+                    const orderChange = document.querySelector(".section-one__orderChange");
+                    if (!orderChange) {
+                        // Логика для создания блока orderChange, если он отсутствует
+                        const newOrderChange = document.createElement("div");
+                        newOrderChange.className = "section-one__orderChange";
+                        sectionOne.appendChild(newOrderChange);
+                    }
+                }
+
+                [sectionOneBox, sectionOneContainer].forEach((block) => {
+                    if (block) block.style.display = "flex";
+                });
+
+                if (sectionOneMobile) {
+                    sectionOneMobile.style.display = "none"; // Прячем мобильный блок
+                }
+            } else {
+                // На мобильных устройствах показываем только мобильный блок
+                if (sectionOneMobile) sectionOneMobile.style.display = "block";
+            }
+        }
+    });
 });
+    

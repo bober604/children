@@ -101,6 +101,126 @@
         &__button {
             border-radius: 5px;
         }
+
+        &__orderChange {
+            margin-top: 0;
+            &_line {
+                display: none;
+            }
+
+            &_header {
+                display: flex;
+                align-items: center;
+            }
+
+            &_img {
+                display: block;
+                width: 30px;
+                height: 30px;
+            }
+
+            &_sag {
+                font-weight: 600;
+                font-size: 20px;
+                margin-top: 0;
+                margin-bottom: 0;
+                margin-left: 44px;
+            }
+
+            &_line-mobile {
+                display: block;
+                border-radius: 10px;
+                width: 321px;
+                height: 2px;
+                background: #0068d0;
+                margin-top: 7px;
+                margin-bottom: 10px;
+            }
+
+            &__box {
+                &__input {
+                    margin-bottom: 10px;
+                    gap: 8.3px;
+                    &_item {
+                        border-radius: 2px;
+                        width: 309px;
+                    }
+
+                    &_item-mobile {
+                        height: 54px;
+                    }
+                }
+
+                &__buttons {
+                    column-gap: 8px;
+                    row-gap: 10px;
+                    justify-content: flex-end;
+                    &_block-mobile {
+                        display: none;
+                    }
+
+                    &_element-1 {
+                        order: 1;
+                    }
+
+                    &_element-2 {
+                        order: 3;
+                    }
+
+                    &_element-3 {
+                        order: 5;
+                    }
+
+                    &_element-4 {
+                        order: 2;
+                    }
+
+                    &_element-5 {
+                        order: 7;
+                    }
+
+                    &_element-6 {
+                        order: 4;
+                    }
+
+                    &_element-7 {
+                        order: 6;
+                    }
+
+                    &_block-1 {
+                        padding-left: 12px;
+                        padding-right: 12px;
+                        border-radius: 5px;
+                        width: 112px;
+                    }
+
+                    &_block-2 {
+                        padding-left: 10px;
+                        padding-right: 7px;
+                        width: 160px;
+                        border-radius: 5px;
+                        &_sag {
+                            font-size: 16px;
+                        }
+                    }
+
+                    &_block-3 {
+                        padding-left: 10px;
+                        padding-right: 7px;
+                        width: 160px;
+                        border-radius: 5px;
+                    }
+                }
+
+                &_save {
+                    width: 177px;
+                }
+
+                &_cancellation {
+                    width: 177px;
+                }
+            }
+        }
     }
 
     .stick {
@@ -272,7 +392,6 @@
             }
 
             &_Child-2 {
-                // display: none;
                 position: fixed;
                 margin-left: 300px;
                 margin-top: 10px;
@@ -304,7 +423,6 @@
             }
 
             &_Child-3 {
-                // display: none;
                 position: fixed;
                 margin-left: 300px;
                 margin-top: 10px;
@@ -324,7 +442,6 @@
                 &_img {
                     width: 28px;
                     height: 28px;
-                    margin-top: 8px;
                     margin-left: calc(17%);
                 }
                 &:hover {
@@ -339,7 +456,6 @@
             }
 
             &_Child-4 {
-                // display: none;
                 position: fixed;
                 margin-left: 300px;
                 margin-top: 10px;

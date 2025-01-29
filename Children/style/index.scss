@@ -206,6 +206,10 @@
             height: 0px;
         }
 
+        &_img {
+            display: none;
+        }
+
         &_sag {
             font-weight: 400;
             font-size: 24px;
@@ -213,6 +217,10 @@
             color: #000;
             margin-top: 13.5px;
             margin-bottom: 14px;
+        }
+
+        &_line-mobile {
+            display: none;
         }
 
         &__box {
