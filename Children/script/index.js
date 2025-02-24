@@ -175,7 +175,7 @@ document.addEventListener("DOMContentLoaded", function() {
                 </div>
                 
                 <div class="section-two__box_Child-2">
-                    <h5 class="section-two__box_Child-2_sag">Ребенок ушёл</h5>
+                    <h5 class="section-two__box_Child-2_sag">Заказ выполенен</h5>
                 </div>
 
                 <div class="section-two__box_Child-3">
@@ -207,14 +207,14 @@ document.addEventListener("DOMContentLoaded", function() {
             var revenueElement = document.querySelector(".revenue");
             revenueElement.textContent = totalRevenue.toFixed(0);
 
-            // Расчёт среднего чека
-            var averageCheck = (orderCount > 0) ? (totalRevenue / orderCount).toFixed(0) : 0;
-            var averageCheckElement = document.querySelector(".section-two__nav_block-2 .section-two__nav_block_sag-2");
-            averageCheckElement.textContent = averageCheck;
+            // // Расчёт среднего чека
+            // var averageCheck = (orderCount > 0) ? (totalRevenue / orderCount).toFixed(0) : 0;
+            // var averageCheckElement = document.querySelector(".section-two__nav_block-2 .section-two__nav_block_sag-2");
+            // averageCheckElement.textContent = averageCheck;
 
-            // Находим элемент для отображения среднего чека и обновляем его значение
-            var averageCheckElement = document.querySelector(".section-two__nav_block-2 .section-two__nav_block_sag-2");
-            averageCheckElement.textContent = averageCheck;
+            // // Находим элемент для отображения среднего чека и обновляем его значение
+            // var averageCheckElement = document.querySelector(".section-two__nav_block-2 .section-two__nav_block_sag-2");
+            // averageCheckElement.textContent = averageCheck;
 
             // Находим элемент с классом .price
             var priceElement = orderContainer.querySelector(".price");

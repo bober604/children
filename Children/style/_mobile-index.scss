@@ -233,8 +233,8 @@
         padding-right: calc(50% - 173px);
         &__nav {
             flex-direction: column;
-            gap: 10px;
             padding-left: 0;
+            padding-right: 0;
             &_block {
                 display: none;
             }
