@@ -207,15 +207,6 @@ document.addEventListener("DOMContentLoaded", function() {
             var revenueElement = document.querySelector(".revenue");
             revenueElement.textContent = totalRevenue.toFixed(0);
 
-            // // Расчёт среднего чека
-            // var averageCheck = (orderCount > 0) ? (totalRevenue / orderCount).toFixed(0) : 0;
-            // var averageCheckElement = document.querySelector(".section-two__nav_block-2 .section-two__nav_block_sag-2");
-            // averageCheckElement.textContent = averageCheck;
-
-            // // Находим элемент для отображения среднего чека и обновляем его значение
-            // var averageCheckElement = document.querySelector(".section-two__nav_block-2 .section-two__nav_block_sag-2");
-            // averageCheckElement.textContent = averageCheck;
-
             // Находим элемент с классом .price
             var priceElement = orderContainer.querySelector(".price");
 
@@ -539,10 +530,13 @@ document.addEventListener("DOMContentLoaded", function() {
                     sectionOne.appendChild(newOrderBlock);
 
                     // Обработка клика по кнопкам времени
-                    newOrderBlock.querySelectorAll(".section-one__orderChange__box__buttons_block-1").forEach(button => {
+                    newOrderBlock.querySelectorAll(".section-one__orderChange__box__buttons_block-1, .section-one__orderChange__box__buttons_block-2, .section-one__orderChange__box__buttons_block-3").forEach(button => {
                         button.addEventListener("click", function () {
-                            this.querySelector('div').classList.toggle("section-one__orderChange__box__buttons_block-1_active");
-                            this.querySelector('div').classList.toggle("section-one__orderChange__box__buttons_block-1_inactive");
+                            const timeDiv = this.querySelector('div');
+                            if (timeDiv) {
+                                timeDiv.classList.toggle("section-one__orderChange__box__buttons_block-1_active");
+                                timeDiv.classList.toggle("section-one__orderChange__box__buttons_block-1_inactive");
+                            }
                         });
                     });
 
@@ -1051,7 +1045,7 @@ document.addEventListener("DOMContentLoaded", function() {
         });
     }
 
-
+    
     // Обработчики для кнопок section-one__orderChange__box_save и section-one__orderChange__box_cancellation
     document.addEventListener("click", function (event) {
         const saveButton = event.target.closest(".section-one__orderChange__box_save");
@@ -1059,10 +1053,15 @@ document.addEventListener("DOMContentLoaded", function() {
         const orderChangeImage = event.target.closest(".section-one__orderChange_img");
 
         if (saveButton || cancelButton || orderChangeImage) {
+            const existingOrderChangeBlock = document.querySelector(".section-one__orderChange");
             const sectionOne = document.querySelector(".section-one");
             const sectionOneMobile = document.querySelector(".section-one__mobile");
             const sectionOneBox = document.querySelector(".section-one__box");
             const sectionOneContainer = document.querySelector(".section-one__container");
+
+            if (existingOrderChangeBlock) {
+                existingOrderChangeBlock.remove(); // Удаляем блок изменения заказа
+            }
 
             // Проверяем ширину экрана для мобильной версии
             if (window.innerWidth < 480) {
@@ -1120,4 +1119,3 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     });
 });
-    
