@@ -52,7 +52,7 @@
   background: #8e9da3;
 }
 .section-one__box__button-1_sag-2 {
-  font-weight: 600;
+  font-weight: 500;
   font-size: 20px;
   text-align: center;
   color: #fff384;
@@ -1424,7 +1424,7 @@
   }
   .section-two__box_Child-1__info_img {
     margin-top: 24px;
-    margin-left: -37px;
+    margin-left: -27px;
   }
   .section-two__box_Child-1__info_counter {
     display: none;

@@ -46,214 +46,219 @@ document.addEventListener("DOMContentLoaded", function() {
     // Находим кнопку "Добавить"
     var addButton = document.querySelector(".section-one__button");
 
-        // Добавляем обработчик события нажатия на кнопку
-        addButton.addEventListener("click", function() {
+    // Добавляем обработчик события нажатия на кнопку
+    addButton.addEventListener("click", function() {
             
-            // Сбрасываем классы .scaled для всех кнопок
-            buttons.forEach(button => {
-                if (button.classList.contains('scaled')) {
-                    button.classList.remove('scaled');
-                }
-            });
-
-            // Находим выбранные кнопки с ценами
-            var selectedButtons = document.querySelectorAll(".section-one__box__button-1.selected, .section-one__box__button-2.selected");
-    
-            // Проверяем, выбраны ли кнопки
-            if (selectedButtons.length === 0) {
-                alert("Пожалуйста, укажите время посещения.");
-                return;
+        // Сбрасываем классы .scaled для всех кнопок
+        buttons.forEach(button => {
+            if (button.classList.contains('scaled')) {
+                button.classList.remove('scaled');
             }
+        });
+
+        // Находим выбранные кнопки с ценами
+        var selectedButtons = document.querySelectorAll(".section-one__box__button-1.selected, .section-one__box__button-2.selected");
+    
+        // Проверяем, выбраны ли кнопки
+        if (selectedButtons.length === 0) {
+            alert("Пожалуйста, укажите время посещения.");
+            return;
+        }
             
-            // Увеличиваем счетчик заказов на 1 только после того, как кнопки выбраны
-            orderCount++;
+        // Увеличиваем счетчик заказов на 1 только после того, как кнопки выбраны
+        orderCount++;
 
-            // Находим элемент с количеством заказов и обновляем его значение
-            var orderCountElement = document.querySelector(".section-two__nav_block_sag-2");
-            orderCountElement.textContent = orderCount;
+        // Находим элемент с количеством заказов и обновляем его значение
+        var orderCountElement = document.querySelector(".section-two__nav_block_sag-2");
+        orderCountElement.textContent = orderCount;
             
-            // Переменная для суммы текущего заказа
-            var currentOrderTotal = 0;
+        // Переменная для суммы текущего заказа
+        var currentOrderTotal = 0;
 
 
-            // Переменная для проверки, выбрана ли аренда
-            let isRental = false;
+        // Переменная для проверки, выбрана ли аренда
+        let isRental = false;
 
-            // Подсчёт общей суммы заказа
+        // Подсчёт общей суммы заказа
+        selectedButtons.forEach(function (button) {
+            var priceText = button.querySelector(".section-one__box__button-1_sag-3").textContent;
+            var price = parseFloat(priceText.replace("руб.", "").trim());
+
+            // Проверяем, выбрана ли аренда
+            if (price === 2000 || price === 4000) {
+                isRental = true;
+            }
+
+            currentOrderTotal += price;
+
+            // Удаляем класс selected после добавления заказа
+            button.classList.remove("selected");
+        });
+
+        // Подсчёт количества имён
+        var nameInput = document.querySelector("#namesInput").value.trim();
+        var names = nameInput.split(/\s+/); // Убираем лишние пробелы и разделяем текст на слова
+        var nameCount = names.filter(name => name.length > 0).length; // Считаем только непустые слова
+
+        // Если это не аренда, умножаем количество имён на стоимость времени посещения
+        if (!isRental) {
+            currentOrderTotal *= nameCount;
+        }
+
+
+    
+        // Создаем контейнер для информации о заказе
+        var orderContainer = document.createElement("div");
+        orderContainer.classList.add("section-two__box");
+    
+        // Строим HTML структуру заказа
+        var orderHTML = `
+            <div class="section-two__box_Child-1">
+                <nav class="section-two__box_Child-1__nav">
+                    <div class="section-two__box_Child-1__nav_section">
+                        <p class="section-two__box_Child-1__nav_section_par-1">Сумма</p>`;
+        
+        // Добавляем информацию о сумме заказа
+        if (selectedButtons.length > 0) {
             selectedButtons.forEach(function (button) {
-                var priceText = button.querySelector(".section-one__box__button-1_sag-3").textContent;
-                var price = parseFloat(priceText.replace("руб.", "").trim());
-
-                // Проверяем, выбрана ли аренда
-                if (price === 2000 || price === 4000) {
-                    isRental = true;
-                }
-
-                currentOrderTotal += price;
-
-                // Удаляем класс selected после добавления заказа
-                button.classList.remove("selected");
+                var price = button.querySelector(".section-one__box__button-1_sag-3").textContent;
+                orderHTML += `<p class="section-two__box_Child-1__nav_section_par-2 price">${price}</p>`;
             });
-
-            // Подсчёт количества имён
-            var nameInput = document.querySelector("#namesInput").value.trim();
-            var names = nameInput.split(/\s+/); // Убираем лишние пробелы и разделяем текст на слова
-            var nameCount = names.filter(name => name.length > 0).length; // Считаем только непустые слова
-
-            // Если это не аренда, умножаем количество имён на стоимость времени посещения
-            if (!isRental) {
-                currentOrderTotal *= nameCount;
-            }
-
-
+        } else {
+            orderHTML += `<p class="section-two__box_Child-1__nav_section_par-2 price">0 руб.</p>`;
+        }
     
-            // Создаем контейнер для информации о заказе
-            var orderContainer = document.createElement("div");
-            orderContainer.classList.add("section-two__box");
-    
-            // Строим HTML структуру заказа
-            var orderHTML = `
-                <div class="section-two__box_Child-1">
-                    <nav class="section-two__box_Child-1__nav">
-                        <div class="section-two__box_Child-1__nav_section">
-                            <p class="section-two__box_Child-1__nav_section_par-1">Сумма</p>`;
-            
-            // Добавляем информацию о сумме заказа
-            if (selectedButtons.length > 0) {
-                selectedButtons.forEach(function (button) {
-                    var price = button.querySelector(".section-one__box__button-1_sag-3").textContent;
-                    orderHTML += `<p class="section-two__box_Child-1__nav_section_par-2 price">${price}</p>`;
-                });
-            } else {
-                orderHTML += `<p class="section-two__box_Child-1__nav_section_par-2 price">0 руб.</p>`;
-            }
-    
-            orderHTML += `
-                        </div>
-                        <div class="section-two__box_Child-1__nav_section">
-                            <p class="section-two__box_Child-1__nav_section_par-1">Зашёл в</p>
-                            <p class="section-two__box_Child-1__nav_section_par-2">${getCurrentTime()}</p>
-                        </div>
-                        <div class="section-two__box_Child-1__nav_section">
-                            <p class="section-two__box_Child-1__nav_section_par-1">Посещение</p>
-                            <p id="duration" class="section-two__box_Child-1__nav_section_par-2  section-two__box_Child-1__nav_section_par-3">${getDuration(selectedButtons)}</p>
-                        </div>
-                    </nav>
-                    <div class="section-two__box_Child-1_line"><!-- Линия --></div>
-    
-                    <div class="section-two__box_Child-1__info">
-                        <div class="section-two__box_Child-1__info_parents">
-                            <h5 class="section-two__box_Child-1__info_parents_number">${capitalizeFirstLetter(document.querySelector('.section-one__container_4').value)}</h5>
-                            <p class="section-two__box_Child-1__info_parents_par">${document.querySelector('.section-one__container_3').value}</p>
-                        </div>
-                        <div class="section-two__box_Child-1__info_line-1"><!-- Линия --></div>
-                        <div class="section-two__box_Child-1__info_container-sag">
-                            <h3 class="section-two__box_Child-1__info_container-sag_name">${capitalizeFirstLetter(document.querySelector('.section-one__container_1').value)}</h3>
-                        </div>
-                        <h3 class="section-two__box_Child-1__info_sag">Осталось:</h3>
-                        <h3 class="section-two__box_Child-1__info_time" id="countdown">${calculateCountdownTime(selectedButtons)}</h3>
-                        <div class="section-two__box_Child-1__info_img"><!-- Пауза/продолжение --></div>
-                        <div class="section-two__box_Child-1__info_counter">
-                            <h5 class="section-two__box_Child-1__info_counter_item">0</h5>
-                            <h5 class="section-two__box_Child-1__info_counter_item">0</h5>
-                        </div>
-                        <div class="section-two__box_Child-1__info_line-2"><!-- Линия --></div>
-                        <div class="section-two__box_Child-1__info_end">
-                            <div class="section-two__box_Child-1__info_end_1">
-                                <h4 class="section-two__box_Child-1__info_end_1_sag">+ 5 минут</h4>
-                                <p class="section-two__box_Child-1__info_end_1_par-1">Бонус</p>
-                            </div>
-                            <div class="section-two__box_Child-1__info_end_line"><!-- Линия --></div>
-                            <div class="section-two__box_Child-1__info_end_1 section-two__box_Child-1__info_end_2">
-                                <h4 class="section-two__box_Child-1__info_end_1_sag">- 5 минут</h4>
-                                <p class="section-two__box_Child-1__info_end_1_par-2">Штраф</p>
-                            </div>
-                        </div>
-                        <div class="section-two__box_Child-1__info_line-3-mobile"><!-- Линия для моб. версии --></div>
-                        <img class="section-two__box_Child-1__info_burger" src="./img/burger.svg" alt="burger">
+        orderHTML += `
                     </div>
+                    <div class="section-two__box_Child-1__nav_section">
+                        <p class="section-two__box_Child-1__nav_section_par-1">Зашёл в</p>
+                        <p class="section-two__box_Child-1__nav_section_par-2">${getCurrentTime()}</p>
+                    </div>
+                    <div class="section-two__box_Child-1__nav_section">
+                        <p class="section-two__box_Child-1__nav_section_par-1">Посещение</p>
+                        <p id="duration" class="section-two__box_Child-1__nav_section_par-2  section-two__box_Child-1__nav_section_par-3">${getDuration(selectedButtons)}</p>
+                    </div>
+                </nav>
+                <div class="section-two__box_Child-1_line"><!-- Линия --></div>
+    
+                <div class="section-two__box_Child-1__info">
+                    <div class="section-two__box_Child-1__info_parents">
+                        <h5 class="section-two__box_Child-1__info_parents_number">${capitalizeFirstLetter(document.querySelector('.section-one__container_4').value)}</h5>
+                        <p class="section-two__box_Child-1__info_parents_par">${document.querySelector('.section-one__container_3').value}</p>
+                    </div>
+                    <div class="section-two__box_Child-1__info_line-1"><!-- Линия --></div>
+                    <div class="section-two__box_Child-1__info_container-sag">
+                        <h3 class="section-two__box_Child-1__info_container-sag_name">${capitalizeFirstLetter(document.querySelector('.section-one__container_1').value)}</h3>
+                    </div>
+                    <h3 class="section-two__box_Child-1__info_sag">Осталось:</h3>
+                    <h3 class="section-two__box_Child-1__info_time" id="countdown">${calculateCountdownTime(selectedButtons)}</h3>
+                    <div class="section-two__box_Child-1__info_img"><!-- Пауза/продолжение --></div>
+                    <div class="section-two__box_Child-1__info_counter">
+                        <h5 class="section-two__box_Child-1__info_counter_item">0</h5>
+                        <h5 class="section-two__box_Child-1__info_counter_item">0</h5>
+                    </div>
+                    <div class="section-two__box_Child-1__info_line-2"><!-- Линия --></div>
+                    <div class="section-two__box_Child-1__info_end">
+                        <div class="section-two__box_Child-1__info_end_1">
+                            <h4 class="section-two__box_Child-1__info_end_1_sag">+ 5 минут</h4>
+                            <p class="section-two__box_Child-1__info_end_1_par-1">Бонус</p>
+                        </div>
+                        <div class="section-two__box_Child-1__info_end_line"><!-- Линия --></div>
+                        <div class="section-two__box_Child-1__info_end_1 section-two__box_Child-1__info_end_2">
+                            <h4 class="section-two__box_Child-1__info_end_1_sag">- 5 минут</h4>
+                            <p class="section-two__box_Child-1__info_end_1_par-2">Штраф</p>
+                        </div>
+                    </div>
+                    <div class="section-two__box_Child-1__info_line-3-mobile"><!-- Линия для моб. версии --></div>
+                    <img class="section-two__box_Child-1__info_burger" src="./img/burger.svg" alt="burger">
                 </div>
-                
-                <div class="section-two__box_Child-2">
-                    <h5 class="section-two__box_Child-2_sag">Заказ выполенен</h5>
-                </div>
-
-                <div class="section-two__box_Child-3">
-                    <h5 class="section-two__box_Child-3_sag">Удалить</h5>
-                    <div class="section-two__box_Child-3_img"><!-- img корзины --></div>
-                </div>
+            </div>
             
-                <div class="section-two__box_Child-4">
-                    <h5 class="section-two__box_Child-4_sag">Изменить заказ</h5>
-                </div>`;
-    
-            // Добавляем сгенерированный HTML в контейнер
-            orderContainer.innerHTML = orderHTML;
-    
-            // Находим блок для добавления информации о заказе
-            var sectionTwoLending = document.querySelector(".section-two_lending");
-    
-            // Вставляем созданный контейнер с информацией о заказе в начало списка
-            sectionTwoLending.insertBefore(orderContainer, sectionTwoLending.firstChild);
+            <div class="section-two__box_Child-2">
+                <h5 class="section-two__box_Child-2_sag">Заказ выполенен</h5>
+            </div>
 
-            // Обновляем общую сумму заказа
-            var priceElement = orderContainer.querySelector(".price");
+            <div class="section-two__box_Child-3">
+                <h5 class="section-two__box_Child-3_sag">Удалить</h5>
+                <div class="section-two__box_Child-3_img"><!-- img корзины --></div>
+            </div>
+            
+            <div class="section-two__box_Child-4">
+                <h5 class="section-two__box_Child-4_sag">Изменить заказ</h5>
+            </div>`;
+    
+        // Добавляем сгенерированный HTML в контейнер
+        orderContainer.innerHTML = orderHTML;
+    
+        // Находим блок для добавления информации о заказе
+        var sectionTwoLending = document.querySelector(".section-two_lending");
+    
+        // Вставляем созданный контейнер с информацией о заказе в начало списка
+        sectionTwoLending.insertBefore(orderContainer, sectionTwoLending.firstChild);
+
+        // Обновляем общую сумму заказа
+        var priceElement = orderContainer.querySelector(".price");
+        priceElement.textContent = currentOrderTotal.toFixed(0) + " руб.";
+
+        // Добавляем текущую сумму к общей выручке
+        totalRevenue += currentOrderTotal;
+
+        // Обновляем значение выручки
+        var revenueElement = document.querySelector(".revenue");
+        revenueElement.textContent = totalRevenue.toFixed(0);
+
+        // Находим элемент с классом .price
+        var priceElement = orderContainer.querySelector(".price");
+
+        // Обновляем сумму заказа
+        if (priceElement) {
             priceElement.textContent = currentOrderTotal.toFixed(0) + " руб.";
-
-            // Добавляем текущую сумму к общей выручке
-            totalRevenue += currentOrderTotal;
-
-            // Обновляем значение выручки
-            var revenueElement = document.querySelector(".revenue");
-            revenueElement.textContent = totalRevenue.toFixed(0);
-
-            // Находим элемент с классом .price
-            var priceElement = orderContainer.querySelector(".price");
-
-            // Обновляем сумму заказа
-            if (priceElement) {
-                priceElement.textContent = currentOrderTotal.toFixed(0) + " руб.";
-            } else {
-                console.error("Элемент с классом 'price' не найден.");
-            }
+        } else {
+            console.error("Элемент с классом 'price' не найден.");
+        }
     
-            // Запускаем обратный отсчет
-            startCountdown(selectedButtons, orderContainer);
+        // Запускаем обратный отсчет
+        startCountdown(selectedButtons, orderContainer);
+
+        // Очищаем все поля ввода
+        if (addButton) {    
+            inputs.forEach(input => input.value = "");
+        }
 
 
 
 
-            // Следующий код для мобильной интерактивности
+        // Следующий код для мобильной интерактивности
 
-            // Делегирование событий для всех бургеров и связанных блоков
-            document.addEventListener('click', (event) => {
-                // Обработка для .section-two__box_Child-1__info_burger
-                if (event.target.closest('.section-two__box_Child-1__info_burger')) {
-                    const burger = event.target.closest('.section-two__box_Child-1__info_burger');
+        // Делегирование событий для всех бургеров и связанных блоков
+        document.addEventListener('click', (event) => {
+            // Обработка для .section-two__box_Child-1__info_burger
+            if (event.target.closest('.section-two__box_Child-1__info_burger')) {
+                const burger = event.target.closest('.section-two__box_Child-1__info_burger');
 
-                    // Переключаем класс active для бургера
-                    burger.classList.toggle('section-two__box_Child-1__info_burger-active');
+                // Переключаем класс active для бургера
+                burger.classList.toggle('section-two__box_Child-1__info_burger-active');
 
-                    // Находим родительский контейнер
-                    const parentContainer = burger.closest('.section-two__box');
+                // Находим родительский контейнер
+                const parentContainer = burger.closest('.section-two__box');
 
-                    if (parentContainer) {
-                        // Находим связанные блоки
-                        const children = parentContainer.querySelectorAll('.section-two__box_Child-2, .section-two__box_Child-3, .section-two__box_Child-4');
+                if (parentContainer) {
+                    // Находим связанные блоки
+                    const children = parentContainer.querySelectorAll('.section-two__box_Child-2, .section-two__box_Child-3, .section-two__box_Child-4');
 
-                        children.forEach((child, index) => {
-                            // Переключаем класс active
-                            child.classList.toggle('active');
+                    children.forEach((child, index) => {
+                        // Переключаем класс active
+                        child.classList.toggle('active');
 
-                            // Устанавливаем margin-top для активных элементов
-                            if (child.classList.contains('active')) {
-                                child.style.marginTop = `${60 + 50 * index}px`; // Расчёт margin-top
-                            } else {
-                                child.style.marginTop = '0'; // Возврат в исходное состояние
-                            }
-                        });
-                    }
+                        // Устанавливаем margin-top для активных элементов
+                        if (child.classList.contains('active')) {
+                            child.style.marginTop = `${60 + 50 * index}px`; // Расчёт margin-top
+                        } else {
+                            child.style.marginTop = '0'; // Возврат в исходное состояние
+                        }
+                    });
                 }
+            }
 
 
             // Обработка для .section-two__box_Child-2.active
@@ -830,106 +835,106 @@ document.addEventListener("DOMContentLoaded", function() {
             return time < 10 ? "0" + time : time;
         }
 
-    // Функция для запуска обратного отсчета
-    function startCountdown(selectedButtons, orderContainer) {
-        var countdownElement = orderContainer.querySelector(".section-two__box_Child-1__info_time");
-        var totalSeconds = getTotalDurationInSeconds(selectedButtons);
-        var countdownDate = new Date();
-        countdownDate.setSeconds(countdownDate.getSeconds() + totalSeconds);
+        // Функция для запуска обратного отсчета
+        function startCountdown(selectedButtons, orderContainer) {
+            var countdownElement = orderContainer.querySelector(".section-two__box_Child-1__info_time");
+            var totalSeconds = getTotalDurationInSeconds(selectedButtons);
+            var countdownDate = new Date();
+            countdownDate.setSeconds(countdownDate.getSeconds() + totalSeconds);
 
-        var isPaused = false;
-        var remainingSeconds = totalSeconds;
+            var isPaused = false;
+            var remainingSeconds = totalSeconds;
 
-        function updateCountdown() {
-            if (!isPaused) {
-                var currentTime = new Date();
-                var remainingTime = countdownDate - currentTime;
-                remainingSeconds = Math.floor(remainingTime / 1000);
+            function updateCountdown() {
+                if (!isPaused) {
+                    var currentTime = new Date();
+                    var remainingTime = countdownDate - currentTime;
+                    remainingSeconds = Math.floor(remainingTime / 1000);
+
+                    if (remainingSeconds <= 0) {
+                        clearInterval(interval);
+                        countdownElement.textContent = "00:00:00";
+                        return;
+                    }
+
+                    var hours = Math.floor(remainingSeconds / 3600);
+                    var minutes = Math.floor((remainingSeconds % 3600) / 60);
+                    var seconds = remainingSeconds % 60;
+
+                    countdownElement.textContent = formatTime(hours) + ":" + formatTime(minutes) + ":" + formatTime(seconds);
+                }
+            }
+
+            updateCountdown(); // Сразу обновляем время
+
+            var interval = setInterval(updateCountdown, 1000); // Запускаем обновление каждую секунду
+
+            // Добавляем обработчик события клика по кнопке паузы/продолжения
+            var pauseButton = orderContainer.querySelector(".section-two__box_Child-1__info_img");
+
+            pauseButton.addEventListener("click", function() {
+                pauseButton.classList.toggle("section-two__box_Child-1__info_img-active");
+                isPaused = !isPaused;
+
+                if (isPaused) {
+                    // Останавливаем таймер
+                    clearInterval(interval);
+                } else {
+                    // Перезапускаем таймер с оставшимся временем
+                    countdownDate = new Date();
+                    countdownDate.setSeconds(countdownDate.getSeconds() + remainingSeconds);
+                    interval = setInterval(updateCountdown, 1000);
+                }
+            });
+
+            // Инициализируем переменные для подсчета бонусов и штрафов
+            var bonusCount = 0;
+            var penaltyCount = 0;
+
+            orderContainer.querySelectorAll(".section-two__box_Child-1__info_end_1").forEach(function(endButton) {
+                endButton.addEventListener("click", function() {
+                    var timeAdjustment = endButton.querySelector("h4").textContent.includes("+") ? 300 : -300;
+
+                    adjustCountdownTime(timeAdjustment);
+
+                    // Определяем, какая кнопка была нажата (бонус или штраф)
+                    if (timeAdjustment > 0) {
+                        // Если это бонус
+                        bonusCount++;
+                        // Обновляем значение в <h5> для бонуса
+                        orderContainer.querySelectorAll(".section-two__box_Child-1__info_counter_item")[0].textContent = bonusCount;
+                    } else {
+                        // Если это штраф
+                        penaltyCount++;
+                        // Обновляем значение в <h5> для штрафа
+                        orderContainer.querySelectorAll(".section-two__box_Child-1__info_counter_item")[1].textContent = penaltyCount;
+                    }
+                });
+            });
+
+            // Функция для изменения времени обратного отсчета
+            function adjustCountdownTime(seconds) {
+                remainingSeconds += seconds;
 
                 if (remainingSeconds <= 0) {
-                    clearInterval(interval);
+                    remainingSeconds = 0;
                     countdownElement.textContent = "00:00:00";
+                    clearInterval(interval);
                     return;
                 }
 
                 var hours = Math.floor(remainingSeconds / 3600);
                 var minutes = Math.floor((remainingSeconds % 3600) / 60);
-                var seconds = remainingSeconds % 60;
+                var secs = remainingSeconds % 60;
 
-                countdownElement.textContent = formatTime(hours) + ":" + formatTime(minutes) + ":" + formatTime(seconds);
-            }
-        }
+                countdownElement.textContent = formatTime(hours) + ":" + formatTime(minutes) + ":" + formatTime(secs);
 
-        updateCountdown(); // Сразу обновляем время
-
-        var interval = setInterval(updateCountdown, 1000); // Запускаем обновление каждую секунду
-
-        // Добавляем обработчик события клика по кнопке паузы/продолжения
-        var pauseButton = orderContainer.querySelector(".section-two__box_Child-1__info_img");
-
-        pauseButton.addEventListener("click", function() {
-            pauseButton.classList.toggle("section-two__box_Child-1__info_img-active");
-            isPaused = !isPaused;
-
-            if (isPaused) {
-                // Останавливаем таймер
-                clearInterval(interval);
-            } else {
-                // Перезапускаем таймер с оставшимся временем
-                countdownDate = new Date();
-                countdownDate.setSeconds(countdownDate.getSeconds() + remainingSeconds);
-                interval = setInterval(updateCountdown, 1000);
-            }
-        });
-
-        // Инициализируем переменные для подсчета бонусов и штрафов
-        var bonusCount = 0;
-        var penaltyCount = 0;
-
-        orderContainer.querySelectorAll(".section-two__box_Child-1__info_end_1").forEach(function(endButton) {
-            endButton.addEventListener("click", function() {
-                var timeAdjustment = endButton.querySelector("h4").textContent.includes("+") ? 300 : -300;
-
-                adjustCountdownTime(timeAdjustment);
-
-                // Определяем, какая кнопка была нажата (бонус или штраф)
-                if (timeAdjustment > 0) {
-                    // Если это бонус
-                    bonusCount++;
-                    // Обновляем значение в <h5> для бонуса
-                    orderContainer.querySelectorAll(".section-two__box_Child-1__info_counter_item")[0].textContent = bonusCount;
-                } else {
-                    // Если это штраф
-                    penaltyCount++;
-                    // Обновляем значение в <h5> для штрафа
-                    orderContainer.querySelectorAll(".section-two__box_Child-1__info_counter_item")[1].textContent = penaltyCount;
+                if (!isPaused) {
+                    countdownDate = new Date();
+                    countdownDate.setSeconds(countdownDate.getSeconds() + remainingSeconds);
                 }
-            });
-        });
-
-        // Функция для изменения времени обратного отсчета
-        function adjustCountdownTime(seconds) {
-            remainingSeconds += seconds;
-
-            if (remainingSeconds <= 0) {
-                remainingSeconds = 0;
-                countdownElement.textContent = "00:00:00";
-                clearInterval(interval);
-                return;
-            }
-
-            var hours = Math.floor(remainingSeconds / 3600);
-            var minutes = Math.floor((remainingSeconds % 3600) / 60);
-            var secs = remainingSeconds % 60;
-
-            countdownElement.textContent = formatTime(hours) + ":" + formatTime(minutes) + ":" + formatTime(secs);
-
-            if (!isPaused) {
-                countdownDate = new Date();
-                countdownDate.setSeconds(countdownDate.getSeconds() + remainingSeconds);
             }
         }
-    }
 
 
 
@@ -1117,5 +1122,5 @@ document.addEventListener("DOMContentLoaded", function() {
                 if (sectionOneMobile) sectionOneMobile.style.display = "block";
             }
         }
-    });
+    }); 
 });

@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Инструкция - Игровая Комната</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            background-color: #f4f4f4;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h1, h2, h3 {
+            color: #222;
+        }
+        .section {
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #ddd;
+        }
+        ul {
+            padding-left: 20px;
+        }
+        .highlight {
+            background: #ffeb3b;
+            padding: 2px 5px;
+            border-radius: 5px;
+        }
+        .button {
+            background: #007bff;
+            color: white;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            display: inline-block;
+            margin-top: 10px;
+        }
+        .button:hover {
+            background: #0056b3;
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 10px;
+            }
+            .container {
+                width: 100%;
+                padding: 15px;
+                box-shadow: none;
+                border-radius: 0;
+            }
+            .button {
+                width: 100%;
+                text-align: center;
+                padding: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Инструкция по использованию системы</h1>
+        
+        <div class="section">
+            <h2>1. Основные возможности</h2>
+            <ul>
+                <li>Добавление заказов</li>
+                <li>Изменение заказов</li>
+                <li>Продление времени посещения</li>
+                <li>Штрафование за нарушение</li>
+                <li>Отслеживание оставшегося времени</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>2. Добавление нового заказа</h2>
+            <p>Для создания заказа введите данные ребёнка:</p>
+            <ul>
+                <li><span class="highlight">Имя</span> — вписывайте имена через пробел (если несколько детей).</li>
+                <li><span class="highlight">Номер телефона</span> — указывается контактный номер родителей.</li>
+                <li><span class="highlight">Примечание</span> — можно оставить дополнительную информацию.</li>
+            </ul>
+            <p>После ввода данных нажмите кнопку <button class="button">Добавить</button>, чтобы создать заказ.</p>
+        </div>
+
+        <div class="section">
+            <h2>3. Изменение заказа</h2>
+            <p>Чтобы изменить заказ, нажмите кнопку <span class="highlight">"Изменить заказ"</span> в соответствующем блоке. В открывшемся окне можно:</p>
+            <ul>
+                <li>Изменить имя, телефон или примечание</li>
+                <li>Изменить время посещения</li>
+                <li>Отменить или сохранить изменения</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>4. Продление или сокращение времени</h2>
+            <p>Для добавления или уменьшения времени использования игровой комнаты:</p>
+            <ul>
+                <li>Нажмите <span class="highlight">+5 мин.</span> для продления</li>
+                <li>Нажмите <span class="highlight">-5 мин.</span> для штрафа</li>
+            </ul>
+            <p>Оставшееся время автоматически обновится.</p>
+        </div>
+
+        <div class="section">
+            <h2>5. Контроль штрафов</h2>
+            <p>Если ребёнок нарушает правила, администратор может сократить его время пребывания:</p>
+            <ul>
+                <li>Используйте кнопку <span class="highlight">-5 мин.</span> для вычитания времени.</li>
+                <li>Штраф можно применять несколько раз.</li>
+                <li>Система автоматически пересчитает оставшееся время.</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>6. Таймер посещения</h2>
+            <p>Каждый заказ имеет встроенный таймер, отображающий оставшееся время. Время обновляется в реальном времени.</p>
+        </div>
+    </div>
+</body>
+</html>
