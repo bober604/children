@@ -136,7 +136,7 @@ document.addEventListener("DOMContentLoaded", function() {
                         </div>
                         <div class="section-two__box_Child-1__nav_section">
                             <p class="section-two__box_Child-1__nav_section_par-1">Посещение</p>
-                            <p id="duration" class="section-two__box_Child-1__nav_section_par-2">${getDuration(selectedButtons)}</p>
+                            <p id="duration" class="section-two__box_Child-1__nav_section_par-2  section-two__box_Child-1__nav_section_par-3">${getDuration(selectedButtons)}</p>
                         </div>
                     </nav>
                     <div class="section-two__box_Child-1_line"><!-- Линия --></div>
@@ -386,278 +386,288 @@ document.addEventListener("DOMContentLoaded", function() {
 
             // Код для мобильной интерактивности окончен
 
+            // Всё связанное с блоком редактирования заказа
+            document.addEventListener("click", function (event) {
+                const editOrderButton = event.target.closest(".section-two__box_Child-4");
+        
+                if (editOrderButton) {
+                    // Удаляем предыдущий блок, если он существует
+                    const existingOrderChangeBlock = document.querySelector(".section-one__orderChange");
+                    if (existingOrderChangeBlock) {
+                        existingOrderChangeBlock.remove();
+                    }
 
-
-            // Получаем кнопку изменения заказа
-            const editOrderButton = document.querySelector(".section-two__box_Child-4");
-
-            // Функция для преобразования времени из формата "1 час", "30 мин.", "Аренда" в "HH:MM:SS"
-            function formatDurationToHHMMSS(duration) {
-                let totalMinutes = 0;
+                    // Функция для преобразования времени из формата "1 час", "30 мин.", "Аренда" в "HH:MM:SS"
+                    function formatDurationToHHMMSS(duration) {
+                        let totalMinutes = 0;
+                    
+                        if (duration.includes("Аренда")) {
+                            if (duration.includes("1 час")) {
+                                totalMinutes = 60; // Аренда 1 час
+                            } else if (duration.includes("2 часа")) {
+                                totalMinutes = 120; // Аренда 2 часа
+                            } else {
+                                console.error("Неподдерживаемый формат аренды:", duration);
+                                return "00:00:00";
+                            }
+                        } else {
+                            if (duration.includes("час")) {
+                                totalMinutes += parseInt(duration) * 60;
+                            }
+                            if (duration.includes("мин")) {
+                                totalMinutes += parseInt(duration);
+                            }
+                        }
+                        
+                        const hours = Math.floor(totalMinutes / 60);
+                        const minutes = totalMinutes % 60;
+                        return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}:00`;
+                    }
             
-                if (duration.includes("Аренда")) {
-                    if (duration.includes("1 час")) {
-                        totalMinutes = 60; // Аренда 1 час
-                    } else if (duration.includes("2 часа")) {
-                        totalMinutes = 120; // Аренда 2 часа
-                    } else {
-                        console.error("Неподдерживаемый формат аренды:", duration);
-                        return "00:00:00";
-                    }
-                } else {
-                    if (duration.includes("час")) {
-                        totalMinutes += parseInt(duration) * 60;
-                    }
-                    if (duration.includes("мин")) {
-                        totalMinutes += parseInt(duration);
-                    }
-                }
-                
-                const hours = Math.floor(totalMinutes / 60);
-                const minutes = totalMinutes % 60;
-                return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}:00`;
-            }
-            
 
-            // Функция для вычисления прошедшего времени
-            const calculateElapsedTime = (initialDuration, currentCountdown) => {
-                const initialSeconds = timeToSeconds(initialDuration); // Преобразуем начальное время в секунды
-                const currentSeconds = timeToSeconds(currentCountdown); // Преобразуем текущее оставшееся время в секунды
-                const elapsedSeconds = initialSeconds - currentSeconds; // Вычисляем разницу
-                return Math.max(elapsedSeconds, 0); // Убеждаемся, что результат не отрицательный
-            };
+                    // Функция для вычисления прошедшего времени
+                    const calculateElapsedTime = (initialDuration, currentCountdown) => {
+                        const initialSeconds = timeToSeconds(initialDuration); // Преобразуем начальное время в секунды
+                        const currentSeconds = timeToSeconds(currentCountdown); // Преобразуем текущее оставшееся время в секунды
+                        const elapsedSeconds = initialSeconds - currentSeconds; // Вычисляем разницу
+                        return Math.max(elapsedSeconds, 0); // Убеждаемся, что результат не отрицательный
+                    };
         
 
-            // Функция для преобразования времени в секунды
-            function timeToSeconds(time) {
-                const [hours, minutes, seconds] = time.split(":").map(Number);
-                return (hours * 3600) + (minutes * 60) + seconds;
-            }
-
-            // Проверка и преобразование `durationValue`
-            function validateAndFormatDuration(duration) {
-                if (duration.includes("час") || duration.includes("мин")) {
-                    return formatDurationToHHMMSS(duration);
-                }
-                console.error("Неверный формат времени:", duration);
-                return "00:00:00"; // Значение по умолчанию для некорректных данных
-            }
-            
-            // Добавляем обработчик события для кнопки
-            editOrderButton.addEventListener("click", function () {
-                const sectionOne = document.querySelector(".section-one");
-
-                // Извлекаем данные из текущего заказа
-                const nameValue = document.querySelector('.section-two__box_Child-1__info_container-sag_name').textContent.trim();
-                const phoneValue = document.querySelector('.section-two__box_Child-1__info_parents_number').textContent.trim();
-                const noteValue = document.querySelector('.section-two__box_Child-1__info_parents_par').textContent.trim();
-                const durationValue = document.getElementById("duration").textContent.trim();
-                const countdownElement = document.querySelector(".section-two__box_Child-1__info_time");
-                const currentCountdown = countdownElement.textContent.trim();
-
-                // Преобразуем и проверяем значения времени
-                const formattedDuration = validateAndFormatDuration(durationValue);
-                const elapsedSeconds = calculateElapsedTime(formattedDuration, currentCountdown);
-
-                console.log("Duration Value (Initial):", durationValue);
-                console.log("Current Countdown (Remaining):", currentCountdown);
-                console.log("Formatted Duration:", formattedDuration);
-                console.log("Прошедшее время в секундах:", elapsedSeconds);
-                
-
-                // Создаём блок для изменения заказа
-                const newOrderBlock = document.createElement("div");
-                newOrderBlock.classList.add("section-one__orderChange__box__buttons_block-1__counter");
-
-                newOrderBlock.innerHTML = `
-                    <div class="section-one__orderChange">
-                        <div class="section-one__orderChange_line"></div> <!-- линия -->
-                        <div class="section-one__orderChange_header">
-                            <img class="section-one__orderChange_img" src="./img/back.svg" alt="back">
-                            <h1 class="section-one__orderChange_sag">Изменить заказ</h1>
-                        </div>
-                        <div class="section-one__orderChange_line-mobile"></div> <!-- линия -->
-                        <div class="section-one__orderChange__box">
-                            <div class="section-one__orderChange__box__input">
-                                <input id="order-1" class="section-one__orderChange__box__input_item" placeholder="Имя" type="text" value="${nameValue}">
-                                <input id="order-2" class="section-one__orderChange__box__input_item" placeholder="Номер телефона" type="tel" value="${phoneValue}">
-                                <input id="order-3" class="section-one__orderChange__box__input_item section-one__orderChange__box__input_item-mobile" placeholder="Примечание" type="text" value="${noteValue}">
-                            </div>
-
-                            <div class="section-one__orderChange__box__buttons">
-                                <div class="section-one__orderChange__box__buttons_block-1 section-one__orderChange__box__buttons_block-mobile">
-                                    <h2 class="section-one__orderChange__box__buttons_block-1_sag">15 мин.</h2>
-                                    <div class="${durationValue === '15 мин.' ? 'section-one__orderChange__box__buttons_block-1_active' : 'section-one__orderChange__box__buttons_block-1_inactive'}"></div>
-                                </div>
-
-                                <div class="section-one__orderChange__box__buttons_block-1 section-one__orderChange__box__buttons_element-1">
-                                    <h2 class="section-one__orderChange__box__buttons_block-1_sag">30 мин.</h2>
-                                    <div class="${durationValue === '30 мин.' ? 'section-one__orderChange__box__buttons_block-1_active' : 'section-one__orderChange__box__buttons_block-1_inactive'}"></div>
-                                </div>
-
-                                <div class="section-one__orderChange__box__buttons_block-1 section-one__orderChange__box__buttons_element-2">
-                                    <h2 class="section-one__orderChange__box__buttons_block-1_sag">1 час</h2>
-                                    <div class="${durationValue === '1 час' ? 'section-one__orderChange__box__buttons_block-1_active' : 'section-one__orderChange__box__buttons_block-1_inactive'}"></div>
-                                </div>
-
-                                <div class="section-one__orderChange__box__buttons_block-1 section-one__orderChange__box__buttons_element-3">
-                                    <h2 class="section-one__orderChange__box__buttons_block-1_sag">2 часа</h2>
-                                    <div class="${durationValue === '2 часа' ? 'section-one__orderChange__box__buttons_block-1_active' : 'section-one__orderChange__box__buttons_block-1_inactive'}"></div>
-                                </div>
-
-                                <div class="section-one__orderChange__box__buttons_block-2 section-one__orderChange__box__buttons_element-4">
-                                    <h2 class="section-one__orderChange__box__buttons_block-1_sag section-one__orderChange__box__buttons_block-2_sag">Аренда 1 час</h2>
-                                    <div class="${durationValue === 'Аренда 1 час' ? 'section-one__orderChange__box__buttons_block-1_active' : 'section-one__orderChange__box__buttons_block-1_inactive'}"></div>
-                                </div>
-                                
-                                <div class="section-one__orderChange__box_cancellation section-one__orderChange__box__buttons_element-5">
-                                    <h2 class="section-one__orderChange__box_cancellation_sag">Отмена</h2>
-                                </div>
-
-                                <div class="section-one__orderChange__box__buttons_block-3 section-one__orderChange__box__buttons_element-6">
-                                    <h2 class="section-one__orderChange__box__buttons_block-1_sag section-one__orderChange__box__buttons_block-2_sag">Аренда 2 часа</h2>
-                                    <div class="${durationValue === 'Аренда 2 часа' ? 'section-one__orderChange__box__buttons_block-1_active' : 'section-one__orderChange__box__buttons_block-1_inactive'}"></div>
-                                </div>
-
-                                <div class="section-one__orderChange__box_save section-one__orderChange__box__buttons_element-7">
-                                    <h2 class="section-one__orderChange__box_save_sag">Сохранить</h2>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                `;
-                
-                sectionOne.appendChild(newOrderBlock);
-
-                // Обработка клика по кнопкам времени
-                newOrderBlock.querySelectorAll(".section-one__orderChange__box__buttons_block-1").forEach(button => {
-                    button.addEventListener("click", function () {
-                        this.querySelector('div').classList.toggle("section-one__orderChange__box__buttons_block-1_active");
-                        this.querySelector('div').classList.toggle("section-one__orderChange__box__buttons_block-1_inactive");
-                    });
-                });
-
-                // Идентификатор текущего таймера и оставшееся время
-                let currentTimerId = null;
-                let remainingTime = 0; // В секундах
-
-                // Функция для остановки текущего таймера
-                function stopCurrentTimer() {
-                    if (currentTimerId !== null) {
-                        clearInterval(currentTimerId); // Удаляем старый таймер
-                        currentTimerId = null;
-                    }
-                }
-
-                // Функция для запуска нового таймера
-                function startNewTimer(durationInMinutes, countdownElement) {
-                    stopCurrentTimer(); // Останавливаем текущий таймер
-
-                    remainingTime = durationInMinutes * 60; // Обновляем оставшееся время (в секундах)
-
-                    remainingTime = durationInMinutes * 60; // Устанавливаем новое время (в секундах)
-
-                    function updateTimerDisplay() {
-                        const hours = Math.floor(remainingTime / 3600);
-                        const minutes = Math.floor((remainingTime % 3600) / 60);
-                        const seconds = remainingTime % 60;
-
-                        countdownElement.textContent = `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
+                    // Функция для преобразования времени в секунды
+                    function timeToSeconds(time) {
+                        const [hours, minutes, seconds] = time.split(":").map(Number);
+                        return (hours * 3600) + (minutes * 60) + seconds;
                     }
 
-                    // Обновляем дисплей сразу
-                    updateTimerDisplay();
-
-                    // Устанавливаем интервал для нового таймера
-                    currentTimerId = setInterval(() => {
-                        if (remainingTime > 0) {
-                            remainingTime--;
-                            updateTimerDisplay();
-                        } else {
-                            // Таймер завершён
-                            stopCurrentTimer();
+                    // Проверка и преобразование `durationValue`
+                    function validateAndFormatDuration(duration) {
+                        if (duration.includes("час") || duration.includes("мин")) {
+                            return formatDurationToHHMMSS(duration);
                         }
-                    }, 1000);
-                }
-
-                // Сопоставление времени и стоимости
-                const timePrices = {
-                    "15 мин.": 50,
-                    "30 мин.": 100,
-                    "1 час": 150,
-                    "2 часа": 250,
-                    "Аренда 1 час": 2000,
-                    "Аренда 2 часа": 4000,
-                };
-
-                // Функция для обработки бонусов/штрафов
-                function adjustTimer(minutes) {
-                    remainingTime += minutes * 60; // Добавляем/вычитаем время (в секундах)
-                    if (remainingTime < 0) remainingTime = 0; // Убеждаемся, что время не уходит в отрицательные значения
-                }
-
-                // Обработка сохранения изменений
-                const saveButton = newOrderBlock.querySelector(".section-one__orderChange__box_save");
-                saveButton.addEventListener("click", function () {
-                    const selectedButtons = newOrderBlock.querySelectorAll(".section-one__orderChange__box__buttons_block-1_active");
-
-                    // Суммируем время из выбранных кнопок
-                    let totalMinutes = 0;
-                    const selectedDurations = Array.from(selectedButtons).map(button => {
-                        const timeText = button.previousElementSibling.textContent.trim();
-
-                        // Считаем минуты
-                        if (timeText.includes("мин")) {
-                            totalMinutes += parseInt(timeText);
-                        } else if (timeText.includes("час")) {
-                            totalMinutes += parseInt(timeText) * 60;
-                        }
-
-                        return timeText; // Сохраняем текстовое значение для отображения
-                    });
-
-                    // Учитываем прошедшее время
-                    const adjustedMinutes = Math.max(totalMinutes - Math.floor(elapsedSeconds / 60), 0);
-
-                    // Формируем текст для id="duration"
-                    const durationText = selectedDurations.join(", ");
-                    document.getElementById("duration").textContent = durationText;
-
-                    // Обновляем сумму заказа
-                    let totalPrice = 0;
-                    document.querySelector(".price").textContent = `${totalPrice} руб.`;
+                        console.error("Неверный формат времени:", duration);
+                        return "00:00:00"; // Значение по умолчанию для некорректных данных
+                    }
             
-                    // Запускаем новый таймер
+            
+                    const sectionOne = document.querySelector(".section-one");
+
+                    // Находим родительский блок заказа
+                    const parentOrder = editOrderButton.closest(".section-two__box");
+
+                    // Извлекаем данные из текущего заказа
+                    const nameValue = parentOrder.querySelector(".section-two__box_Child-1__info_container-sag_name").textContent.trim();
+                    const phoneValue = parentOrder.querySelector(".section-two__box_Child-1__info_parents_number").textContent.trim();
+                    const noteValue = parentOrder.querySelector(".section-two__box_Child-1__info_parents_par").textContent.trim();
+                    const durationValue = parentOrder.querySelector(".section-two__box_Child-1__nav_section_par-3").textContent.trim();
+
                     const countdownElement = document.querySelector(".section-two__box_Child-1__info_time");
-                    startNewTimer(adjustedMinutes, countdownElement);
+                    const currentCountdown = countdownElement.textContent.trim();
 
-                    // Обновляем дополнительные данные (имя, телефон, примечания)
-                    document.querySelector(".section-two__box_Child-1__info_container-sag_name").textContent = document.getElementById("order-1").value;
-                    document.querySelector(".section-two__box_Child-1__info_parents_number").textContent = document.getElementById("order-2").value;
-                    document.querySelector(".section-two__box_Child-1__info_parents_par").textContent = document.getElementById("order-3").value;
+                    // Преобразуем и проверяем значения времени
+                    const formattedDuration = validateAndFormatDuration(durationValue);
+                    const elapsedSeconds = calculateElapsedTime(formattedDuration, currentCountdown);
 
-                    // Удаляем блок изменения заказа
-                    newOrderBlock.remove();
-                });
+                    console.log("Duration Value (Initial):", durationValue);
+                    console.log("Current Countdown (Remaining):", currentCountdown);
+                    console.log("Formatted Duration:", formattedDuration);
+                    console.log("Прошедшее время в секундах:", elapsedSeconds);
+                    
 
-                // Изменяем обработчики для бонуса/штрафа
-                document.querySelector(".section-two__box_Child-1__info_end_1_par-1").addEventListener("click", () => adjustTimer(5)); // +5 минут
-                document.querySelector(".section-two__box_Child-1__info_end_1_par-2").addEventListener("click", () => adjustTimer(-5)); // -5 минут
+                    // Создаём блок для изменения заказа
+                    const newOrderBlock = document.createElement("div");
+                    newOrderBlock.classList.add("section-one__orderChange__box__buttons_block-1__counter");
 
-                // Изменяем обработчик для паузы/продолжения
-                document.querySelector(".section-two__box_Child-1__info_img").addEventListener("click", () => {
-                    if (currentTimerId !== null) {
-                        stopCurrentTimer(); // Останавливаем текущий таймер
-                    } else {
-                        startNewTimer(Math.ceil(remainingTime / 60), document.querySelector(".section-two__box_Child-1__info_time")); // Возобновляем таймер
+                    newOrderBlock.innerHTML = `
+                        <div class="section-one__orderChange">
+                            <div class="section-one__orderChange_line"></div> <!-- линия -->
+                            <div class="section-one__orderChange_header">
+                                <img class="section-one__orderChange_img" src="./img/back.svg" alt="back">
+                                <h1 class="section-one__orderChange_sag">Изменить заказ</h1>
+                            </div>
+                            <div class="section-one__orderChange_line-mobile"></div> <!-- линия -->
+                            <div class="section-one__orderChange__box">
+                                <div class="section-one__orderChange__box__input">
+                                    <input id="order-1" class="section-one__orderChange__box__input_item" placeholder="Имя" type="text" value="${nameValue}">
+                                    <input id="order-2" class="section-one__orderChange__box__input_item" placeholder="Номер телефона" type="tel" value="${phoneValue}">
+                                    <input id="order-3" class="section-one__orderChange__box__input_item section-one__orderChange__box__input_item-mobile" placeholder="Примечание" type="text" value="${noteValue}">
+                                </div>
+
+                                <div class="section-one__orderChange__box__buttons">
+                                    <div class="section-one__orderChange__box__buttons_block-1 section-one__orderChange__box__buttons_block-mobile">
+                                        <h2 class="section-one__orderChange__box__buttons_block-1_sag">15 мин.</h2>
+                                        <div class="${durationValue === '15 мин.' ? 'section-one__orderChange__box__buttons_block-1_active' : 'section-one__orderChange__box__buttons_block-1_inactive'}"></div>
+                                    </div>
+
+                                    <div class="section-one__orderChange__box__buttons_block-1 section-one__orderChange__box__buttons_element-1">
+                                        <h2 class="section-one__orderChange__box__buttons_block-1_sag">30 мин.</h2>
+                                        <div class="${durationValue === '30 мин.' ? 'section-one__orderChange__box__buttons_block-1_active' : 'section-one__orderChange__box__buttons_block-1_inactive'}"></div>
+                                    </div>
+
+                                    <div class="section-one__orderChange__box__buttons_block-1 section-one__orderChange__box__buttons_element-2">
+                                        <h2 class="section-one__orderChange__box__buttons_block-1_sag">1 час</h2>
+                                        <div class="${durationValue === '1 час' ? 'section-one__orderChange__box__buttons_block-1_active' : 'section-one__orderChange__box__buttons_block-1_inactive'}"></div>
+                                    </div>
+
+                                    <div class="section-one__orderChange__box__buttons_block-1 section-one__orderChange__box__buttons_element-3">
+                                        <h2 class="section-one__orderChange__box__buttons_block-1_sag">2 часа</h2>
+                                        <div class="${durationValue === '2 часа' ? 'section-one__orderChange__box__buttons_block-1_active' : 'section-one__orderChange__box__buttons_block-1_inactive'}"></div>
+                                    </div>
+
+                                    <div class="section-one__orderChange__box__buttons_block-2 section-one__orderChange__box__buttons_element-4">
+                                        <h2 class="section-one__orderChange__box__buttons_block-1_sag section-one__orderChange__box__buttons_block-2_sag">Аренда 1 час</h2>
+                                        <div class="${durationValue === 'Аренда 1 час' ? 'section-one__orderChange__box__buttons_block-1_active' : 'section-one__orderChange__box__buttons_block-1_inactive'}"></div>
+                                    </div>
+                                    
+                                    <div class="section-one__orderChange__box_cancellation section-one__orderChange__box__buttons_element-5">
+                                        <h2 class="section-one__orderChange__box_cancellation_sag">Отмена</h2>
+                                    </div>
+
+                                    <div class="section-one__orderChange__box__buttons_block-3 section-one__orderChange__box__buttons_element-6">
+                                        <h2 class="section-one__orderChange__box__buttons_block-1_sag section-one__orderChange__box__buttons_block-2_sag">Аренда 2 часа</h2>
+                                        <div class="${durationValue === 'Аренда 2 часа' ? 'section-one__orderChange__box__buttons_block-1_active' : 'section-one__orderChange__box__buttons_block-1_inactive'}"></div>
+                                    </div>
+
+                                    <div class="section-one__orderChange__box_save section-one__orderChange__box__buttons_element-7">
+                                        <h2 class="section-one__orderChange__box_save_sag">Сохранить</h2>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    
+                    sectionOne.appendChild(newOrderBlock);
+
+                    // Обработка клика по кнопкам времени
+                    newOrderBlock.querySelectorAll(".section-one__orderChange__box__buttons_block-1").forEach(button => {
+                        button.addEventListener("click", function () {
+                            this.querySelector('div').classList.toggle("section-one__orderChange__box__buttons_block-1_active");
+                            this.querySelector('div').classList.toggle("section-one__orderChange__box__buttons_block-1_inactive");
+                        });
+                    });
+
+                    // Идентификатор текущего таймера и оставшееся время
+                    let currentTimerId = null;
+                    let remainingTime = 0; // В секундах
+
+                    // Функция для остановки текущего таймера
+                    function stopCurrentTimer() {
+                        if (currentTimerId !== null) {
+                            clearInterval(currentTimerId); // Удаляем старый таймер
+                            currentTimerId = null;
+                        }
                     }
-                });
 
-                // Обработка нажатия кнопки "Отмена"
-                const cancelButton = newOrderBlock.querySelector(".section-one__orderChange__box_cancellation");
-                cancelButton.addEventListener("click", function () {
-                    newOrderBlock.remove(); // Удаляем блок изменения заказа
-                });
+                    // Функция для запуска нового таймера
+                    function startNewTimer(durationInMinutes, countdownElement) {
+                        stopCurrentTimer(); // Останавливаем текущий таймер
+
+                        remainingTime = durationInMinutes * 60; // Обновляем оставшееся время (в секундах)
+
+                        remainingTime = durationInMinutes * 60; // Устанавливаем новое время (в секундах)
+
+                        function updateTimerDisplay() {
+                            const hours = Math.floor(remainingTime / 3600);
+                            const minutes = Math.floor((remainingTime % 3600) / 60);
+                            const seconds = remainingTime % 60;
+
+                            countdownElement.textContent = `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
+                        }
+
+                        // Обновляем дисплей сразу
+                        updateTimerDisplay();
+
+                        // Устанавливаем интервал для нового таймера
+                        currentTimerId = setInterval(() => {
+                            if (remainingTime > 0) {
+                                remainingTime--;
+                                updateTimerDisplay();
+                            } else {
+                                // Таймер завершён
+                                stopCurrentTimer();
+                            }
+                        }, 1000);
+                    }
+
+                    // Сопоставление времени и стоимости
+                    const timePrices = {
+                        "15 мин.": 50,
+                        "30 мин.": 100,
+                        "1 час": 150,
+                        "2 часа": 250,
+                        "Аренда 1 час": 2000,
+                        "Аренда 2 часа": 4000,
+                    };
+
+                    // Функция для обработки бонусов/штрафов
+                    function adjustTimer(minutes) {
+                        remainingTime += minutes * 60; // Добавляем/вычитаем время (в секундах)
+                        if (remainingTime < 0) remainingTime = 0; // Убеждаемся, что время не уходит в отрицательные значения
+                    }
+
+                    // Обработка сохранения изменений
+                    const saveButton = newOrderBlock.querySelector(".section-one__orderChange__box_save");
+                    saveButton.addEventListener("click", function () {
+                        const selectedButtons = newOrderBlock.querySelectorAll(".section-one__orderChange__box__buttons_block-1_active");
+
+                        // Суммируем время из выбранных кнопок
+                        let totalMinutes = 0;
+                        const selectedDurations = Array.from(selectedButtons).map(button => {
+                            const timeText = button.previousElementSibling.textContent.trim();
+
+                            // Считаем минуты
+                            if (timeText.includes("мин")) {
+                                totalMinutes += parseInt(timeText);
+                            } else if (timeText.includes("час")) {
+                                totalMinutes += parseInt(timeText) * 60;
+                            }
+
+                            return timeText; // Сохраняем текстовое значение для отображения
+                        });
+
+                        // Учитываем прошедшее время
+                        const adjustedMinutes = Math.max(totalMinutes - Math.floor(elapsedSeconds / 60), 0);
+
+                        // Формируем текст для id="duration"
+                        const durationText = selectedDurations.join(", ");
+                        document.getElementById("duration").textContent = durationText;
+
+                        // Обновляем сумму заказа
+                        let totalPrice = 0;
+                        document.querySelector(".price").textContent = `${totalPrice} руб.`;
+                
+                        // Запускаем новый таймер
+                        const countdownElement = document.querySelector(".section-two__box_Child-1__info_time");
+                        startNewTimer(adjustedMinutes, countdownElement);
+
+                        // Обновляем дополнительные данные (имя, телефон, примечания)
+                        parentOrder.querySelector(".section-two__box_Child-1__info_container-sag_name").textContent = document.getElementById("order-1").value;
+                        parentOrder.querySelector(".section-two__box_Child-1__info_parents_number").textContent = document.getElementById("order-2").value;
+                        parentOrder.querySelector(".section-two__box_Child-1__info_parents_par").textContent = document.getElementById("order-3").value;
+
+                        // Удаляем блок изменения заказа
+                        newOrderBlock.remove();
+                    });
+
+                    // Изменяем обработчики для бонуса/штрафа
+                    document.querySelector(".section-two__box_Child-1__info_end_1_par-1").addEventListener("click", () => adjustTimer(5)); // +5 минут
+                    document.querySelector(".section-two__box_Child-1__info_end_1_par-2").addEventListener("click", () => adjustTimer(-5)); // -5 минут
+
+                    // Изменяем обработчик для паузы/продолжения
+                    document.querySelector(".section-two__box_Child-1__info_img").addEventListener("click", () => {
+                        if (currentTimerId !== null) {
+                            stopCurrentTimer(); // Останавливаем текущий таймер
+                        } else {
+                            startNewTimer(Math.ceil(remainingTime / 60), document.querySelector(".section-two__box_Child-1__info_time")); // Возобновляем таймер
+                        }
+                    });
+
+                    // Обработка нажатия кнопки "Отмена"
+                    const cancelButton = newOrderBlock.querySelector(".section-one__orderChange__box_cancellation");
+                    cancelButton.addEventListener("click", function () {
+                        newOrderBlock.remove(); // Удаляем блок изменения заказа
+                    });
+                }
             });
 
 

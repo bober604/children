@@ -290,7 +290,6 @@
   cursor: pointer;
 }
 .section-one__orderChange__box__buttons_block-1__counter {
-  margin-top: 3px;
   display: flex;
   align-items: center;
   gap: 5.5px;
