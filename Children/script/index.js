@@ -1,3 +1,21 @@
+// Import the functions you need from the SDKs you need
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+// Your web app's Firebase configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyDTYDcBhc4WucicvZj6CjVIgHiovS3EZ3g",
+  authDomain: "black-pizza---play-room.firebaseapp.com",
+  projectId: "black-pizza---play-room",
+  storageBucket: "black-pizza---play-room.firebasestorage.app",
+  messagingSenderId: "697383277537",
+  appId: "1:697383277537:web:8a227496c14394f6d7f8a0",
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+
 document.addEventListener("DOMContentLoaded", function() {
     // Находим все ваши поля ввода
     var inputs = document.querySelectorAll(".section-one__container_1, .section-one__container_4, .section-one__container__parent_2.section-one__container_3");
