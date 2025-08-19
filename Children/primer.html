@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>BlackPizza API Test</title>
+</head>
+<body>
+    <h1>Тест BlackPizza API</h1>
+
+    <button onclick="getOrders()">Получить заказы за 09.08.2025</button>
+    <button onclick="addOrder()">Добавить заказ</button>
+
+    <pre id="output"></pre>
+
+    <script>
+        const API_URL = "http://127.0.0.1:8000";
+
+        function getOrders() {
+            fetch(`${API_URL}/orders/09.08.2025`)
+                .then(res => res.json())
+                .then(data => document.getElementById("output").textContent = JSON.stringify(data, null, 2))
+                .catch(err => console.error(err));
+        }
+
+        function addOrder() {
+            fetch(`${API_URL}/order`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    sum: 500,
+                    date: "09.08.2025",
+                    time: "15.00.00"
+                })
+            })
+            .then(res => res.json())
+            .then(data => document.getElementById("output").textContent = JSON.stringify(data, null, 2))
+            .catch(err => console.error(err));
+        }
+    </script>
+</body>
+</html>
