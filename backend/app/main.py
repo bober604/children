@@ -29,7 +29,7 @@ LOCAL_TZ = zoneinfo.ZoneInfo("Asia/Yekaterinburg")  # можно заменит�
 def add_order(order: schemas.OrderCreate, db: Session = Depends(database.get_db)):
     o = crud.create_order(db, order.sum, order.date, order.time)
     # после создания — рассылаем обновлённую статистику по дню
-    asyncio.create_task(broadcast_today_stats())
+    # asyncio.create_task(broadcast_today_stats())
     return o
 
 @app.get("/orders/{date_str}")
