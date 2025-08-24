@@ -237,6 +237,27 @@
             text-anchor: middle;
         }
 
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        .error-message {
+            background: #fee;
+            border: 1px solid #fcc;
+            color: #c33;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+
+        .no-data {
+            text-align: center;
+            color: #6c757d;
+            font-style: italic;
+            padding: 40px;
+        }
+
         @media (max-width: 768px) {
             .back-a {
                 position: relative;
@@ -284,6 +305,8 @@
             </div>
         </div>
 
+        <div id="error-container" style="display: none;" class="error-message"></div>
+
         <div class="stats-grid">
             <div class="stat-card">
                 <div class="stat-title">
@@ -307,7 +330,6 @@
                     Средний чек
                 </div>
                 <div class="stat-value" id="avg-order">0 ₽</div>
-                
             </div>
 
             <div class="stat-card">
@@ -333,6 +355,9 @@
                 </div>
             </div>
             <div class="chart" id="sales-chart">
+                <div id="no-data-message" class="no-data" style="display: none;">
+                    Нет данных для отображения графика
+                </div>
                 <svg width="100%" height="100%" viewBox="0 0 900 400" preserveAspectRatio="xMidYMid meet">
                     <g class="x-axis"></g>
                     <g class="y-axis"></g>
@@ -353,80 +378,7 @@
     <script>
         // Базовый URL бэкенда
         const API_BASE_URL = 'http://127.0.0.1:8000';
-        let isBackendConnected = false;
         let currentChartType = 'orders';
-
-        // Тестовые данные для демонстрации
-        const demoData = {
-            day: {
-                orders: 1248,
-                avgOrder: 4572,
-                total: 5706240,
-                chartData: [
-                    // { label: '00:00', orders: 120, revenue: 548640 },
-                    // { label: '03:00', orders: 80, revenue: 365760 },
-                    { label: '06:00', orders: 150, revenue: 685800 },
-                    { label: '09:00', orders: 210, revenue: 960120 },
-                    { label: '12:00', orders: 320, revenue: 1463040 },
-                    { label: '15:00', orders: 280, revenue: 1280160 },
-                    { label: '18:00', orders: 190, revenue: 868680 },
-                    { label: '21:00', orders: 130, revenue: 594360 }
-                ]
-            },
-            week: {
-                orders: 8736,
-                avgOrder: 4215,
-                total: 36822240,
-                chartData: [
-                    { label: 'Пн', orders: 1050, revenue: 4425750 },
-                    { label: 'Вт', orders: 1320, revenue: 5563800 },
-                    { label: 'Ср', orders: 980, revenue: 4130700 },
-                    { label: 'Чт', orders: 1470, revenue: 6196050 },
-                    { label: 'Пт', orders: 1890, revenue: 7966350 },
-                    { label: 'Сб', orders: 1560, revenue: 6575400 },
-                    { label: 'Вс', orders: 1466, revenue: 6179190 }
-                ]
-            },
-            month: {
-                orders: 37440,
-                avgOrder: 3980,
-                total: 149011200,
-                chartData: [
-                    { label: 'Неделя 1', orders: 8200, revenue: 32636000 },
-                    { label: 'Неделя 2', orders: 9100, revenue: 36218000 },
-                    { label: 'Неделя 3', orders: 10200, revenue: 40596000 },
-                    { label: 'Неделя 4', orders: 11940, revenue: 47521200 }
-                ]
-            },
-            year: {
-                orders: 449280,
-                avgOrder: 3820,
-                total: 1716249600,
-                chartData: [
-                    { label: 'Янв', orders: 31200, revenue: 119184000 },
-                    { label: 'Фев', orders: 33600, revenue: 128352000 },
-                    { label: 'Мар', orders: 37440, revenue: 143020800 },
-                    { label: 'Апр', orders: 36000, revenue: 137520000 },
-                    { label: 'Май', orders: 40320, revenue: 154022400 },
-                    { label: 'Июн', orders: 38880, revenue: 148521600 },
-                    { label: 'Июл', orders: 41760, revenue: 159523200 },
-                    { label: 'Авг', orders: 43200, revenue: 165024000 },
-                    { label: 'Сен', orders: 40800, revenue: 155856000 },
-                    { label: 'Окт', orders: 42240, revenue: 161356800 },
-                    { label: 'Ноя', orders: 43680, revenue: 166857600 },
-                    { label: 'Дек', orders: 48960, revenue: 187027200 }
-                ]
-            }
-        };
-
-        // Текущая дата в формате DD.MM.YYYY
-        function getCurrentDate() {
-            const now = new Date();
-            const day = String(now.getDate()).padStart(2, '0');
-            const month = String(now.getMonth() + 1).padStart(2, '0');
-            const year = now.getFullYear();
-            return `${day}.${month}.${year}`;
-        }
 
         // Форматирование чисел
         function formatNumber(num) {
@@ -449,178 +401,237 @@
         // Функция для выполнения запросов к API
         async function fetchData(url) {
             try {
-                console.log('Запрос к:', url);
                 const response = await fetch(url);
                 if (!response.ok) {
                     throw new Error(`Ошибка HTTP: ${response.status}`);
                 }
-                const data = await response.json();
-                console.log('Получены данные:', data, 'Тип:', typeof data);
-                return data;
+                return await response.json();
             } catch (error) {
                 console.error('Ошибка при запросе данных:', error);
                 throw error;
             }
         }
 
-        // Извлечение числа из данных бэкенда
-        function extractNumber(data, possibleKeys = []) {
-            if (typeof data === 'number') {
-                return data;
+        // Получить заказы за диапазон дат
+        async function getOrdersRange(startDate, endDate) {
+            try {
+                const url = `${API_BASE_URL}/orders_range?start_date=${startDate}&end_date=${endDate}`;
+                const data = await fetchData(url);
+                return Array.isArray(data) ? data : [];
+            } catch (error) {
+                console.error('Ошибка при получении заказов за диапазон:', error);
+                throw error;
             }
-            if (typeof data === 'string') {
-                const num = Number(data);
-                return isNaN(num) ? 0 : num;
-            }
-            if (data && typeof data === 'object') {
-                for (const key of possibleKeys) {
-                    if (data[key] !== undefined && data[key] !== null) {
-                        const num = Number(data[key]);
-                        if (!isNaN(num)) return num;
-                    }
-                }
-                for (const key in data) {
-                    if (data.hasOwnProperty(key)) {
-                        const num = Number(data[key]);
-                        if (!isNaN(num)) return num;
-                    }
-                }
-            }
-            return 0;
         }
 
-        // Количество заказов за день
-        async function getOrdersCount(date) {
+        // Форматирование даты для отображения
+        function formatDate(date) {
+            const day = String(date.getDate()).padStart(2, '0');
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const year = date.getFullYear();
+            return `${day}.${month}.${year}`;
+        }
+
+        // Получить данные за период
+        async function getDataForPeriod(period) {
             try {
-                const data = await fetchData(`${API_BASE_URL}/orders/${date}`);
+                const now = new Date();
+                let startDate = new Date(now);
                 
-                if (Array.isArray(data)) {
-                    return data.length;
+                switch(period) {
+                    case 'day':
+                        startDate.setHours(0, 0, 0, 0);
+                        break;
+                    case 'week':
+                        startDate.setDate(now.getDate() - 6);
+                        startDate.setHours(0, 0, 0, 0);
+                        break;
+                    case 'month':
+                        startDate.setDate(now.getDate() - 29);
+                        startDate.setHours(0, 0, 0, 0);
+                        break;
+                    case 'year':
+                        startDate.setMonth(now.getMonth() - 11);
+                        startDate.setDate(1);
+                        startDate.setHours(0, 0, 0, 0);
+                        break;
                 }
                 
-                return extractNumber(data, [
-                    'orders_count', 'count', 'total_orders', 'orders',
-                    'quantity', 'qty', 'number', 'num'
-                ]);
-            } catch (error) {
-                console.error('Ошибка при получении количества заказов:', error);
-                return 0;
-            }
-        }
-
-        // Средний чек за день
-        async function getAverageOrder(date) {
-            try {
-                const data = await fetchData(`${API_BASE_URL}/average/${date}`);
-                const value = extractNumber(data, [
-                    'average_check', 'avg', 'average', 'avg_order',
-                    'mean', 'median', 'check_amount'
-                ]);
-                return Math.round(value);
-            } catch (error) {
-                console.error('Ошибка при получении среднего чека:', error);
-                return 0;
-            }
-        }
-
-        // Общая выручка за день
-        async function getTotalRevenue(date) {
-            try {
-                const data = await fetchData(`${API_BASE_URL}/revenue/${date}`);
-                const value = extractNumber(data, [
-                    'total_revenue', 'revenue', 'total', 'sum',
-                    'income', 'amount', 'total_amount'
-                ]);
-                return Math.round(value);
-            } catch (error) {
-                console.error('Ошибка при получении выручки:', error);
-                return 0;
-            }
-        }
-
-        // Проверка подключения к бэкенду
-        async function checkBackendConnection() {
-            try {
-                console.log('Проверка подключения к бэкенду...');
-                const response = await fetch(`${API_BASE_URL}/orders/${getCurrentDate()}`, {
-                    method: 'GET',
-                    headers: { 'Content-Type': 'application/json' }
-                });
+                const formattedStartDate = formatDate(startDate);
+                const formattedEndDate = formatDate(now);
                 
-                if (response.ok) {
-                    isBackendConnected = true;
-                    console.log('✅ Бэкенд подключен!');
-                    return true;
-                }
-            } catch (error) {
-                console.log('❌ Бэкенд не доступен. Используем демо-данные.');
-                isBackendConnected = false;
-            }
-            return false;
-        }
-
-        // Получаем данные из бэкенда или демо-данные
-        async function getBackendData(period, date) {
-            try {
-                const ordersCount = await getOrdersCount(date);
-                const avgOrder = await getAverageOrder(date);
-                const totalRevenue = await getTotalRevenue(date);
+                const orders = await getOrdersRange(formattedStartDate, formattedEndDate);
+                
+                const ordersCount = orders.length;
+                const totalRevenue = orders.reduce((sum, order) => sum + (order.sum || 0), 0);
+                const avgOrder = ordersCount > 0 ? Math.round(totalRevenue / ordersCount) : 0;
+                
+                const chartData = generateChartData(orders, period);
                 
                 return {
                     orders: ordersCount,
                     avgOrder: avgOrder,
                     total: totalRevenue,
-                    chartData: demoData[period].chartData
+                    chartData: chartData
                 };
+                
             } catch (error) {
-                console.error('Ошибка при получении данных с бэкенда:', error);
-                return demoData[period];
+                console.error('Ошибка при получении данных за период:', error);
+                throw error;
             }
         }
 
-        // Обновление данных на странице
-        async function updateData(period) {
-            const currentDate = getCurrentDate();
-            console.log('Обновление данных для периода:', period);
-            
-            const data = await getBackendData(period, currentDate);
+        // Генерация данных для графика
+        function generateChartData(orders, period) {
+            if (orders.length === 0) {
+                return [];
+            }
 
-            // Обновляем DOM
-            document.getElementById('orders-count').textContent = formatNumber(data.orders);
-            document.getElementById('avg-order').textContent = formatNumber(data.avgOrder) + ' ₽';
-            document.getElementById('total-revenue').textContent = formatNumber(data.total) + ' ₽';
+            if (period === 'day') {
+                const hourlyData = {};
+                
+                orders.forEach(order => {
+                    if (order.time) {
+                        const hour = order.time.split(':')[0] + ':00';
+                        if (!hourlyData[hour]) {
+                            hourlyData[hour] = { orders: 0, revenue: 0 };
+                        }
+                        hourlyData[hour].orders += 1;
+                        hourlyData[hour].revenue += order.sum || 0;
+                    }
+                });
+                
+                const result = [];
+                for (let hour = 0; hour < 24; hour++) {
+                    const hourStr = `${hour.toString().padStart(2, '0')}:00`;
+                    const data = hourlyData[hourStr] || { orders: 0, revenue: 0 };
+                    
+                    result.push({
+                        label: hourStr,
+                        orders: data.orders,
+                        revenue: data.revenue
+                    });
+                }
+                return result;
+            } else if (period === 'week') {
+                const dailyData = {};
+                
+                orders.forEach(order => {
+                    if (order.date) {
+                        if (!dailyData[order.date]) {
+                            dailyData[order.date] = { orders: 0, revenue: 0 };
+                        }
+                        dailyData[order.date].orders += 1;
+                        dailyData[order.date].revenue += order.sum || 0;
+                    }
+                });
+                
+                const sortedDates = Object.keys(dailyData).sort((a, b) => {
+                    const [dayA, monthA, yearA] = a.split('.').map(Number);
+                    const [dayB, monthB, yearB] = b.split('.').map(Number);
+                    return new Date(yearA, monthA - 1, dayA) - new Date(yearB, monthB - 1, dayB);
+                });
+                
+                return sortedDates.map(date => ({
+                    label: date,
+                    orders: dailyData[date].orders,
+                    revenue: dailyData[date].revenue
+                }));
+            } else if (period === 'month') {
+                const dailyData = {};
+                
+                orders.forEach(order => {
+                    if (order.date) {
+                        if (!dailyData[order.date]) {
+                            dailyData[order.date] = { orders: 0, revenue: 0 };
+                        }
+                        dailyData[order.date].orders += 1;
+                        dailyData[order.date].revenue += order.sum || 0;
+                    }
+                });
+                
+                const sortedDates = Object.keys(dailyData).sort((a, b) => {
+                    const [dayA, monthA, yearA] = a.split('.').map(Number);
+                    const [dayB, monthB, yearB] = b.split('.').map(Number);
+                    return new Date(yearA, monthA - 1, dayA) - new Date(yearB, monthB - 1, dayB);
+                });
+                
+                return sortedDates.map(date => {
+                    const day = date.split('.')[0];
+                    return {
+                        label: `${day}`,
+                        orders: dailyData[date].orders,
+                        revenue: dailyData[date].revenue
+                    };
+                });
+            } else if (period === 'year') {
+                const monthNames = ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек'];
+                const now = new Date();
+                const result = [];
+                
+                for (let i = 0; i < 12; i++) {
+                    const date = new Date(now);
+                    date.setMonth(now.getMonth() - i);
+                    const monthIndex = date.getMonth();
+                    const year = date.getFullYear();
+                    
+                    result.unshift({
+                        label: `${monthNames[monthIndex]} ${year}`,
+                        month: monthIndex + 1,
+                        year: year,
+                        orders: 0,
+                        revenue: 0
+                    });
+                }
+                
+                orders.forEach(order => {
+                    if (order.date) {
+                        try {
+                            const dateParts = order.date.split('-');
+                            if (dateParts.length === 3) {
+                                const year = parseInt(dateParts[0], 10);
+                                const month = parseInt(dateParts[1], 10);
+                                
+                                const monthData = result.find(item => 
+                                    item.month === month && item.year === year
+                                );
+                                
+                                if (monthData) {
+                                    monthData.orders += 1;
+                                    monthData.revenue += order.sum || 0;
+                                }
+                            }
+                        } catch (e) {
+                            console.error('Ошибка обработки даты:', order.date, e);
+                        }
+                    }
+                });
+                
+                return result.map(item => ({
+                    label: item.label,
+                    orders: item.orders,
+                    revenue: item.revenue
+                }));
+            }
             
-            // Обновляем статус подключения
-            updateConnectionStatus();
-            
-            // Обновляем график
-            updateChart(data.chartData, period, currentChartType);
+            return [];
         }
 
-        // Обновление статуса подключения
-        function updateConnectionStatus() {
-            const statusElement = document.getElementById('connection-status') || createStatusElement();
-        }
-
-        // Создание элемента для статуса
-        function createStatusElement() {
-            const statusElement = document.createElement('div');
-            statusElement.id = 'connection-status';
-            statusElement.style.position = 'fixed';
-            statusElement.style.top = '10px';
-            statusElement.style.right = '10px';
-            statusElement.style.padding = '5px 10px';
-            statusElement.style.background = 'white';
-            statusElement.style.border = '1px solid #ccc';
-            statusElement.style.borderRadius = '5px';
-            statusElement.style.zIndex = '1000';
-            document.body.appendChild(statusElement);
-            return statusElement;
+        // Показать ошибку
+        function showError(message) {
+            const errorContainer = document.getElementById('error-container');
+            errorContainer.textContent = message;
+            errorContainer.style.display = 'block';
+            setTimeout(() => {
+                errorContainer.style.display = 'none';
+            }, 5000);
         }
 
         // Отрисовка графика
         function updateChart(chartData, period, chartType) {
             const svg = document.querySelector('#sales-chart svg');
+            const noDataMessage = document.getElementById('no-data-message');
+            
             if (!svg) return;
             
             const barsGroup = svg.querySelector('.bars');
@@ -628,38 +639,39 @@
             const yAxisGroup = svg.querySelector('.y-axis');
             const gridGroup = svg.querySelector('.grid-lines');
             
-            // Очищаем предыдущий график
             if (barsGroup) barsGroup.innerHTML = '';
             if (xAxisGroup) xAxisGroup.innerHTML = '';
             if (yAxisGroup) yAxisGroup.innerHTML = '';
             if (gridGroup) gridGroup.innerHTML = '';
             
-            if (!chartData || chartData.length === 0) return;
+            const hasData = chartData && chartData.length > 0 && chartData.some(item => 
+                item.orders > 0 || item.revenue > 0
+            );
             
-            // Определяем данные для отображения
+            if (!hasData) {
+                svg.style.display = 'none';
+                noDataMessage.style.display = 'block';
+                return;
+            }
+            
+            svg.style.display = 'block';
+            noDataMessage.style.display = 'none';
+            
             const dataKey = chartType === 'orders' ? 'orders' : 'revenue';
             const values = chartData.map(item => item[dataKey] || 0);
-            const maxValue = Math.max(...values);
+            const maxValue = Math.max(...values, 1);
             
-            // Настройки графика
             const margin = { top: 40, right: 30, bottom: 60, left: 70 };
             const width = 900 - margin.left - margin.right;
             const height = 400 - margin.top - margin.bottom;
             const barWidth = (width / chartData.length) * 0.7;
             
-            // Масштабирование
             const scaleY = maxValue > 0 ? height / maxValue : 1;
             
-            // Создаем основную группу для графика
-            const mainGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
-            mainGroup.setAttribute('transform', `translate(${margin.left}, ${margin.top})`);
-            
-            // Сетка и оси Y
             for (let i = 0; i <= 5; i++) {
                 const value = Math.round(maxValue / 5 * i);
                 const y = height - (height / 5 * i);
                 
-                // Линия сетки
                 const gridLine = document.createElementNS("http://www.w3.org/2000/svg", "line");
                 gridLine.setAttribute('x1', '0');
                 gridLine.setAttribute('y1', y);
@@ -669,7 +681,6 @@
                 gridLine.setAttribute('stroke-width', '1');
                 if (gridGroup) gridGroup.appendChild(gridLine);
                 
-                // Подпись значения
                 const valueText = document.createElementNS("http://www.w3.org/2000/svg", "text");
                 valueText.setAttribute('x', '-10');
                 valueText.setAttribute('y', y + 4);
@@ -677,7 +688,6 @@
                 valueText.setAttribute('font-size', '12');
                 valueText.setAttribute('fill', '#6c757d');
                 
-                // Форматирование в зависимости от масштаба
                 if (chartType === 'revenue') {
                     if (maxValue >= 1000000) {
                         valueText.textContent = (value / 1000000).toFixed(1) + 'M';
@@ -693,7 +703,6 @@
                 if (yAxisGroup) yAxisGroup.appendChild(valueText);
             }
             
-            // Ось X (линия)
             const xAxisLine = document.createElementNS("http://www.w3.org/2000/svg", "line");
             xAxisLine.setAttribute('x1', '0');
             xAxisLine.setAttribute('y1', height);
@@ -703,14 +712,12 @@
             xAxisLine.setAttribute('stroke-width', '1');
             if (xAxisGroup) xAxisGroup.appendChild(xAxisLine);
             
-            // Столбцы и подписи
             chartData.forEach((item, index) => {
                 const value = item[dataKey] || 0;
                 const barHeight = value * scaleY;
                 const x = index * (width / chartData.length) + (width / chartData.length - barWidth) / 2;
                 const y = height - barHeight;
                 
-                // Столбец
                 const bar = document.createElementNS("http://www.w3.org/2000/svg", "rect");
                 bar.setAttribute('class', 'bar');
                 bar.setAttribute('x', x);
@@ -720,7 +727,6 @@
                 bar.setAttribute('rx', '3');
                 bar.setAttribute('fill', '#4361ee');
                 
-                // Анимация появления
                 bar.setAttribute('opacity', '0');
                 setTimeout(() => {
                     bar.setAttribute('opacity', '1');
@@ -728,7 +734,6 @@
                 
                 if (barsGroup) barsGroup.appendChild(bar);
                 
-                // Подпись значения на столбце
                 if (barHeight > 20) {
                     const valueLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
                     valueLabel.setAttribute('x', x + barWidth / 2);
@@ -747,7 +752,6 @@
                     if (barsGroup) barsGroup.appendChild(valueLabel);
                 }
                 
-                // Подпись категории на оси X
                 const categoryLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
                 categoryLabel.setAttribute('x', x + barWidth / 2);
                 categoryLabel.setAttribute('y', height + 20);
@@ -759,41 +763,29 @@
                 if (xAxisGroup) xAxisGroup.appendChild(categoryLabel);
             });
             
-            // Обновляем легенду
             document.getElementById('legend-text').textContent = 
                 chartType === 'orders' ? 'Количество заказов' : 'Общая выручка (руб.)';
         }
 
-        // Функция для имитации работы бэкенда
-        function simulateBackend() {
-            isBackendConnected = true;
-            updateConnectionStatus();
-            
-            const currentPeriod = document.getElementById('period-select').value;
-            updateData(currentPeriod);
-            
-            alert('✅ Режим имитации бэкенда включен! Данные обновлены.');
-        }
+        // Обновление данных на странице
+        async function updateData(period) {
+            try {
+                document.body.classList.add('loading');
+                
+                const data = await getDataForPeriod(period);
 
-        // Создаем кнопку для имитации бэкенда
-        function createSimulateButton() {
-            const button = document.createElement('button');
-            button.textContent = '🎭 Имитировать бэкенд (тест)';
-            button.style.position = 'fixed';
-            button.style.bottom = '60px';
-            button.style.right = '10px';
-            button.style.padding = '10px';
-            button.style.background = '#ff6b6b';
-            button.style.color = 'white';
-            button.style.border = 'none';
-            button.style.borderRadius = '5px';
-            button.style.cursor = 'pointer';
-            button.style.zIndex = '1000';
-            button.style.fontSize = '14px';
-            
-            button.addEventListener('click', simulateBackend);
-            
-            document.body.appendChild(button);
+                document.getElementById('orders-count').textContent = formatNumber(data.orders);
+                document.getElementById('avg-order').textContent = formatNumber(data.avgOrder) + ' ₽';
+                document.getElementById('total-revenue').textContent = formatNumber(data.total) + ' ₽';
+                
+                updateChart(data.chartData, period, currentChartType);
+                
+                document.body.classList.remove('loading');
+                
+            } catch (error) {
+                showError('Ошибка загрузки данных: ' + error.message);
+                document.body.classList.remove('loading');
+            }
         }
 
         // Обработчики событий
@@ -807,50 +799,19 @@
             updateData(currentPeriod);
         });
 
-        // Кнопка для проверки подключения
-        function addTestButton() {
-            const button = document.createElement('button');
-            button.textContent = 'Проверить подключение';
-            button.style.position = 'fixed';
-            button.style.bottom = '10px';
-            button.style.right = '10px';
-            button.style.padding = '10px';
-            button.style.background = '#4361ee';
-            button.style.color = 'white';
-            button.style.border = 'none';
-            button.style.borderRadius = '5px';
-            button.style.cursor = 'pointer';
-            button.style.zIndex = '1000';
-            
-            button.addEventListener('click', async () => {
-                button.textContent = 'Проверяем...';
-                const connected = await checkBackendConnection();
-                updateConnectionStatus();
-                if (connected) {
-                    button.textContent = 'Обновить данные';
-                    updateData(document.getElementById('period-select').value);
-                } else {
-                    button.textContent = 'Проверить подключение';
-                }
-            });
-            
-            document.body.appendChild(button);
-        }
-
         // Инициализация при загрузке страницы
         document.addEventListener('DOMContentLoaded', async function() {
-            console.log('Страница загружена, инициализация...');
-            
-            // Добавляем кнопки
-            addTestButton();
-            createSimulateButton();
-            
-            // Проверяем подключение
-            await checkBackendConnection();
-            updateConnectionStatus();
-            
-            // Загружаем данные
-            updateData('day');
+            try {
+                const now = new Date();
+                const yesterday = new Date(now);
+                yesterday.setDate(now.getDate() - 1);
+                
+                await getOrdersRange(formatDate(yesterday), formatDate(now));
+                
+                updateData('day');
+            } catch (error) {
+                showError('Не удалось подключиться к серверу. Проверьте подключение и попробуйте снова.');
+            }
         });
     </script>
 </body>
