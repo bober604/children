@@ -257,6 +257,36 @@
             padding: 40px;
         }
 
+        #custom-period-container {
+            background: white;
+            padding: 20px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            margin-bottom: 20px;
+        }
+
+        #custom-period-container input[type="date"]:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(67, 97, 238, 0.2);
+        }
+
+        #apply-custom-period {
+            padding: 10px 20px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: var(--transition);
+        }
+
+        #apply-custom-period:hover {
+            background-color: var(--secondary-color);
+            transform: translateY(-2px);
+        }
+
         @media (max-width: 768px) {
             .back-a {
                 position: relative;
@@ -286,6 +316,24 @@
             .chart {
                 height: 300px;
             }
+
+            #custom-period-container {
+                padding: 15px;
+            }
+            
+            #custom-period-container > div {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            #custom-period-container input[type="date"] {
+                width: 100% !important;
+            }
+            
+            #apply-custom-period {
+                margin-top: 15px !important;
+                width: 100%;
+            }
         }
     </style>
 </head>
@@ -300,7 +348,25 @@
                     <option value="week">За неделю</option>
                     <option value="month">За месяц</option>
                     <option value="year">За год</option>
+                    <option value="custom">За период</option>
                 </select>
+            </div>
+        </div>
+
+        <!-- Контейнер для выбора периода -->
+        <div id="custom-period-container" style="display: none;">
+            <div style="display: flex; gap: 15px; align-items: center;">
+                <div>
+                    <label style="display: block; margin-bottom: 5px; font-weight: 500;">С:</label>
+                    <input type="date" id="start-date" style="padding: 10px; border: 1px solid #ddd; border-radius: 8px; width: 150px;">
+                </div>
+                <div>
+                    <label style="display: block; margin-bottom: 5px; font-weight: 500;">По:</label>
+                    <input type="date" id="end-date" style="padding: 10px; border: 1px solid #ddd; border-radius: 8px; width: 150px;">
+                </div>
+                <button id="apply-custom-period">
+                    Применить
+                </button>
             </div>
         </div>
 
@@ -378,6 +444,7 @@
         // Базовый URL бэкенда
         const API_BASE_URL = 'http://127.0.0.1:8000';
         let currentChartType = 'orders';
+        let currentPeriod = 'day';
 
         // Форматирование чисел
         function formatNumber(num) {
@@ -431,12 +498,18 @@
             return `${day}.${month}.${year}`;
         }
 
-        // Форматирование даты в формате YYYY-MM-DD
+        // Форматирование даты в формате YYYY-MM-DD (для input type="date")
         function formatDateISO(date) {
             const year = date.getFullYear();
             const month = String(date.getMonth() + 1).padStart(2, '0');
             const day = String(date.getDate()).padStart(2, '0');
             return `${year}-${month}-${day}`;
+        }
+
+        // Функция для показа/скрытия выбора периода
+        function toggleCustomPeriodInput(show) {
+            const container = document.getElementById('custom-period-container');
+            container.style.display = show ? 'block' : 'none';
         }
 
         // Получить данные за период
@@ -474,6 +547,33 @@
                 const avgOrder = ordersCount > 0 ? Math.round(totalRevenue / ordersCount) : 0;
                 
                 const chartData = generateChartData(orders, period);
+                
+                return {
+                    orders: ordersCount,
+                    avgOrder: avgOrder,
+                    total: totalRevenue,
+                    chartData: chartData
+                };
+                
+            } catch (error) {
+                console.error('Ошибка при получении данных за период:', error);
+                throw error;
+            }
+        }
+
+        // Функция для получения данных за произвольный период
+        async function getDataForCustomPeriod(startDate, endDate) {
+            try {
+                const formattedStartDate = formatDate(new Date(startDate));
+                const formattedEndDate = formatDate(new Date(endDate));
+                
+                const orders = await getOrdersRange(formattedStartDate, formattedEndDate);
+                
+                const ordersCount = orders.length;
+                const totalRevenue = orders.reduce((sum, order) => sum + (order.sum || 0), 0);
+                const avgOrder = ordersCount > 0 ? Math.round(totalRevenue / ordersCount) : 0;
+                
+                const chartData = generateCustomPeriodChartData(orders, startDate, endDate);
                 
                 return {
                     orders: ordersCount,
@@ -604,7 +704,6 @@
                     if (order.date) {
                         let orderDateStr = order.date;
                         
-                        // Конвертируем формат даты, если нужно
                         if (order.date.match(/^\d{4}-\d{2}-\d{2}$/)) {
                             const parts = order.date.split('-');
                             orderDateStr = `${parts[2]}.${parts[1]}.${parts[0]}`;
@@ -629,7 +728,7 @@
                 }
                 
                 return result;
-
+                
             } else if (period === 'year') {
                 const monthNames = ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек'];
                 const now = new Date();
@@ -681,6 +780,58 @@
             }
             
             return [];
+        }
+
+        // Генерация данных для графика произвольного периода
+        function generateCustomPeriodChartData(orders, startDate, endDate) {
+            if (orders.length === 0) {
+                return [];
+            }
+
+            const start = new Date(startDate);
+            const end = new Date(endDate);
+            const dailyData = {};
+            
+            // Создаем все дни периода с нулевыми значениями
+            const currentDate = new Date(start);
+            while (currentDate <= end) {
+                const dateStr = formatDate(currentDate);
+                dailyData[dateStr] = { orders: 0, revenue: 0 };
+                currentDate.setDate(currentDate.getDate() + 1);
+            }
+            
+            // Заполняем реальными данными
+            orders.forEach(order => {
+                if (order.date) {
+                    let orderDateStr = order.date;
+                    
+                    if (order.date.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                        const parts = order.date.split('-');
+                        orderDateStr = `${parts[2]}.${parts[1]}.${parts[0]}`;
+                    }
+                    
+                    if (dailyData[orderDateStr]) {
+                        dailyData[orderDateStr].orders += 1;
+                        dailyData[orderDateStr].revenue += order.sum || 0;
+                    }
+                }
+            });
+            
+            // Преобразуем в массив
+            const result = [];
+            const currentDate2 = new Date(start);
+            while (currentDate2 <= end) {
+                const dateStr = formatDate(currentDate2);
+                const day = dateStr.split('.')[0];
+                result.push({
+                    label: `${day}`,
+                    orders: dailyData[dateStr]?.orders || 0,
+                    revenue: dailyData[dateStr]?.revenue || 0
+                });
+                currentDate2.setDate(currentDate2.getDate() + 1);
+            }
+            
+            return result;
         }
 
         // Показать ошибку
@@ -747,8 +898,9 @@
                     case 'day':
                     case 'week':
                     case 'month':
+                    case 'custom':
                     default:
-                        maxValue = 20000; // 20 тыс для дня, недели и месяца
+                        maxValue = 20000; // 20 тыс для дня, недели, месяца и произвольного периода
                 }
             }
             
@@ -775,111 +927,116 @@
                 if (gridGroup) gridGroup.appendChild(gridLine);
                 
                 // Подписи значений на оси Y
-        const valueText = document.createElementNS("http://www.w3.org/2000/svg", "text");
-        valueText.setAttribute('x', margin.left - 10);
-        valueText.setAttribute('y', y + 4);
-        valueText.setAttribute('text-anchor', 'end');
-        valueText.setAttribute('font-size', '12');
-        valueText.setAttribute('fill', '#6c757d');
-        
-        // Форматируем значения для выручки
-        if (chartType === 'revenue') {
-            if (value >= 1000000) {
-                valueText.textContent = (value / 1000000).toFixed(1) + 'M';
-            } else if (value >= 1000) {
-                valueText.textContent = (value / 1000).toFixed(0) + 'K';
-            } else {
-                valueText.textContent = formatNumber(value);
-            }
-        } else {
-            valueText.textContent = formatNumber(value);
-        }
-        
-        if (yAxisGroup) yAxisGroup.appendChild(valueText);
-    }
-    
-    // Ось X
-    const xAxisLine = document.createElementNS("http://www.w3.org/2000/svg", "line");
-    xAxisLine.setAttribute('x1', margin.left);
-    xAxisLine.setAttribute('y1', margin.top + height);
-    xAxisLine.setAttribute('x2', margin.left + width);
-    xAxisLine.setAttribute('y2', margin.top + height);
-    xAxisLine.setAttribute('stroke', '#6c757d');
-    xAxisLine.setAttribute('stroke-width', '1');
-    if (xAxisGroup) xAxisGroup.appendChild(xAxisLine);
-    
-    // Рисуем столбцы и подписи оси X
-    chartData.forEach((item, index) => {
-        const value = item[dataKey] || 0;
-        const barHeight = value * scaleY;
-        const x = margin.left + index * (width / chartData.length) + (width / chartData.length - barWidth) / 2;
-        const y = margin.top + height - barHeight;
-        
-        // Рисуем столбец только если есть заказы
-        if (value > 0) {
-            const bar = document.createElementNS("http://www.w3.org/2000/svg", "rect");
-            bar.setAttribute('class', 'bar');
-            bar.setAttribute('x', x);
-            bar.setAttribute('y', y);
-            bar.setAttribute('width', barWidth);
-            bar.setAttribute('height', barHeight);
-            bar.setAttribute('rx', '3');
-            bar.setAttribute('fill', '#4361ee');
-            
-            bar.setAttribute('opacity', '0');
-            setTimeout(() => {
-                bar.setAttribute('opacity', '1');
-            }, index * 100);
-            
-            if (barsGroup) barsGroup.appendChild(bar);
-            
-            const valueLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
-            valueLabel.setAttribute('x', x + barWidth / 2);
-            valueLabel.setAttribute('y', y - 8);
-            valueLabel.setAttribute('text-anchor', 'middle');
-            valueLabel.setAttribute('font-size', '11');
-            valueLabel.setAttribute('fill', '#4361ee');
-            valueLabel.setAttribute('font-weight', 'bold');
-            
-            // Форматируем значения над столбцами для выручки
-            if (chartType === 'revenue') {
-                if (value >= 1000000) {
-                    valueLabel.textContent = (value / 1000000).toFixed(1) + 'M';
-                } else if (value >= 1000) {
-                    valueLabel.textContent = (value / 1000).toFixed(0) + 'K';
+                const valueText = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                valueText.setAttribute('x', margin.left - 10);
+                valueText.setAttribute('y', y + 4);
+                valueText.setAttribute('text-anchor', 'end');
+                valueText.setAttribute('font-size', '12');
+                valueText.setAttribute('fill', '#6c757d');
+                
+                // Форматируем значения для выручки
+                if (chartType === 'revenue') {
+                    if (value >= 1000000) {
+                        valueText.textContent = (value / 1000000).toFixed(1) + 'M';
+                    } else if (value >= 1000) {
+                        valueText.textContent = (value / 1000).toFixed(0) + 'K';
+                    } else {
+                        valueText.textContent = formatNumber(value);
+                    }
                 } else {
-                    valueLabel.textContent = formatNumber(value);
+                    valueText.textContent = formatNumber(value);
                 }
-            } else {
-                valueLabel.textContent = formatNumber(value);
+                
+                if (yAxisGroup) yAxisGroup.appendChild(valueText);
             }
             
-            if (barsGroup) barsGroup.appendChild(valueLabel);
+            // Ось X
+            const xAxisLine = document.createElementNS("http://www.w3.org/2000/svg", "line");
+            xAxisLine.setAttribute('x1', margin.left);
+            xAxisLine.setAttribute('y1', margin.top + height);
+            xAxisLine.setAttribute('x2', margin.left + width);
+            xAxisLine.setAttribute('y2', margin.top + height);
+            xAxisLine.setAttribute('stroke', '#6c757d');
+            xAxisLine.setAttribute('stroke-width', '1');
+            if (xAxisGroup) xAxisGroup.appendChild(xAxisLine);
+            
+            // Рисуем столбцы и подписи оси X
+            chartData.forEach((item, index) => {
+                const value = item[dataKey] || 0;
+                const barHeight = value * scaleY;
+                const x = margin.left + index * (width / chartData.length) + (width / chartData.length - barWidth) / 2;
+                const y = margin.top + height - barHeight;
+                
+                // Рисуем столбец только если есть заказы
+                if (value > 0) {
+                    const bar = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+                    bar.setAttribute('class', 'bar');
+                    bar.setAttribute('x', x);
+                    bar.setAttribute('y', y);
+                    bar.setAttribute('width', barWidth);
+                    bar.setAttribute('height', barHeight);
+                    bar.setAttribute('rx', '3');
+                    bar.setAttribute('fill', '#4361ee');
+                    
+                    bar.setAttribute('opacity', '0');
+                    setTimeout(() => {
+                        bar.setAttribute('opacity', '1');
+                    }, index * 100);
+                    
+                    if (barsGroup) barsGroup.appendChild(bar);
+                    
+                    const valueLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                    valueLabel.setAttribute('x', x + barWidth / 2);
+                    valueLabel.setAttribute('y', y - 8);
+                    valueLabel.setAttribute('text-anchor', 'middle');
+                    valueLabel.setAttribute('font-size', '11');
+                    valueLabel.setAttribute('fill', '#4361ee');
+                    valueLabel.setAttribute('font-weight', 'bold');
+                    
+                    // Форматируем значения над столбцами для выручки
+                    if (chartType === 'revenue') {
+                        if (value >= 1000000) {
+                            valueLabel.textContent = (value / 1000000).toFixed(1) + 'M';
+                        } else if (value >= 1000) {
+                            valueLabel.textContent = (value / 1000).toFixed(0) + 'K';
+                        } else {
+                            valueLabel.textContent = formatNumber(value);
+                        }
+                    } else {
+                        valueLabel.textContent = formatNumber(value);
+                    }
+                    
+                    if (barsGroup) barsGroup.appendChild(valueLabel);
+                }
+                
+                // Подписи на оси X - всегда ровно
+                const categoryLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                categoryLabel.setAttribute('x', x + barWidth / 2);
+                categoryLabel.setAttribute('y', margin.top + height + 20);
+                categoryLabel.setAttribute('text-anchor', 'middle');
+                categoryLabel.setAttribute('font-size', '12');
+                categoryLabel.setAttribute('fill', '#6c757d');
+                categoryLabel.textContent = item.label;
+                
+                if (xAxisGroup) xAxisGroup.appendChild(categoryLabel);
+            });
+            
+            // Обновляем легенду
+            document.getElementById('legend-text').textContent = 
+                chartType === 'orders' ? 'Количество заказов' : 'Общая выручка (руб.)';
         }
-        
-        // Подписи на оси X - всегда ровно
-        const categoryLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
-        categoryLabel.setAttribute('x', x + barWidth / 2);
-        categoryLabel.setAttribute('y', margin.top + height + 20);
-        categoryLabel.setAttribute('text-anchor', 'middle');
-        categoryLabel.setAttribute('font-size', '12');
-        categoryLabel.setAttribute('fill', '#6c757d');
-        categoryLabel.textContent = item.label;
-        
-        if (xAxisGroup) xAxisGroup.appendChild(categoryLabel);
-    });
-    
-    // Обновляем легенду
-    document.getElementById('legend-text').textContent = 
-        chartType === 'orders' ? 'Количество заказов' : 'Общая выручка (руб.)';
-}
 
         // Обновление данных на странице
-        async function updateData(period) {
+        async function updateData(period, customStartDate = null, customEndDate = null) {
             try {
                 document.body.classList.add('loading');
                 
-                const data = await getDataForPeriod(period);
+                let data;
+                if (period === 'custom' && customStartDate && customEndDate) {
+                    data = await getDataForCustomPeriod(customStartDate, customEndDate);
+                } else {
+                    data = await getDataForPeriod(period);
+                }
 
                 document.getElementById('orders-count').textContent = formatNumber(data.orders);
                 document.getElementById('avg-order').textContent = formatNumber(data.avgOrder) + ' ₽';
@@ -897,23 +1054,60 @@
 
         // Обработчики событий
         document.getElementById('period-select').addEventListener('change', function() {
-            updateData(this.value);
+            currentPeriod = this.value;
+            if (this.value === 'custom') {
+                toggleCustomPeriodInput(true);
+            } else {
+                toggleCustomPeriodInput(false);
+                updateData(this.value);
+            }
         });
 
         document.getElementById('chart-type').addEventListener('change', function() {
             currentChartType = this.value;
-            const currentPeriod = document.getElementById('period-select').value;
-            updateData(currentPeriod);
+            if (currentPeriod === 'custom') {
+                const startDate = document.getElementById('start-date').value;
+                const endDate = document.getElementById('end-date').value;
+                if (startDate && endDate) {
+                    updateData('custom', startDate, endDate);
+                }
+            } else {
+                updateData(currentPeriod);
+            }
+        });
+
+        document.getElementById('apply-custom-period').addEventListener('click', function() {
+            const startDate = document.getElementById('start-date').value;
+            const endDate = document.getElementById('end-date').value;
+            
+            if (!startDate || !endDate) {
+                showError('Пожалуйста, выберите обе даты');
+                return;
+            }
+            
+            if (new Date(startDate) > new Date(endDate)) {
+                showError('Дата начала не может быть позже даты окончания');
+                return;
+            }
+            
+            updateData('custom', startDate, endDate);
         });
 
         // Инициализация при загрузке страницы
         document.addEventListener('DOMContentLoaded', async function() {
             try {
-                const now = new Date();
-                const yesterday = new Date(now);
-                yesterday.setDate(now.getDate() - 1);
+                // Устанавливаем даты по умолчанию для произвольного периода
+                const today = new Date();
+                const weekAgo = new Date();
+                weekAgo.setDate(today.getDate() - 6);
                 
-                await getOrdersRange(formatDate(yesterday), formatDate(now));
+                document.getElementById('end-date').value = formatDateISO(today);
+                document.getElementById('start-date').value = formatDateISO(weekAgo);
+                
+                const yesterday = new Date(today);
+                yesterday.setDate(today.getDate() - 1);
+                
+                await getOrdersRange(formatDate(yesterday), formatDate(today));
                 
                 updateData('day');
             } catch (error) {
