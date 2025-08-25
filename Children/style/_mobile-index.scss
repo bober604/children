@@ -1,0 +1,752 @@
+@media (max-width: 480px) {
+
+    .section-one {
+        display: none;
+        padding-left: calc(50% - 161px);
+        padding-right: calc(50% - 161px);
+        width: 322px;
+        padding-top: 8px;
+        position: fixed;
+        background: #fff;
+        z-index: 1;
+        &__mobile {
+            display: block;
+            &__container {
+                display: flex;
+                align-items: center;
+                &_img {
+                    width: 30px;
+                    height: 30px;
+                }
+
+                &_sag {
+                    margin-left: 63px;
+                    font-weight: 600;
+                    font-size: 20px;
+                    text-align: center;
+                    color: #000;
+                }
+            }
+
+            &_line {
+                margin-top: 5px;
+                border-radius: 10px;
+                width: 321px;
+                height: 2px;
+                background: #1eb500;
+            }
+        }
+
+        &__box {
+            row-gap: 8px;
+            column-gap: 4.65px;
+            padding-top: 11px;
+            &__buttonDeleteMobile {
+                display: none;
+            }
+
+            &__buttonMobile-1 {
+                order: 1;
+            }
+
+            &__buttonMobile-2 {
+                order: 3;
+            }
+
+            &__buttonMobile-3 {
+                order: 0;
+            }
+
+            &__buttonMobile-4 {
+                order: 2;
+            }
+
+            &__buttonMobile-5 {
+                order: 4;
+            }
+
+            &__button-1 {
+                border-radius: 5px;
+            }
+
+            &__button-2 {
+                border-radius: 5px;
+                width: 158px;
+                height: 57px;
+                &_sagMobile-1 {
+                    font-size: 16px;
+                }
+
+                &_sagMobile-2 {
+                    font-size: 14px;
+                }
+            }
+        }
+
+        &__container {
+            &_1 {
+                border-radius: 2px;
+                width: 308px;
+            }
+
+            &__parent {
+                flex-direction: column;
+                &_2 {
+                    border-radius: 2px;
+                    width: 308px;
+                }
+            }
+        }
+
+        &__button {
+            border-radius: 5px;
+        }
+
+        &__orderChange {
+            margin-top: 0;
+            &_line {
+                display: none;
+            }
+
+            &_header {
+                display: flex;
+                align-items: center;
+            }
+
+            &_img {
+                display: block;
+                width: 30px;
+                height: 30px;
+            }
+
+            &_sag {
+                font-weight: 600;
+                font-size: 20px;
+                margin-top: 0;
+                margin-bottom: 0;
+                margin-left: 44px;
+            }
+
+            &_line-mobile {
+                display: block;
+                border-radius: 10px;
+                width: 321px;
+                height: 2px;
+                background: #0068d0;
+                margin-top: 7px;
+                margin-bottom: 10px;
+            }
+
+            &__box {
+                &__input {
+                    margin-bottom: 10px;
+                    gap: 8.3px;
+                    &_item {
+                        border-radius: 2px;
+                        width: 309px;
+                    }
+
+                    &_item-mobile {
+                        height: 54px;
+                    }
+                }
+
+                &__buttons {
+                    column-gap: 8px;
+                    row-gap: 10px;
+                    justify-content: flex-end;
+                    &_block-mobile {
+                        display: none;
+                    }
+
+                    &_element-1 {
+                        order: 1;
+                    }
+
+                    &_element-2 {
+                        order: 3;
+                    }
+
+                    &_element-3 {
+                        order: 5;
+                    }
+
+                    &_element-4 {
+                        order: 2;
+                    }
+
+                    &_element-5 {
+                        order: 7;
+                    }
+
+                    &_element-6 {
+                        order: 4;
+                    }
+
+                    &_element-7 {
+                        order: 6;
+                    }
+
+                    &_block-1 {
+                        padding-left: 12px;
+                        padding-right: 12px;
+                        border-radius: 5px;
+                        width: 112px;
+                    }
+
+                    &_block-2 {
+                        padding-left: 10px;
+                        padding-right: 7px;
+                        width: 160px;
+                        border-radius: 5px;
+                        &_sag {
+                            font-size: 16px;
+                        }
+                    }
+
+                    &_block-3 {
+                        padding-left: 10px;
+                        padding-right: 7px;
+                        width: 160px;
+                        border-radius: 5px;
+                    }
+                }
+
+                &_save {
+                    width: 177px;
+                }
+
+                &_cancellation {
+                    width: 177px;
+                }
+            }
+        }
+    }
+
+    .stick {
+        display: none;
+    }
+
+    .section-two {
+        margin-top: 0;
+        padding-left: calc(50% - 173px);
+        padding-right: calc(50% - 173px);
+        &__nav {
+            flex-direction: column;
+            padding-left: 0;
+            padding-right: 0;
+            &_block {
+                display: none;
+            }
+
+            &_button {
+                display: flex;
+                justify-content: space-between;
+                padding-top: 12px;
+                &-1 {
+                    border: 1px solid #048410;
+                    border-radius: 50px;
+                    padding: 10px 15px;
+                    width: 133px;
+                    height: 39px;
+                    &_sag {
+                        font-weight: 600;
+                        font-size: 16px;
+                        color: #048410;
+                    }
+                    
+                }
+            
+                &-2 {
+                    border: 1px solid #000;
+                    border-radius: 50px;
+                    padding: 10px 15px;
+                    width: 124px;
+                    height: 39px;
+                    margin-left: 30px;
+                    &_sag {
+                        font-weight: 600;
+                        font-size: 16px;
+                        color: #000;
+                    }
+                }
+
+                &-3 {
+                    border: 1px solid #000;
+                    border-radius: 6px;
+                    width: 39px;
+                    height: 39px;
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    &_img {
+                        width: 35px;
+                        height: 35px;
+                    }
+                }
+            }
+        }
+
+        &_line {
+            width: 346px;
+            height: 1px;
+            margin-bottom: 10px;
+            margin-left: 0px;
+        }
+        
+        &__box {
+            margin-top: 0;
+            margin-left: 0;
+            margin-bottom: 3.5px;
+            flex-direction: column;
+            &_Child-1 {
+                border-radius: 5px;
+                width: 346px;
+                min-height: 66px;
+                &__nav {
+                    display: none;
+                }
+
+                &_line {
+                    display: none;
+                }
+
+                &__info {
+                    margin-left: 7.6px;
+                    &_parents {
+                        margin-top: 30.3px;
+                    }
+
+                    &_line-1 {
+                        display: none;
+                    }
+
+                    &_container-sag {
+                        width: 96px;
+                        min-height: 27px;
+                        margin-left: -126px;
+                        &_name {
+                            font-weight: 300;
+                            font-size: 16px;
+                            margin-top: -30px;
+                            position: relative;
+                            width: 97px;
+                            min-height: 30px;
+                        }
+                    }
+
+                    &_sag {
+                        font-size: 18px;
+                        margin-left: 22px;
+                        margin-top: 3px;
+                    }
+
+                    &_time {
+                        font-size: 16px;
+                        margin-top: 6.7px;
+                        margin-left: 14px;
+                        width: 70px;
+                    }
+
+                    &_img {
+                        margin-top: 24px;
+                        margin-left: -27px;
+                    }
+
+                    &_counter {
+                        display: none;
+                    }
+
+                    &_line-2 {
+                        width: 138px;
+                        height: 0px;
+                        margin-top: 28px;
+                        margin-left: -193px;
+                    }
+
+                    &_end {
+                        margin-left: -140px;
+                        margin-top: 34px;
+                        flex-direction: row-reverse;
+                        align-items: center;
+                        height: 24px;
+                        gap: 1.3px;
+                        &_line {
+                            height: 24px;
+                            width: 0;
+                        }
+                    }
+
+                    &_line-3-mobile {
+                        display: block;
+                        border: 1px solid #d9d9d9;
+                        width: 0px;
+                        height: 50px;
+                        margin-left: 40px;
+                        margin-top: 8px;
+                    }
+
+                    &_burger {
+                        display: block;
+                        width: 30px;
+                        height: 30px;
+                        padding-top: 16px;
+                        margin-left: 5px;
+                        transition: all 0.5s;
+                    }
+
+                    &_burger-active {
+                        transform: rotate(90deg) translateX(10px) translateY(-7px);
+                        display: block;
+                        width: 30px;
+                        height: 30px;
+                        padding-top: 16px;
+                        margin-left: 5px;
+                    }
+                }
+            }
+
+            &_Child-2 {
+                position: fixed;
+                margin-left: 300px;
+                margin-top: 10px;
+                width: 45px;
+                min-height: 0;
+                height: 45px;
+                background: #fff;
+                border-radius: 10px;
+                border: 2px solid #0ebc01;
+                z-index: 10;
+                background: white url(../img/Child-2.png) no-repeat center center;
+                background-size: 70% 70%;
+                opacity: 0;
+                pointer-events: none; /* Делает элементы не кликабельными, пока они скрыты */
+                transition: opacity 0.5s, margin-top 0.5s;
+                &_sag {
+                    display: none;
+                }
+                &:hover {
+                    background: white url(../img/Child-2.png) no-repeat center center;
+                    background-size: 70% 70%;
+                }
+            }
+
+            &_Child-2.active {
+                margin-top: 60px;
+                opacity: 1;
+                pointer-events: all; /* Делает элементы снова кликабельными */
+            }
+
+            &_Child-3 {
+                position: fixed;
+                margin-left: 300px;
+                margin-top: 10px;
+                width: 45px;
+                min-height: 0;
+                height: 45px;
+                background: #fff;
+                border-radius: 10px;
+                border: 2px solid #af3131;
+                z-index: 9;
+                opacity: 0;
+                pointer-events: none; /* Делает элементы не кликабельными, пока они скрыты */
+                transition: opacity 0.5s, margin-top 0.5s;
+                &_sag {
+                    display: none;
+                }
+                &_img {
+                    width: 28px;
+                    height: 28px;
+                    margin-left: calc(17%);
+                }
+                &:hover {
+                    background: #fff;
+                }
+            }
+
+            &_Child-3.active {
+                margin-top: 110px;
+                opacity: 1;
+                pointer-events: all; /* Делает элементы снова кликабельными */
+            }
+
+            &_Child-4 {
+                position: fixed;
+                margin-left: 300px;
+                margin-top: 10px;
+                width: 45px;
+                min-height: 0;
+                height: 45px;
+                border-radius: 10px;
+                border: 2px solid #1d00ff;
+                z-index: 8;
+                background: white url(../img/changeMobile.png) no-repeat calc(50% + 2px) center;
+                background-size: 72% 72%;
+                opacity: 0;
+                pointer-events: none; /* Делает элементы не кликабельными, пока они скрыты */
+                transition: opacity 0.5s, margin-top 0.5s;
+                &_sag {
+                    display: none;
+                }
+                &:hover {
+                    background: white url(../img/changeMobile.png) no-repeat calc(50% + 2px) center;
+                    background-size: 72% 72%;
+                }
+            }
+
+            &_Child-4.active {
+                margin-top: 161px;
+                opacity: 1;
+                pointer-events: all; /* Делает элементы снова кликабельными */
+            }
+        }
+    }
+
+    .in-section-two {
+        margin-top: 0;
+        padding-left: calc(50% - 173px);
+        padding-right: calc(50% - 173px);
+        &__nav {
+            flex-direction: column;
+            gap: 10px;
+            padding-left: 0;
+            &_block {
+                display: none;
+            }
+
+            &_button {
+                display: flex;
+                justify-content: space-between;
+                padding-top: 12px;
+                &-1 {
+                    border: 1px solid #048410;
+                    border-radius: 50px;
+                    padding: 10px 15px;
+                    width: 133px;
+                    height: 39px;
+                    &_sag {
+                        font-weight: 600;
+                        font-size: 16px;
+                        color: #048410;
+                    }
+                }
+            
+                &-2 {
+                    border: 1px solid #000;
+                    border-radius: 50px;
+                    padding: 10px 15px;
+                    width: 124px;
+                    height: 39px;
+                    &_sag {
+                        font-weight: 600;
+                        font-size: 16px;
+                        color: #000;
+                    }
+                }
+            }
+        }
+
+        &_line {
+            width: 346px;
+            height: 1px;
+            margin-bottom: 10px;
+            margin-left: 0px;
+        }
+        
+        &__box {
+            margin-top: 0;
+            margin-left: 0;
+            margin-bottom: 3.5px;
+            &_Child-1 {
+                border-radius: 5px;
+                width: 346px;
+                min-height: 66px;
+                &__nav {
+                    display: none;
+                }
+
+                &_line {
+                    display: none;
+                }
+
+                &__info {
+                    margin-left: 7.6px;
+                    &_parents {
+                        margin-top: 30.3px;
+                    }
+
+                    &_line-1 {
+                        display: none;
+                    }
+
+                    &_container-sag {
+                        width: 96px;
+                        min-height: 27px;
+                        &_name {
+                            font-weight: 300;
+                            font-size: 16px;
+                            margin-top: -38px;
+                            position: relative;
+                            width: 97px;
+                            min-height: 30px;
+                        }
+                    }
+
+                    &_sag {
+                        font-size: 18px;
+                        margin-left: 22px;
+                        margin-top: 3px;
+                    }
+
+                    &_time {
+                        font-size: 16px;
+                        margin-top: 6.7px;
+                        margin-left: 14px;
+                        width: 70px;
+                    }
+
+                    &_img {
+                        margin-top: 24px;
+                        margin-left: -37px;
+                    }
+
+                    &_counter {
+                        display: none;
+                    }
+
+                    &_line-2 {
+                        width: 138px;
+                        height: 0px;
+                        margin-top: 28px;
+                        margin-left: -193px;
+                    }
+
+                    &_end {
+                        margin-left: -140px;
+                        margin-top: 34px;
+                        flex-direction: row-reverse;
+                        align-items: center;
+                        height: 24px;
+                        gap: 1.3px;
+                        &_line {
+                            height: 24px;
+                            width: 0;
+                        }
+                    }
+
+                    &_line-3-mobile {
+                        display: block;
+                        border: 1px solid #d9d9d9;
+                        width: 0px;
+                        height: 50px;
+                        margin-left: 40px;
+                        margin-top: 8px;
+                    }
+
+                    &_burger {
+                        display: block;
+                        width: 30px;
+                        height: 30px;
+                        padding-top: 16px;
+                        margin-left: 5px;
+                    }
+                }
+            }
+
+            &_Child-2 {
+                position: fixed;
+                margin-left: 300px;
+                margin-top: 10px;
+                width: 45px;
+                min-height: 0;
+                height: 45px;
+                background: #fff;
+                border-radius: 10px;
+                border: 2px solid #0ebc01;
+                z-index: 10;
+                background: white url(../img/Child-2.png) no-repeat center center;
+                background-size: 70% 70%;
+                opacity: 0;
+                pointer-events: none; /* Делает элементы не кликабельными, пока они скрыты */
+                transition: opacity 0.5s, margin-top 0.5s;
+                &_sag {
+                    display: none;
+                }
+                &:hover {
+                    background: white url(../img/Child-2.png) no-repeat center center;
+                    background-size: 70% 70%;
+                }
+            }
+
+            &_Child-2.active {
+                margin-top: 60px;
+                opacity: 1;
+                pointer-events: all; /* Делает элементы снова кликабельными */
+            }
+
+            &_Child-3 {
+                position: fixed;
+                margin-left: 300px;
+                margin-top: 10px;
+                width: 45px;
+                min-height: 0;
+                height: 45px;
+                background: #fff;
+                border-radius: 10px;
+                border: 2px solid #af3131;
+                z-index: 9;
+                opacity: 0;
+                pointer-events: none; /* Делает элементы не кликабельными, пока они скрыты */
+                transition: opacity 0.5s, margin-top 0.5s;
+                &_sag {
+                    display: none;
+                }
+                &_img {
+                    width: 28px;
+                    height: 28px;
+                    margin-top: 8px;
+                    margin-left: calc(17%);
+                }
+                &:hover {
+                    background: #fff;
+                }
+            }
+
+            &_Child-3.active {
+                margin-top: 110px;
+                opacity: 1;
+                pointer-events: all; /* Делает элементы снова кликабельными */
+            }
+
+            &_Child-4 {
+                position: fixed;
+                margin-left: 300px;
+                margin-top: 10px;
+                width: 45px;
+                min-height: 0;
+                height: 45px;
+                border-radius: 10px;
+                border: 2px solid #1d00ff;
+                z-index: 8;
+                background: white url(../img/changeMobile.png) no-repeat calc(50% + 2px) center;
+                background-size: 72% 72%;
+                opacity: 0;
+                pointer-events: none; /* Делает элементы не кликабельными, пока они скрыты */
+                transition: opacity 0.5s, margin-top 0.5s;
+                &_sag {
+                    display: none;
+                }
+                &:hover {
+                    background: white url(../img/changeMobile.png) no-repeat calc(50% + 2px) center;
+                    background-size: 72% 72%;
+                }
+            }
+
+            &_Child-4.active {
+                margin-top: 161px;
+                opacity: 1;
+                pointer-events: all; /* Делает элементы снова кликабельными */
+            }
+        }
+    }
+}
