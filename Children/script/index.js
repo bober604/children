@@ -1,4 +1,37 @@
 document.addEventListener("DOMContentLoaded", function() {
+    // Функция для отправки запросов на сервер
+    function sendRequest(url, method, data) {
+        console.log('Отправляемые данные:', data); // Проверьте здесь формат
+        
+        return fetch(url, {
+            method: method,
+            headers: { 
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            },
+            body: JSON.stringify(data) // Просто преобразуем в JSON, не меняя ключи
+        })
+        .then(res => res.json())
+        .then(data => console.log(data))
+        .catch(error => console.error('Ошибка:', error));
+    }
+
+    // Функция для форматирования времени в нужный формат (HH.MM.SS)
+    function formatTimeString(date) {
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        const seconds = String(date.getSeconds()).padStart(2, '0');
+        return `${hours}.${minutes}.${seconds}`;
+    }
+
+    // Функция для форматирования даты в нужный формат (DD.MM.YYYY)
+    function formatDateString(date) {
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
+        return `${day}.${month}.${year}`;
+    }
+
     // Находим все ваши поля ввода
     var inputs = document.querySelectorAll(".section-one__container_1, .section-one__container_4, .section-one__container__parent_2.section-one__container_3");
 
@@ -210,6 +243,18 @@ document.addEventListener("DOMContentLoaded", function() {
 
         // Добавляем текущую сумму к общей выручке
         totalRevenue += currentOrderTotal;
+
+        // Отправляем данные о новом заказе на сервер
+        const currentDate = new Date();
+        const dateStr = formatDateString(currentDate);
+        const timeStr = formatTimeString(currentDate);
+
+        sendRequest("http://127.0.0.1:8000/order", "POST", {
+            sum: currentOrderTotal,
+            date: dateStr,
+            time: timeStr
+        });
+
 
         // Обновляем значение выручки
         var revenueElement = document.querySelector(".revenue");
@@ -613,6 +658,17 @@ document.addEventListener("DOMContentLoaded", function() {
                     var revenueElement = document.querySelector(".section-two__nav_block-3 .revenue");
                     revenueElement.textContent = totalRevenue.toFixed(0);
 
+                    // Отправляем данные об изменении заказа на сервер
+                    const dateStr = formatDateString(new Date());
+                    const timeStr = formatTimeString(new Date());
+
+                    sendRequest("http://127.0.0.1:8000/order/update", "POST", {
+                        old_sum: oldPrice,
+                        date: dateStr, 
+                        time: timeStr,
+                        new_sum: newPrice
+                    });
+
                     // Перезапускаем таймер с новым временем
                     const fakeButtons = [{
                         textContent: timeText,
@@ -733,6 +789,17 @@ document.addEventListener("DOMContentLoaded", function() {
 
                     // Уменьшаем общую выручку на сумму удалённого заказа
                     totalRevenue -= orderTotal;
+
+                    // Отправляем данные об удалении заказа на сервер
+                    const currentDate = new Date();
+                    const dateStr = formatDateString(currentDate);
+                    const timeStr = formatTimeString(currentDate);
+
+                    sendRequest("http://127.0.0.1:8000/order", "DELETE", {
+                        sum: orderTotal,
+                        date: dateStr,
+                        time: timeStr
+                    });
 
                     // Обновляем элемент с общей выручкой
                     var revenueElement = document.querySelector(".section-two__nav_block-3 .revenue");
