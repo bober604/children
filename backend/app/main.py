@@ -1,5 +1,5 @@
 import asyncio
-from fastapi import FastAPI, Depends, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, Depends, WebSocket, WebSocketDisconnect, BackgroundTasks
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta, time as time_cls
@@ -56,9 +56,6 @@ def orders_range(start_date: str, end_date: str, db: Session = Depends(database.
     ed = datetime.strptime(end_date, "%d.%m.%Y").date()
     return crud.get_orders_by_range(db, sd, ed)
 
-from fastapi import BackgroundTasks, Depends
-from fastapi.responses import JSONResponse
-from sqlalchemy.orm import Session
 
 @app.delete("/order")
 def delete_order(payload: schemas.OrderDelete, background_tasks: BackgroundTasks, db: Session = Depends(database.get_db)):
@@ -68,18 +65,6 @@ def delete_order(payload: schemas.OrderDelete, background_tasks: BackgroundTasks
         return {"message": "Order deleted successfully"}
     return JSONResponse(status_code=404, content={"detail": "not found"})
 
-# Нерабочий код Джамшеда
-# @app.delete("/order")
-# def delete_order(payload: schemas.OrderDelete, db: Session = Depends(database.get_db)):
-#     ok = crud.delete_order(db, payload.sum, payload.date, payload.time)
-#     # оповещаем клиентов
-#     asyncio.create_task(broadcast_today_stats())
-#     return {"deleted": ok}
-
-from fastapi import BackgroundTasks, Depends
-from fastapi.responses import JSONResponse
-from sqlalchemy.orm import Session
-
 @app.post("/order/update")
 def update_order(
     payload: schemas.OrderUpdate, background_tasks: BackgroundTasks, db: Session = Depends(database.get_db)):
@@ -88,16 +73,6 @@ def update_order(
     if updated:
         return updated
     return JSONResponse(status_code=404, content={"detail": "not found"})
-
-# Нерабочий код Джамшеда
-# @app.post("/order/update")
-# def update_order(payload: schemas.OrderUpdate, db: Session = Depends(database.get_db)):
-#     updated = crud.update_order(db, payload.old_sum, payload.date, payload.time, payload.new_sum)
-#     asyncio.create_task(broadcast_today_stats())
-#     if updated:
-#         return updated
-#     return JSONResponse(status_code=404, content={"detail": "not found"})
-
 
 # ----------------------
 # WebSocket endpoint
