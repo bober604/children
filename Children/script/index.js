@@ -255,6 +255,10 @@ document.addEventListener("DOMContentLoaded", function() {
             time: timeStr
         });
 
+        // После успешного создания заказа
+        orderContainer.dataset.creationDate = dateStr;
+        orderContainer.dataset.creationTime = timeStr;
+
 
         // Обновляем значение выручки
         var revenueElement = document.querySelector(".revenue");
@@ -582,10 +586,17 @@ document.addEventListener("DOMContentLoaded", function() {
                 // Обработка клика по кнопкам времени
                 newOrderBlock.querySelectorAll(".section-one__orderChange__box__buttons_block-1, .section-one__orderChange__box__buttons_block-2, .section-one__orderChange__box__buttons_block-3").forEach(button => {
                     button.addEventListener("click", function () {
+                        // Сначала сбрасываем все выделения
+                        newOrderBlock.querySelectorAll(".section-one__orderChange__box__buttons_block-1_active").forEach(activeBtn => {
+                            activeBtn.classList.remove("section-one__orderChange__box__buttons_block-1_active");
+                            activeBtn.classList.add("section-one__orderChange__box__buttons_block-1_inactive");
+                        });
+                        
+                        // Затем выделяем текущую кнопку
                         const timeDiv = this.querySelector('div');
                         if (timeDiv) {
-                            timeDiv.classList.toggle("section-one__orderChange__box__buttons_block-1_active");
-                            timeDiv.classList.toggle("section-one__orderChange__box__buttons_block-1_inactive");
+                            timeDiv.classList.remove("section-one__orderChange__box__buttons_block-1_inactive");
+                            timeDiv.classList.add("section-one__orderChange__box__buttons_block-1_active");
                         }
                     });
                 });
@@ -658,14 +669,11 @@ document.addEventListener("DOMContentLoaded", function() {
                     var revenueElement = document.querySelector(".section-two__nav_block-3 .revenue");
                     revenueElement.textContent = totalRevenue.toFixed(0);
 
-                    // Отправляем данные об изменении заказа на сервер
-                    const dateStr = formatDateString(new Date());
-                    const timeStr = formatTimeString(new Date());
-
+                    // Затем используйте их
                     sendRequest("http://127.0.0.1:8000/order/update", "POST", {
                         old_sum: oldPrice,
-                        date: dateStr, 
-                        time: timeStr,
+                        date: orderContainer.dataset.creationDate,
+                        time: orderContainer.dataset.creationTime,
                         new_sum: newPrice
                     });
 
@@ -776,37 +784,48 @@ document.addEventListener("DOMContentLoaded", function() {
                     }
 
                     var orderTotal = currentOrderTotal;
-                    orderContainer.remove();
+                    
+                    // Используем сохраненные дату и время создания заказа
+                    const creationDate = orderContainer.dataset.creationDate;
+                    const creationTime = orderContainer.dataset.creationTime;
 
-                    // Уменьшаем количество заказов
-                    orderCount--;
-
-                    // Обновляем элемент с количеством заказов
-                    var orderCountElement = document.querySelector(".section-two__nav_block-1 .section-two__nav_block_sag-2");
-                    if (orderCountElement) {
-                        orderCountElement.textContent = orderCount;
-                    }
-
-                    // Уменьшаем общую выручку на сумму удалённого заказа
-                    totalRevenue -= orderTotal;
-
-                    // Отправляем данные об удалении заказа на сервер
-                    const currentDate = new Date();
-                    const dateStr = formatDateString(currentDate);
-                    const timeStr = formatTimeString(currentDate);
-
-                    sendRequest("http://127.0.0.1:8000/order", "DELETE", {
+                    console.log('Данные для удаления:', {
                         sum: orderTotal,
-                        date: dateStr,
-                        time: timeStr
+                        date: creationDate,
+                        time: creationTime
                     });
 
-                    
-                    // Обновляем элемент с общей выручкой
-                    var revenueElement = document.querySelector(".section-two__nav_block-3 .revenue");
-                    if (revenueElement) {
-                        revenueElement.textContent = totalRevenue.toFixed(0);
-                    }
+                    // Отправляем данные об удалении заказа на сервер
+                    sendRequest("http://127.0.0.1:8000/order", "DELETE", {
+                        sum: orderTotal,
+                        date: creationDate,
+                        time: creationTime
+                    }).then(result => {
+                        if (result !== null) { // ← Измените проверку
+                            // Успешно удалено, удаляем элемент из DOM
+                            orderContainer.remove();
+                            
+                            // Уменьшаем количество заказов
+                            orderCount--;
+                            
+                            // Обновляем элемент с количеством заказов
+                            var orderCountElement = document.querySelector(".section-two__nav_block-1 .section-two__nav_block_sag-2");
+                            if (orderCountElement) {
+                                orderCountElement.textContent = orderCount;
+                            }
+                            
+                            // Уменьшаем общую выручку на сумму удалённого заказа
+                            totalRevenue -= orderTotal;
+                            
+                            // Обновляем элемент с общей выручкой
+                            var revenueElement = document.querySelector(".section-two__nav_block-3 .revenue");
+                            if (revenueElement) {
+                                revenueElement.textContent = totalRevenue.toFixed(0);
+                            }
+                        } else {
+                            console.log('Ошибка при удалении заказа');
+                        }
+                    });
                 }
             }
         });
