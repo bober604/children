@@ -681,19 +681,23 @@ document.addEventListener("DOMContentLoaded", function() {
                     var revenueElement = document.querySelector(".section-two__nav_block-3 .revenue");
                     revenueElement.textContent = totalRevenue.toFixed(0);
 
+                    // ИСПОЛЬЗУЕМ ДАННЫЕ ИЗ РОДИТЕЛЬСКОГО ЗАКАЗА (parentOrder), а не orderContainer
+                    const originalDate = parentOrder.dataset.creationDate;
+                    const originalTime = parentOrder.dataset.creationTime;
+
                     sendRequest("http://127.0.0.1:8000/order/update", "POST", {
                         old_sum: oldPrice,
-                        date: orderContainer.dataset.creationDate,
-                        time: orderContainer.dataset.creationTime,
+                        date: originalDate,  // ← Данные из редактируемого заказа
+                        time: originalTime,  // ← Данные из редактируемого заказа
                         new_sum: newPrice
                     }).then(result => {
-                        if (result && !result.detail) { // ← Проверяем что нет ошибки
-                            // ОБНОВЛЯЕМ сохраненные данные после успешного изменения!
-                            orderContainer.dataset.creationSum = newPrice;
+                        if (result && result.id) {
+                            // ОБНОВЛЯЕМ ДАННЫЕ В РОДИТЕЛЬСКОМ ЗАКАЗЕ
+                            parentOrder.dataset.creationSum = newPrice;
                             
                             console.log('✅ Данные заказа обновлены:', result);
                             
-                            // Обновляем DOM (если нужно)
+                            // Обновляем DOM родительского заказа
                             parentOrder.querySelector(".section-two__box_Child-1__info_container-sag_name").textContent = newName;
                             parentOrder.querySelector(".section-two__box_Child-1__info_parents_number").textContent = newPhone;
                             parentOrder.querySelector(".section-two__box_Child-1__info_parents_par").textContent = newNote;
@@ -815,23 +819,43 @@ document.addEventListener("DOMContentLoaded", function() {
                     const creationTime = orderContainer.dataset.creationTime;
 
                     console.log('Данные для удаления:', {
-                        sum: currentSum, // ← АКТУАЛЬНАЯ сумма (250)
+                        sum: currentSum,
                         date: creationDate,
                         time: creationTime
                     });
 
                     sendRequest("http://127.0.0.1:8000/order", "DELETE", {
-                        sum: currentSum, // ← АКТУАЛЬНАЯ сумма
+                        sum: currentSum,
                         date: creationDate,
                         time: creationTime
                     }).then(result => {
                         if (result && result.message) {
-                            // Успешно удалено
+                            // УСПЕШНО УДАЛЕНО - ОБНОВЛЯЕМ ИНТЕРФЕЙС
+                            
+                            // 1. Удаляем элемент из DOM
                             orderContainer.remove();
+                            
+                            // 2. Уменьшаем количество заказов
                             orderCount--;
-                            // ... остальной код
+                            
+                            // 3. Обновляем элемент с количеством заказов
+                            var orderCountElement = document.querySelector(".section-two__nav_block_sag-2");
+                            if (orderCountElement) {
+                                orderCountElement.textContent = orderCount;
+                            }
+                            
+                            // 4. Уменьшаем общую выручку на сумму удалённого заказа
+                            totalRevenue -= currentSum;
+                            
+                            // 5. Обновляем элемент с общей выручкой
+                            var revenueElement = document.querySelector(".revenue");
+                            if (revenueElement) {
+                                revenueElement.textContent = totalRevenue.toFixed(0);
+                            }
+                            
+                            console.log('✅ Заказ успешно удален');
                         } else {
-                            console.log('Ошибка при удалении заказа');
+                            console.log('❌ Ошибка при удалении заказа');
                         }
                     });
                 }
