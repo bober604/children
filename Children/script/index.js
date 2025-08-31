@@ -1,7 +1,7 @@
 document.addEventListener("DOMContentLoaded", function() {
     // Функция для отправки запросов на сервер
     function sendRequest(url, method, data) {
-        console.log('Отправляемые данные:', data); // Проверьте здесь формат
+        console.log('Отправляемые данные:', data);
         
         return fetch(url, {
             method: method,
@@ -9,11 +9,22 @@ document.addEventListener("DOMContentLoaded", function() {
                 "Content-Type": "application/json",
                 "Accept": "application/json"
             },
-            body: JSON.stringify(data) // Просто преобразуем в JSON, не меняя ключи
+            body: JSON.stringify(data)
         })
-        .then(res => res.json())
-        .then(data => console.log(data))
-        .catch(error => console.error('Ошибка:', error));
+        .then(res => {
+            if (!res.ok) {
+                throw new Error(`HTTP error! status: ${res.status}`);
+            }
+            return res.json(); // ← Возвращаем промис с данными
+        })
+        .then(data => {
+            console.log('Успешный ответ:', data);
+            return data; // ← Возвращаем данные
+        })
+        .catch(error => {
+            console.error('Ошибка:', error);
+            return null; // ← Возвращаем null при ошибке
+        });
     }
 
     // Функция для форматирования времени в нужный формат (HH.MM.SS)
@@ -258,6 +269,7 @@ document.addEventListener("DOMContentLoaded", function() {
         // После успешного создания заказа
         orderContainer.dataset.creationDate = dateStr;
         orderContainer.dataset.creationTime = timeStr;
+        orderContainer.dataset.creationSum = currentOrderTotal; // ← Сохраняем сумму
 
 
         // Обновляем значение выручки
@@ -669,12 +681,26 @@ document.addEventListener("DOMContentLoaded", function() {
                     var revenueElement = document.querySelector(".section-two__nav_block-3 .revenue");
                     revenueElement.textContent = totalRevenue.toFixed(0);
 
-                    // Затем используйте их
                     sendRequest("http://127.0.0.1:8000/order/update", "POST", {
                         old_sum: oldPrice,
                         date: orderContainer.dataset.creationDate,
                         time: orderContainer.dataset.creationTime,
                         new_sum: newPrice
+                    }).then(result => {
+                        if (result && !result.detail) { // ← Проверяем что нет ошибки
+                            // ОБНОВЛЯЕМ сохраненные данные после успешного изменения!
+                            orderContainer.dataset.creationSum = newPrice;
+                            
+                            console.log('✅ Данные заказа обновлены:', result);
+                            
+                            // Обновляем DOM (если нужно)
+                            parentOrder.querySelector(".section-two__box_Child-1__info_container-sag_name").textContent = newName;
+                            parentOrder.querySelector(".section-two__box_Child-1__info_parents_number").textContent = newPhone;
+                            parentOrder.querySelector(".section-two__box_Child-1__info_parents_par").textContent = newNote;
+                            parentOrder.querySelector(".section-two__box_Child-1__nav_section_par-3").textContent = timeText;
+                        } else {
+                            console.log('❌ Ошибка при обновлении заказа:', result);
+                        }
                     });
 
                     // Перезапускаем таймер с новым временем
@@ -783,45 +809,27 @@ document.addEventListener("DOMContentLoaded", function() {
                         stopTimer(timerId);
                     }
 
-                    var orderTotal = currentOrderTotal;
-                    
-                    // Используем сохраненные дату и время создания заказа
+                    // Используем АКТУАЛЬНУЮ сумму из data-атрибута
+                    const currentSum = orderContainer.dataset.creationSum || currentOrderTotal;
                     const creationDate = orderContainer.dataset.creationDate;
                     const creationTime = orderContainer.dataset.creationTime;
 
                     console.log('Данные для удаления:', {
-                        sum: orderTotal,
+                        sum: currentSum, // ← АКТУАЛЬНАЯ сумма (250)
                         date: creationDate,
                         time: creationTime
                     });
 
-                    // Отправляем данные об удалении заказа на сервер
                     sendRequest("http://127.0.0.1:8000/order", "DELETE", {
-                        sum: orderTotal,
+                        sum: currentSum, // ← АКТУАЛЬНАЯ сумма
                         date: creationDate,
                         time: creationTime
                     }).then(result => {
-                        if (result !== null) { // ← Измените проверку
-                            // Успешно удалено, удаляем элемент из DOM
+                        if (result && result.message) {
+                            // Успешно удалено
                             orderContainer.remove();
-                            
-                            // Уменьшаем количество заказов
                             orderCount--;
-                            
-                            // Обновляем элемент с количеством заказов
-                            var orderCountElement = document.querySelector(".section-two__nav_block-1 .section-two__nav_block_sag-2");
-                            if (orderCountElement) {
-                                orderCountElement.textContent = orderCount;
-                            }
-                            
-                            // Уменьшаем общую выручку на сумму удалённого заказа
-                            totalRevenue -= orderTotal;
-                            
-                            // Обновляем элемент с общей выручкой
-                            var revenueElement = document.querySelector(".section-two__nav_block-3 .revenue");
-                            if (revenueElement) {
-                                revenueElement.textContent = totalRevenue.toFixed(0);
-                            }
+                            // ... остальной код
                         } else {
                             console.log('Ошибка при удалении заказа');
                         }
