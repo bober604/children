@@ -801,6 +801,7 @@ document.addEventListener("DOMContentLoaded", function() {
                         time: timeStr
                     });
 
+                    
                     // Обновляем элемент с общей выручкой
                     var revenueElement = document.querySelector(".section-two__nav_block-3 .revenue");
                     if (revenueElement) {
