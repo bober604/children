@@ -481,9 +481,25 @@ function startCountdown(selectedButtons, orderContainer, initialSeconds = null) 
     const pauseButton = orderContainer.querySelector(".section-two__box_Child-1__info_img");
     
     const totalSeconds = getTotalDurationInSeconds(selectedButtons);
+    
+    // Ключевое изменение: вычисляем прошедшее время с момента создания заказа
     let remainingSeconds = initialSeconds !== null ? initialSeconds : totalSeconds;
     
-    // Сохраняем время начала и оставшееся время
+    // Если это восстановление после перезагрузки, вычисляем реальное оставшееся время
+    if (initialSeconds === null && orderContainer.dataset.creationTime) {
+        const creationTime = orderContainer.dataset.creationTime;
+        const now = new Date();
+        
+        // Преобразуем время создания в объект Date
+        const [hours, minutes, seconds] = creationTime.split(/[.:]/).map(Number);
+        const creationDate = new Date();
+        creationDate.setHours(hours, minutes, seconds, 0);
+        
+        // Вычисляем прошедшее время в секундах
+        const elapsedSeconds = Math.floor((now - creationDate) / 1000);
+        remainingSeconds = Math.max(0, totalSeconds - elapsedSeconds);
+    }
+
     const startTime = Date.now();
     let isPaused = false;
     let pauseStartTime = 0;
@@ -506,7 +522,7 @@ function startCountdown(selectedButtons, orderContainer, initialSeconds = null) 
         
         const currentTime = Date.now();
         const elapsedSeconds = Math.floor((currentTime - startTime - totalPausedTime) / 1000);
-        return Math.max(0, totalSeconds - elapsedSeconds);
+        return Math.max(0, remainingSeconds - elapsedSeconds);
     }
 
     // Инициализируем отображение
@@ -514,16 +530,16 @@ function startCountdown(selectedButtons, orderContainer, initialSeconds = null) 
 
     const interval = setInterval(() => {
         if (!isPaused) {
-            remainingSeconds = getAccurateRemainingTime();
-            updateDisplay(remainingSeconds);
+            const currentRemaining = getAccurateRemainingTime();
+            updateDisplay(currentRemaining);
             
-            if (remainingSeconds <= 0) {
+            if (currentRemaining <= 0) {
                 stopTimer(orderId);
                 saveOrdersToStorage();
             }
             
             // Сохраняем состояние каждые 30 секунд
-            if (remainingSeconds % 30 === 0) {
+            if (currentRemaining % 30 === 0) {
                 saveOrdersToStorage();
             }
         }
@@ -764,6 +780,7 @@ function recreateOrderFromStorage(orderData) {
         }];
         
         if (typeof startCountdown === 'function') {
+            // Передаем remainingTime как initialSeconds
             startCountdown(fakeButtons, orderContainer, remainingTime);
             
             // Восстанавливаем состояние паузы
@@ -823,6 +840,14 @@ function addOrderCompletedFunctionality(orderContainer) {
     newCompleteButton.addEventListener("click", function() {
         var targetBlock = orderContainer.closest(".section-two__box");
         if (!targetBlock) return;
+        
+        // Находим кнопку паузы в этом заказе
+        const pauseButton = targetBlock.querySelector(".section-two__box_Child-1__info_img");
+        
+        // Нажимаем кнопку паузы/продолжения
+        if (pauseButton) {
+            pauseButton.click();
+        }
         
         // Просто переключаем основной класс
         targetBlock.classList.toggle("in-section-two__box");
