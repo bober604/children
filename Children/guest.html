@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Гостевой режим - Детская комната</title>
+    <link rel="stylesheet" href="style/guest.css">
+    <script src="./script/guest.js"></script>
+</head>
+<body class="body">
+    <div class="global_section">
+        <section class="section-two">
+            <nav class="section-two__nav">
+                <div class="section-two__nav_container-1">
+                    <div class="section-two__nav_block section-two__nav_block-1">
+                        <h4 class="section-two__nav_block_sag-1">Активные заказы</h4>
+                        <h4 class="section-two__nav_block_sag-2" id="activeOrdersCount">0</h4>
+                    </div>
+                </div>
+            </nav>
+            <div class="section-two_line"></div>
+
+            <!-- Блок с соглашением -->
+            <div id="agreementBlock" class="agreement-block">
+                <div class="agreement-content">
+                    <h2>Правила посещения и пользовательское соглашение</h2>
+                    <div class="agreement-text">
+                        <p>Перед просмотром информации о текущих заказах, пожалуйста, ознакомьтесь с правилами:</p>
+                        <ol>
+                            <li>Дети должны находиться под присмотром родителей</li>
+                            <li>Запрещается приносить еду и напитки в игровую зону</li>
+                            <li>Соблюдайте чистоту и порядок</li>
+                        </ol>
+                        <p><strong>Соглашение об обработке данных:</strong></p>
+                        <p>Пиццерия собирает и обрабатывает информацию о посещениях детской комнаты, включая имена детей, продолжительность их посещения и время начала посещения. Данная информация отображается в общем доступе.</p>
+                    </div>
+                    <div class="agreement-checkbox">
+                        <input type="checkbox" id="agreeCheckbox">
+                        <label for="agreeCheckbox">Я согласен с правилами и обработкой данных</label>
+                    </div>
+                    <button id="agreeButton" class="section-one__button" disabled>
+                        <h2 class="section-one__button_sag">Продолжить</h2>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Блок с заказами (изначально скрыт) -->
+            <div id="ordersBlock" class="section-two_lending" style="display: none;">
+                <!-- Заказы будут добавляться динамически -->
+            </div>
+        </section>
+    </div>
+</body>
+</html>

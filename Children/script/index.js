@@ -583,6 +583,12 @@ function startCountdown(selectedButtons, orderContainer, initialSeconds = null) 
     return orderId;
 }
 
+// Функция для подсчета количества имен в строке
+function countNames(nameString) {
+    if (!nameString || typeof nameString !== 'string') return 0;
+    return nameString.split(/\s+/).filter(name => name.length > 0).length;
+}
+
 // ==================== ФУНКЦИИ ДЛЯ LOCALSTORAGE ====================
 
 // Функции для работы с LocalStorage
@@ -1150,12 +1156,25 @@ function addEditOrderFunctionality(orderContainer) {
                     return;
                 }
 
-                // Получаем новое время и рассчитываем цену
+                // Получаем новое время и рассчитываем БАЗОВУЮ цену (за одно имя)
                 const timeText = selectedButtons[0].previousElementSibling.textContent.trim();
-                const newPrice = calculatePriceFromDuration(timeText);
+                const basePriceForOneName = calculatePriceFromDuration(timeText);
+                
                 const newName = document.getElementById("order-1").value;
                 const newPhone = document.getElementById("order-2").value;
                 const newNote = document.getElementById("order-3").value;
+
+                // === ИСПРАВЛЕНИЕ: Подсчитываем количество имен из ПОЛЯ ВВОДА в блоке изменения ===
+                // Считаем количество имен (слов, разделенных пробелами) из поля ввода
+                const newNames = newName.split(/\s+/).filter(name => name.length > 0);
+                const nameCount = newNames.length;
+                // ================================================================
+
+                // Проверяем, выбрана ли аренда (цена аренды не умножается на кол-во имен)
+                const isRental = timeText.includes('Аренда');
+                
+                // РАССЧИТЫВАЕМ ИТОГОВУЮ ЦЕНУ: для аренды берем базовую цену, для времени - умножаем на кол-во имен
+                const newPrice = isRental ? basePriceForOneName : basePriceForOneName * nameCount;
 
                 // Получаем оставшееся время из текущего таймера
                 const remainingSeconds = getRemainingTime(parentOrder);
@@ -1180,7 +1199,7 @@ function addEditOrderFunctionality(orderContainer) {
                 // Обновляем общую выручку
                 totalRevenue = totalRevenue - oldPrice + newPrice;
                 var revenueElement = document.querySelector(".section-two__nav_block-3 .revenue");
-                revenueElement.textContent = totalRevenue.toFixed(0);
+                if (revenueElement) revenueElement.textContent = totalRevenue.toFixed(0);
 
                 // ИСПОЛЬЗУЕМ ДАННЫЕ ИЗ РОДИТЕЛЬСКОГО ЗАКАЗА (parentOrder), а не orderContainer
                 const originalDate = parentOrder.dataset.creationDate;
@@ -1222,22 +1241,22 @@ function addEditOrderFunctionality(orderContainer) {
                 // Вычитаем прошедшее время из нового общего времени
                 const initialSeconds = Math.max(newTotalSeconds - elapsedSeconds, 0);
 
-                console.log("Original duration:", originalDurationSeconds, "seconds");
-                console.log("Remaining time:", remainingSeconds, "seconds");
-                console.log("Elapsed time:", elapsedSeconds, "seconds");
-                console.log("New total time:", newTotalSeconds, "seconds");
-                console.log("Initial time for new timer:", initialSeconds, "seconds");
+                console.log("New name input:", newName);
+                console.log("Name count:", nameCount);
+                console.log("New price calculation:", isRental ? 
+                    `Rental (${basePriceForOneName})` : 
+                    `Time (${basePriceForOneName} × ${nameCount} = ${newPrice})`);
 
                 // 1. ОСТАНАВЛИВАЕМ СТАРЫЙ ТАЙМЕР
                 const oldTimerId = parentOrder.dataset.timerId;
                 if (oldTimerId && typeof stopTimer === 'function') {
-                    stopTimer(oldTimerId); // Вызываем функцию остановки таймера
+                    stopTimer(oldTimerId);
                 }
 
                 // 2. Перезапускаем таймер с новым временем
-                stopAllTimersForContainer(parentOrder); // Гарантированная остановка
+                stopAllTimersForContainer(parentOrder);
                 const newTimerId = startCountdown(fakeButtons, parentOrder, initialSeconds);
-                parentOrder.dataset.timerId = newTimerId; // Обновляем ID
+                parentOrder.dataset.timerId = newTimerId;
 
                 // ПОСЛЕ СОХРАНЕНИЯ ИЗМЕНЕНИЙ:
                 saveOrdersToStorage();
