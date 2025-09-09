@@ -34,9 +34,15 @@ function sendRequest(url, method, data) {
 
 function stopTimer(orderId) {
     if (activeTimers.has(orderId)) {
-        clearInterval(activeTimers.get(orderId));
+        const timerInfo = activeTimers.get(orderId);
+        clearInterval(timerInfo.interval);
+        if (timerInfo.worker) {
+            timerInfo.worker.terminate();
+        }
         activeTimers.delete(orderId);
+        return true;
     }
+    return false;
 }
 
 function addDeleteFunctionality(orderContainer) {
@@ -227,139 +233,105 @@ function formatDisplayTime(timeString) {
 }
 
 function setupBurgerMenuHandlers() {
-    // Обработка для .section-two__box_Child-1__info_burger
-    document.addEventListener('click', (event) => {
-        if (event.target.closest('.section-two__box_Child-1__info_burger')) {
-            const burger = event.target.closest('.section-two__box_Child-1__info_burger');
-            
-            // Переключаем класс active для бургера
-            burger.classList.toggle('section-two__box_Child-1__info_burger-active');
-            
-            // Находим родительский контейнер
-            const parentContainer = burger.closest('.section-two__box');
-            
-            if (parentContainer) {
-                // Находим связанные блоки
-                const children = parentContainer.querySelectorAll('.section-two__box_Child-2, .section-two__box_Child-3, .section-two__box_Child-4');
-                
-                children.forEach((child, index) => {
-                    // Переключаем класс active
-                    child.classList.toggle('active');
-                    
-                    // Устанавливаем margin-top для активных элементов
-                    if (child.classList.contains('active')) {
-                        child.style.marginTop = `${60 + 50 * index}px`;
-                    } else {
-                        child.style.marginTop = '0';
-                    }
-                });
-            }
-        }
+    // Удаляем все старые обработчики чтобы избежать дублирования
+    document.removeEventListener('click', handleBurgerMenuClick);
+    
+    // Добавляем единый обработчик для всего документа
+    document.addEventListener('click', handleBurgerMenuClick);
+}
+
+function handleBurgerMenuClick(event) {
+    // Обработка клика по бургер-меню (обычные заказы)
+    if (event.target.closest('.section-two__box_Child-1__info_burger')) {
+        const burger = event.target.closest('.section-two__box_Child-1__info_burger');
+        const container = burger.closest('.section-two__box');
         
-        // Обработка для .section-two__box_Child-2.active
-        if (event.target.closest(".section-two__box_Child-2.active")) {
-            const child = event.target.closest(".section-two__box_Child-2.active");
-            const parentContainer = child.closest(".section-two__box");
-            
-            if (parentContainer) {
-                const burger = parentContainer.querySelector(".section-two__box_Child-1__info_burger");
-                const children = parentContainer.querySelectorAll(".section-two__box_Child-2, .section-two__box_Child-3, .section-two__box_Child-4");
-                
-                // Убираем класс active у всех связанных блоков
-                children.forEach((child) => {
-                    child.classList.remove("active");
-                    child.style.marginTop = "0";
-                });
-                
-                // Снимаем active у бургера
-                if (burger) burger.classList.remove("section-two__box_Child-1__info_burger-active");
-            }
+        if (container) {
+            toggleBurgerMenu(container, burger);
+            event.stopPropagation();
         }
+        return;
+    }
+    
+    // Обработка клика по бургер-меню (завершенные заказы)
+    if (event.target.closest('.in-section-two__box_Child-1__info_burger')) {
+        const burger = event.target.closest('.in-section-two__box_Child-1__info_burger');
+        const container = burger.closest('.in-section-two__box');
         
-        // Обработка для .section-two__box_Child-4.active
-        if (event.target.closest(".section-two__box_Child-4.active")) {
-            const child = event.target.closest(".section-two__box_Child-4.active");
-            const parentContainer = child.closest(".section-two__box");
-            
-            if (parentContainer) {
-                const burger = parentContainer.querySelector(".section-two__box_Child-1__info_burger");
-                const children = parentContainer.querySelectorAll(".section-two__box_Child-2, .section-two__box_Child-3, .section-two__box_Child-4");
-                
-                // Убираем класс active у всех связанных блоков
-                children.forEach((child) => {
-                    child.classList.remove("active");
-                    child.style.marginTop = "0";
-                });
-                
-                // Снимаем active у бургера
-                if (burger) burger.classList.remove("section-two__box_Child-1__info_burger-active");
-            }
+        if (container) {
+            toggleBurgerMenu(container, burger);
+            event.stopPropagation();
         }
-        
-        // Обработка для .in-section-two__box_Child-1__info_burger
-        if (event.target.closest(".in-section-two__box_Child-1__info_burger")) {
-            const burger = event.target.closest(".in-section-two__box_Child-1__info_burger");
-            const parentContainer = burger.closest(".in-section-two__box");
-            
-            if (parentContainer) {
-                const children = parentContainer.querySelectorAll(".in-section-two__box_Child-2, .in-section-two__box_Child-3, .in-section-two__box_Child-4");
-                
-                children.forEach((child, index) => {
-                    // Переключаем класс active
-                    child.classList.toggle("active");
-                    
-                    // Устанавливаем margin-top для активных элементов
-                    if (child.classList.contains("active")) {
-                        child.style.marginTop = `${60 + 50 * index}px`;
-                    } else {
-                        child.style.marginTop = "0";
-                    }
-                });
-                
-                // Переключаем класс active для бургера
-                burger.classList.toggle("in-section-two__box_Child-1__info_burger-active");
-            }
+        return;
+    }
+    
+    // Закрытие меню при клике вне его области
+    const allContainers = document.querySelectorAll('.section-two__box');
+    allContainers.forEach(container => {
+        const burger = container.querySelector('.section-two__box_Child-1__info_burger');
+        if (burger && burger.classList.contains('section-two__box_Child-1__info_burger-active')) {
+            closeBurgerMenu(container, burger);
         }
-        
-        // Обработка для .in-section-two__box_Child-2.active
-        if (event.target.closest(".in-section-two__box_Child-2.active")) {
-            const child = event.target.closest(".in-section-two__box_Child-2.active");
-            const parentContainer = child.closest(".in-section-two__box");
-            
-            if (parentContainer) {
-                const burger = parentContainer.querySelector(".in-section-two__box_Child-1__info_burger");
-                const children = parentContainer.querySelectorAll(".in-section-two__box_Child-2, .in-section-two__box_Child-3, .in-section-two__box_Child-4");
-                
-                // Убираем класс active у всех связанных блоков
-                children.forEach((child) => {
-                    child.classList.remove("active");
-                    child.style.marginTop = "0";
-                });
-                
-                // Снимаем active у бургера
-                if (burger) burger.classList.remove("in-section-two__box_Child-1__info_burger-active");
-            }
+    });
+}
+
+function toggleBurgerMenu(container, burger) {
+    const isActive = burger.classList.contains('section-two__box_Child-1__info_burger-active');
+    
+    // Сначала закрываем все другие открытые меню
+    document.querySelectorAll('.section-two__box_Child-1__info_burger.section-two__box_Child-1__info_burger-active').forEach(otherBurger => {
+        if (otherBurger !== burger) {
+            const otherContainer = otherBurger.closest('.section-two__box');
+            closeBurgerMenu(otherContainer, otherBurger);
         }
-        
-        // Обработка для .in-section-two__box_Child-4.active
-        if (event.target.closest(".in-section-two__box_Child-4.active")) {
-            const child = event.target.closest(".in-section-two__box_Child-4.active");
-            const parentContainer = child.closest(".in-section-two__box");
-            
-            if (parentContainer) {
-                const burger = parentContainer.querySelector(".in-section-two__box_Child-1__info_burger");
-                const children = parentContainer.querySelectorAll(".in-section-two__box_Child-2, .in-section-two__box_Child-3, .in-section-two__box_Child-4");
-                
-                // Убираем класс active у всех связанных блоков
-                children.forEach((child) => {
-                    child.classList.remove("active");
-                    child.style.marginTop = "0";
-                });
-                
-                // Снимаем active у бургера
-                if (burger) burger.classList.remove("in-section-two__box_Child-1__info_burger-active");
-            }
+    });
+    
+    // Переключаем текущее меню
+    if (isActive) {
+        closeBurgerMenu(container, burger);
+    } else {
+        openBurgerMenu(container, burger);
+    }
+}
+
+function openBurgerMenu(container, burger) {
+    burger.classList.add('section-two__box_Child-1__info_burger-active');
+    burger.classList.add('rotated'); // Добавляем класс поворота
+    
+    const children = container.querySelectorAll('.section-two__box_Child-2, .section-two__box_Child-3, .section-two__box_Child-4');
+    
+    children.forEach((child, index) => {
+        child.classList.add('active');
+        if (window.innerWidth < 480) {
+            child.style.marginTop = `${60 + 50 * index}px`;
         }
+    });
+}
+
+function closeBurgerMenu(container, burger) {
+    burger.classList.remove('section-two__box_Child-1__info_burger-active');
+    burger.classList.remove('rotated'); // Убираем класс поворота
+    
+    const children = container.querySelectorAll('.section-two__box_Child-2, .section-two__box_Child-3, .section-two__box_Child-4');
+    children.forEach(child => {
+        child.classList.remove('active');
+        child.style.marginTop = '0';
+    });
+}
+
+// Функция для закрытия всех бургер-меню
+function closeAllBurgerMenus() {
+    document.querySelectorAll('.section-two__box_Child-1__info_burger.section-two__box_Child-1__info_burger-active').forEach(burger => {
+        const container = burger.closest('.section-two__box');
+        burger.classList.remove('rotated'); // Сбрасываем анимацию
+        closeBurgerMenu(container, burger);
+    });
+    
+    // Также сбрасываем для завершенных заказов
+    document.querySelectorAll('.in-section-two__box_Child-1__info_burger.section-two__box_Child-1__info_burger-active').forEach(burger => {
+        const container = burger.closest('.in-section-two__box');
+        burger.classList.remove('rotated'); // Сбрасываем анимацию
+        closeBurgerMenu(container, burger);
     });
 }
 
@@ -419,7 +391,29 @@ function setupDailyClear() {
     }, 1000);
 }
 
-// ==================== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ====================
+function stopAllTimersForContainer(orderContainer) {
+    const orderId = orderContainer.dataset.timerId;
+    if (orderId && activeTimers.has(orderId)) {
+        const timerInfo = activeTimers.get(orderId);
+        clearInterval(timerInfo.interval);
+        if (timerInfo.worker) {
+            timerInfo.worker.terminate();
+        }
+        activeTimers.delete(orderId);
+    }
+    
+    // Также ищем любые другие таймеры, которые могут ссылаться на этот контейнер
+    for (const [id, timer] of activeTimers.entries()) {
+        if (timer.container === orderContainer) {
+            clearInterval(timer.interval);
+            if (timer.worker) {
+                timer.worker.terminate();
+            }
+            activeTimers.delete(id);
+        }
+    }
+}
+
 function formatTime(time) {
     return time < 10 ? "0" + time : time;
 }
@@ -470,32 +464,38 @@ function getTotalDurationInSeconds(selectedButtons) {
 
 function startCountdown(selectedButtons, orderContainer, initialSeconds = null) {
     let orderId = orderContainer.dataset.timerId;
-    if (!orderId) {
-        orderId = Date.now().toString();
-        orderContainer.dataset.timerId = orderId;
+    
+    // Гарантированно останавливаем предыдущий таймер для этого контейнера
+    if (orderId && activeTimers.has(orderId)) {
+        clearInterval(activeTimers.get(orderId).interval);
+        if (activeTimers.get(orderId).worker) {
+            activeTimers.get(orderId).worker.terminate();
+        }
+        activeTimers.delete(orderId);
     }
     
-    stopTimer(orderId);
+    // Создаем новый ID если нужно
+    if (!orderId) {
+        orderId = 'timer_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        orderContainer.dataset.timerId = orderId;
+    }
     
     const countdownElement = orderContainer.querySelector(".section-two__box_Child-1__info_time");
     const pauseButton = orderContainer.querySelector(".section-two__box_Child-1__info_img");
     
     const totalSeconds = getTotalDurationInSeconds(selectedButtons);
     
-    // Ключевое изменение: вычисляем прошедшее время с момента создания заказа
+    // Вычисляем оставшееся время
     let remainingSeconds = initialSeconds !== null ? initialSeconds : totalSeconds;
     
-    // Если это восстановление после перезагрузки, вычисляем реальное оставшееся время
     if (initialSeconds === null && orderContainer.dataset.creationTime) {
         const creationTime = orderContainer.dataset.creationTime;
         const now = new Date();
         
-        // Преобразуем время создания в объект Date
         const [hours, minutes, seconds] = creationTime.split(/[.:]/).map(Number);
         const creationDate = new Date();
-        creationDate.setHours(hours, minutes, seconds, 0);
+        creationDate.setHours(hours, minutes, seconds || 0, 0);
         
-        // Вычисляем прошедшее время в секундах
         const elapsedSeconds = Math.floor((now - creationDate) / 1000);
         remainingSeconds = Math.max(0, totalSeconds - elapsedSeconds);
     }
@@ -506,12 +506,18 @@ function startCountdown(selectedButtons, orderContainer, initialSeconds = null) 
     let totalPausedTime = 0;
 
     function updateDisplay(seconds) {
+        if (!countdownElement) return;
+        
         const hours = Math.floor(seconds / 3600);
         const minutes = Math.floor((seconds % 3600) / 60);
         const secondsLeft = seconds % 60;
         
-        if (countdownElement) {
-            countdownElement.textContent = formatTime(hours) + ":" + formatTime(minutes) + ":" + formatTime(secondsLeft);
+        countdownElement.textContent = formatTime(hours) + ":" + formatTime(minutes) + ":" + formatTime(secondsLeft);
+        
+        // Автоматически помечаем как завершенный при достижении 0
+        if (seconds <= 0 && !orderContainer.classList.contains('in-section-two__box')) {
+            const completeButton = orderContainer.querySelector(".section-two__box_Child-2");
+            if (completeButton) completeButton.click();
         }
     }
 
@@ -529,32 +535,40 @@ function startCountdown(selectedButtons, orderContainer, initialSeconds = null) 
     updateDisplay(remainingSeconds);
 
     const interval = setInterval(() => {
-        if (!isPaused) {
+        if (!isPaused && orderContainer.isConnected) {
             const currentRemaining = getAccurateRemainingTime();
             updateDisplay(currentRemaining);
             
             if (currentRemaining <= 0) {
-                stopTimer(orderId);
-                saveOrdersToStorage();
-            }
-            
-            // Сохраняем состояние каждые 30 секунд
-            if (currentRemaining % 30 === 0) {
+                clearInterval(interval);
+                activeTimers.delete(orderId);
                 saveOrdersToStorage();
             }
         }
     }, 1000);
     
-    activeTimers.set(orderId, { interval: interval, worker: null });
+    // Сохраняем информацию о таймере
+    activeTimers.set(orderId, { 
+        interval: interval, 
+        isPaused: isPaused,
+        remainingSeconds: remainingSeconds,
+        container: orderContainer
+    });
 
     // Обработчик паузы
     if (pauseButton) {
+        // Удаляем старые обработчики
         const newPauseButton = pauseButton.cloneNode(true);
         pauseButton.parentNode.replaceChild(newPauseButton, pauseButton);
         
         newPauseButton.addEventListener("click", function() {
             isPaused = !isPaused;
             this.classList.toggle("section-two__box_Child-1__info_img-active");
+            
+            // Обновляем состояние в хранилище таймеров
+            if (activeTimers.has(orderId)) {
+                activeTimers.get(orderId).isPaused = isPaused;
+            }
             
             if (isPaused) {
                 pauseStartTime = Date.now();
@@ -565,6 +579,8 @@ function startCountdown(selectedButtons, orderContainer, initialSeconds = null) 
             saveOrdersToStorage();
         });
     }
+    
+    return orderId;
 }
 
 // ==================== ФУНКЦИИ ДЛЯ LOCALSTORAGE ====================
@@ -602,7 +618,9 @@ function saveOrdersToStorage() {
             creationTime: orderElement.dataset.creationTime || '',
             isCompleted: orderElement.querySelector('.section-two__box_Child-1__info_time')?.textContent === '00:00:00',
             isPaused: isPaused,
-            isCompletedStyle: isCompletedStyle // ← Сохраняем состояние стилей
+            isCompletedStyle: orderElement.classList.contains('in-section-two__box'),
+            isTimerStyled: orderElement.querySelector('.section-two__box_Child-1__info_time')?.classList.contains('in-section-two__box_Child-1__info_time'),
+            isPauseButtonStyled: orderElement.querySelector('.section-two__box_Child-1__info_img')?.classList.contains('in-section-two__box_Child-1__info_img')
         };
         orders.push(order);
     }
@@ -770,6 +788,10 @@ function recreateOrderFromStorage(orderData) {
         applyStyle('.section-two__box_Child-3_sag', 'in-section-two__box_Child-3_sag');
         applyStyle('.section-two__box_Child-4', 'in-section-two__box_Child-4');
         applyStyle('.section-two__box_Child-4_sag', 'in-section-two__box_Child-4_sag');
+        
+        // Применяем стили к таймеру и кнопке паузы
+        applyStyle('.section-two__box_Child-1__info_time', 'in-section-two__box_Child-1__info_time');
+        applyStyle('.section-two__box_Child-1__info_img', 'in-section-two__box_Child-1__info_img');
     }
 
     // Если заказ не завершен, запускаем таймер
@@ -809,6 +831,11 @@ function recreateOrderFromStorage(orderData) {
     }
 
     return orderContainer;
+
+    // Переинициализируем обработчики после создания элемента
+    setTimeout(() => {
+        setupBurgerMenuHandlers();
+    }, 100);
 }
 
 // Функция для форматирования времени в нужный формат (HH.MM.SS)
@@ -833,41 +860,85 @@ function addOrderCompletedFunctionality(orderContainer) {
     
     if (!completeButton) return;
     
-    // Удаляем старые обработчики
     const newCompleteButton = completeButton.cloneNode(true);
     completeButton.parentNode.replaceChild(newCompleteButton, completeButton);
 
     newCompleteButton.addEventListener("click", function() {
-        var targetBlock = orderContainer.closest(".section-two__box");
+        const targetBlock = orderContainer.closest(".section-two__box");
         if (!targetBlock) return;
         
-        // Находим кнопку паузы в этом заказе
-        const pauseButton = targetBlock.querySelector(".section-two__box_Child-1__info_img");
+        const isCompleting = !targetBlock.classList.contains('in-section-two__box');
         
-        // Нажимаем кнопку паузы/продолжения
-        if (pauseButton) {
-            pauseButton.click();
+        if (isCompleting) {
+            // ЗАВЕРШАЕМ ЗАКАЗ - останавливаем таймер
+            const timerId = targetBlock.dataset.timerId;
+            if (timerId && typeof stopTimer === 'function') {
+                stopTimer(timerId);
+            }
+        } else {
+            // ВОЗОБНОВЛЯЕМ ЗАКАЗ - перезапускаем таймер
+            const durationElement = targetBlock.querySelector('.section-two__box_Child-1__nav_section_par-3');
+            if (durationElement) {
+                const durationText = durationElement.textContent.trim();
+                const fakeButtons = [{
+                    textContent: durationText,
+                    querySelector: () => ({ textContent: durationText })
+                }];
+                
+                // Получаем оставшееся время из элемента
+                const countdownElement = targetBlock.querySelector(".section-two__box_Child-1__info_time");
+                if (countdownElement) {
+                    const timeText = countdownElement.textContent.trim();
+                    const timeParts = timeText.split(':');
+                    
+                    if (timeParts.length === 3) {
+                        const hours = parseInt(timeParts[0]) || 0;
+                        const minutes = parseInt(timeParts[1]) || 0;
+                        const seconds = parseInt(timeParts[2]) || 0;
+                        const remainingSeconds = hours * 3600 + minutes * 60 + seconds;
+                        
+                        if (remainingSeconds > 0) {
+                            // Перезапускаем таймер с оставшимся временем
+                            startCountdown(fakeButtons, targetBlock, remainingSeconds);
+                        }
+                    }
+                }
+            }
         }
         
-        // Просто переключаем основной класс
+        // Переключаем визуальное состояние
         targetBlock.classList.toggle("in-section-two__box");
         
-        // Переключаем классы для дочерних элементов (с проверками)
+        // Переключаем классы для всех элементов
         const toggleClass = (selector, className) => {
             const element = targetBlock.querySelector(selector);
             if (element) element.classList.toggle(className);
         };
         
-        toggleClass(".section-two__box_Child-1", "in-section-two__box_Child-1");
-        toggleClass(".section-two__box_Child-1_line", "in-section-two__box_Child-1_line");
-        toggleClass(".section-two__box_Child-1__info_line-1", "in-section-two__box_Child-1__info_line-1");
-        toggleClass(".section-two__box_Child-1__info_container-sag_name", "in-section-two__box_Child-1__info_container-sag_name");
-        toggleClass(".section-two__box_Child-2", "in-section-two__box_Child-2");
-        toggleClass(".section-two__box_Child-2_sag", "in-section-two__box_Child-2_sag");
-        toggleClass(".section-two__box_Child-3", "in-section-two__box_Child-3");
-        toggleClass(".section-two__box_Child-3_sag", "in-section-two__box_Child-3_sag");
-        toggleClass(".section-two__box_Child-4", "in-section-two__box_Child-4");
-        toggleClass(".section-two__box_Child-4_sag", "in-section-two__box_Child-4_sag");
+        const classesToToggle = [
+            [".section-two__box_Child-1", "in-section-two__box_Child-1"],
+            [".section-two__box_Child-1_line", "in-section-two__box_Child-1_line"],
+            [".section-two__box_Child-1__info_line-1", "in-section-two__box_Child-1__info_line-1"],
+            [".section-two__box_Child-1__info_container-sag_name", "in-section-two__box_Child-1__info_container-sag_name"],
+            [".section-two__box_Child-2", "in-section-two__box_Child-2"],
+            [".section-two__box_Child-2_sag", "in-section-two__box_Child-2_sag"],
+            [".section-two__box_Child-3", "in-section-two__box_Child-3"],
+            [".section-two__box_Child-3_sag", "in-section-two__box_Child-3_sag"],
+            [".section-two__box_Child-4", "in-section-two__box_Child-4"],
+            [".section-two__box_Child-4_sag", "in-section-two__box_Child-4_sag"],
+            [".section-two__box_Child-1__info_time", "in-section-two__box_Child-1__info_time"],
+            [".section-two__box_Child-1__info_img", "in-section-two__box_Child-1__info_img"]
+        ];
+        
+        classesToToggle.forEach(([selector, className]) => {
+            toggleClass(selector, className);
+        });
+        
+        // Обновляем состояние паузы
+        const pauseButton = targetBlock.querySelector(".section-two__box_Child-1__info_img");
+        if (pauseButton && pauseButton.classList.contains("section-two__box_Child-1__info_img-active")) {
+            pauseButton.click(); // Снимаем паузу при возобновлении
+        }
         
         // Сохраняем состояние
         if (typeof saveOrdersToStorage === 'function') {
@@ -985,10 +1056,6 @@ function addEditOrderFunctionality(orderContainer) {
                             </div>
 
                             <div class="section-one__orderChange__box__buttons">
-                                <div class="section-one__orderChange__box__buttons_block-1 section-one__orderChange__box__buttons_block-mobile">
-                                    <h2 class="section-one__orderChange__box__buttons_block-1_sag">15 мин.</h2>
-                                    <div class="${durationValue === '15 мин.' ? 'section-one__orderChange__box__buttons_block-1_active' : 'section-one__orderChange__box__buttons_block-1_inactive'}"></div>
-                                </div>
 
                                 <div class="section-one__orderChange__box__buttons_block-1 section-one__orderChange__box__buttons_element-1">
                                     <h2 class="section-one__orderChange__box__buttons_block-1_sag">30 мин.</h2>
@@ -1161,7 +1228,16 @@ function addEditOrderFunctionality(orderContainer) {
                 console.log("New total time:", newTotalSeconds, "seconds");
                 console.log("Initial time for new timer:", initialSeconds, "seconds");
 
-                 startCountdown(fakeButtons, parentOrder, initialSeconds);
+                // 1. ОСТАНАВЛИВАЕМ СТАРЫЙ ТАЙМЕР
+                const oldTimerId = parentOrder.dataset.timerId;
+                if (oldTimerId && typeof stopTimer === 'function') {
+                    stopTimer(oldTimerId); // Вызываем функцию остановки таймера
+                }
+
+                // 2. Перезапускаем таймер с новым временем
+                stopAllTimersForContainer(parentOrder); // Гарантированная остановка
+                const newTimerId = startCountdown(fakeButtons, parentOrder, initialSeconds);
+                parentOrder.dataset.timerId = newTimerId; // Обновляем ID
 
                 // ПОСЛЕ СОХРАНЕНИЯ ИЗМЕНЕНИЙ:
                 saveOrdersToStorage();
@@ -1177,6 +1253,11 @@ function addEditOrderFunctionality(orderContainer) {
             });
         }
     });
+
+    // После сохранения изменений переинициализируем обработчики
+    setTimeout(() => {
+        setupBurgerMenuHandlers();
+    }, 100);
 
     // Добавляем интерактивность для удаления блока
     addDeleteFunctionality(orderContainer,);
@@ -1240,14 +1321,6 @@ document.addEventListener("DOMContentLoaded", function() {
         });
     });
 
-    // Функция для остановки таймера
-    function stopTimer(orderId) {
-        if (activeTimers.has(orderId)) {
-            clearInterval(activeTimers.get(orderId));
-            activeTimers.delete(orderId);
-        }
-    }
-
     // Находим все кнопки по классу
     const buttons = document.querySelectorAll('.section-one__box__button-1, .section-one__box__button-2');
 
@@ -1272,6 +1345,9 @@ document.addEventListener("DOMContentLoaded", function() {
 
     // Добавляем обработчик события нажатия на кнопку
     addButton.addEventListener("click", function() {
+
+        // Закрываем все открытые бургер-меню перед созданием нового заказа
+        closeAllBurgerMenus();
             
         // Сбрасываем классы .scaled для всех кнопок
         buttons.forEach(button => {
@@ -1481,6 +1557,10 @@ document.addEventListener("DOMContentLoaded", function() {
 
     // Добавляем обработчик клика для кнопки создания заказа
     creatureButton.addEventListener("click", function () {
+
+        // Закрываем все открытые бургер-меню
+        closeAllBurgerMenus();
+
         const sectionOne = document.querySelector(".section-one");
         const sectionOneBox = document.querySelector(".section-one__box");
         const sectionOneContainer = document.querySelector(".section-one__container");
@@ -1668,4 +1748,7 @@ document.addEventListener("DOMContentLoaded", function() {
     setInterval(function() {
         saveOrdersToStorage();
     }, 30000);
+
+    // Настройка обработчиков бургер-меню
+    setupBurgerMenuHandlers();
 });
