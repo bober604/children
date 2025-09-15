@@ -1,3 +1,54 @@
+const guestChannel = new BroadcastChannel('guest_orders_channel');
+
+// Функция для отправки сообщений
+function sendToGuest(message) {
+    try {
+        guestChannel.postMessage(message);
+        console.log('📤 Отправлено в гостевой режим:', message.type, message);
+    } catch (error) {
+        console.error('❌ Ошибка отправки в гостевой режим:', error);
+    }
+}
+
+guestChannel.onmessage = (event) => {
+    if (event.data.type === 'REQUEST_SYNC') {
+        this.syncAllOrders();
+    }
+};
+
+// Функция для синхронизации всех заказов
+function syncAllOrders() {
+    const orders = [];
+    const orderElements = document.querySelectorAll('.section-two__box');
+    
+    orderElements.forEach(element => {
+        if (element.isConnected && !element.classList.contains('in-section-two__box')) {
+            const order = {
+                id: element.dataset.timerId,
+                child_name: element.querySelector('.section-two__box_Child-1__info_container-sag_name')?.textContent || '',
+                phone: element.querySelector('.section-two__box_Child-1__info_parents_number')?.textContent || '',
+                note: element.querySelector('.section-two__box_Child-1__info_parents_par')?.textContent || '',
+                sum: parseFloat(element.querySelector('.price')?.textContent.replace('руб.', '').trim()) || 0,
+                duration: element.querySelector('.section-two__box_Child-1__nav_section_par-3')?.textContent || '',
+                start_time: element.querySelector('.section-two__box_Child-1__nav_section_par-2')?.textContent || '',
+                remaining_seconds: getRemainingTime(element),
+                status: 'active'
+            };
+            orders.push(order);
+        }
+    });
+    
+    sendToGuest({
+        type: 'SYNC_ALL_ORDERS',
+        orders: orders
+    });
+}
+
+// Вызовем синхронизацию при загрузке
+document.addEventListener("DOMContentLoaded", function() {
+    setTimeout(syncAllOrders, 1000);
+});
+
 // ==================== ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ====================
 let activeTimers = new Map();
 let orderCount = 0;
@@ -132,6 +183,12 @@ function addDeleteFunctionality(orderContainer) {
                     updateCounters();
                     saveOrdersToStorage();
                 }
+
+                const deleteData = {
+                    type: 'ORDER_DELETED', 
+                    order_id: orderContainer.dataset.timerId
+                };
+                sendToGuest(deleteData);
             }
         }
     });
@@ -950,6 +1007,12 @@ function addOrderCompletedFunctionality(orderContainer) {
         if (typeof saveOrdersToStorage === 'function') {
             setTimeout(saveOrdersToStorage, 100);
         }
+
+        const completeData = {
+            type: 'ORDER_COMPLETED',
+            order_id: targetBlock.dataset.timerId
+        };
+        sendToGuest(completeData);
     });
 }
 
@@ -1527,6 +1590,68 @@ document.addEventListener("DOMContentLoaded", function() {
             saveOrdersToStorage();
         }
 
+        const guestOrderData = {
+            type: 'NEW_ORDER',
+            order: {
+                id: orderContainer.dataset.timerId,
+                child_name: capitalizeFirstLetter(document.querySelector('.section-one__container_1').value),
+                phone: document.querySelector('.section-one__container_4').value,
+                note: document.querySelector('.section-one__container_3').value,
+                sum: currentOrderTotal,
+                duration: getDuration(selectedButtons),
+                start_time: getCurrentTime(),
+                remaining_seconds: getTotalDurationInSeconds(selectedButtons),
+                status: 'active'
+            }
+        };
+        sendToGuest(guestOrderData);
+
+        // Добавим обработчик для запросов синхронизации
+        guestChannel.onmessage = (event) => {
+            if (event.data.type === 'REQUEST_SYNC') {
+                console.log('📥 Запрос синхронизации от гостевого режима');
+                syncAllOrders();
+            }
+        };
+
+        // Функция синхронизации всех заказов
+        function syncAllOrders() {
+            const orders = [];
+            const orderElements = document.querySelectorAll('.section-two__box:not(.in-section-two__box)');
+            
+            orderElements.forEach(element => {
+                if (element.isConnected) {
+                    try {
+                        const order = {
+                            id: element.dataset.timerId,
+                            child_name: element.querySelector('.section-two__box_Child-1__info_container-sag_name')?.textContent || '',
+                            phone: element.querySelector('.section-two__box_Child-1__info_parents_number')?.textContent || '',
+                            note: element.querySelector('.section-two__box_Child-1__info_parents_par')?.textContent || '',
+                            sum: parseFloat(element.querySelector('.price')?.textContent.replace('руб.', '').trim()) || 0,
+                            duration: element.querySelector('.section-two__box_Child-1__nav_section_par-3')?.textContent || '',
+                            start_time: element.querySelector('.section-two__box_Child-1__nav_section_par-2')?.textContent || '',
+                            remaining_seconds: getRemainingTime(element),
+                            status: 'active'
+                        };
+                        orders.push(order);
+                    } catch (error) {
+                        console.error('Ошибка получения данных заказа:', error);
+                    }
+                }
+            });
+            
+            sendToGuest({
+                type: 'SYNC_ALL_ORDERS',
+                orders: orders
+            });
+            
+            console.log('✅ Синхронизировано заказов:', orders.length);
+        }
+
+        // Вызовем синхронизацию при загрузке
+        document.addEventListener("DOMContentLoaded", function() {
+            setTimeout(syncAllOrders, 2000);
+        });
 
         // Обновляем значение выручки
         var revenueElement = document.querySelector(".revenue");
