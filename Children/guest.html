@@ -49,6 +49,19 @@
             border-radius: var(--border-radius);
         }
 
+        .section-two__box_Child-1__nav {
+            justify-content: space-between;
+        }
+
+        .section-two__box_Child-1__info {
+            margin-top: 10px;
+        }
+
+        .section-two__box_Child-1__info_container-sag {
+            max-width: 390px;
+            min-width: 390px;
+        }
+
         .guest-container {
             width: 100%;
         }
@@ -141,7 +154,7 @@
             border-radius: 20px;
             font-size: 12px;
             font-weight: 600;
-            margin-left: 12px;
+            margin-left: 100px;
         }
 
         .status-active {
@@ -153,36 +166,6 @@
             background: var(--guest-gray);
             color: var(--guest-white);
         }
-
-        /* .refresh-button {
-            position: fixed;
-            bottom: 25px;
-            right: 25px;
-            width: 60px;
-            height: 60px;
-            background: var(--guest-primary);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            box-shadow: 0 6px 20px rgba(236, 194, 6, 0.4);
-            transition: var(--transition);
-            z-index: 1000;
-            border: 2px solid var(--guest-dark);
-        } */
-
-        /* .refresh-button:hover {
-            transform: rotate(180deg) scale(1.1);
-            background: var(--guest-primary-dark);
-            box-shadow: 0 8px 25px rgba(236, 194, 6, 0.6);
-        }
-
-        .refresh-button img {
-            width: 28px;
-            height: 28px;
-            filter: brightness(0) invert(0);
-        } */
 
         /* Блок загрузки */
         #loadingBlock {
@@ -225,12 +208,10 @@
             .section-two {
                 width: 100%;
                 margin: 0;
-                border-radius: 12px;
                 border: 1px solid var(--guest-primary);
             }
 
             .section-two_lending {
-                padding: 10px 5px;
                 gap: 12px;
             }
 
@@ -242,23 +223,38 @@
             
             .section-two__box_Child-1 {
                 width: 100%;
-                padding: 15px;
+                padding: 5px 15px;
             }
             
             .section-two__box_Child-1__nav {
-                flex-direction: column;
-                gap: 12px;
+                gap: 0;
+                display: flex;
+                flex-direction: row;
+                justify-content: space-between;
             }
             
             .section-two__box_Child-1__nav_section {
                 flex-direction: row;
                 justify-content: space-between;
-                width: 100%;
+                max-width: 100%;
+                min-width: 10%;
+            }
+
+            .section-two__box_Child-1__nav_section_par-1 {
+                font-size: 10px;
             }
             
+            .section-two__box_Child-1__nav_section_par-2 {
+                font-size: 12px;
+            }
+
             .section-two__box_Child-1__info {
                 flex-wrap: wrap;
                 gap: 12px;
+            }
+
+            .section-two__box_Child-1__info_container-sag {
+                min-width: 90px;
             }
             
             .section-two__box_Child-1__info_time {
@@ -269,6 +265,7 @@
             .guest-header {
                 padding: 20px 15px;
                 border-radius: 12px 12px 0 0;
+                margin-bottom: 0;
             }
 
             .guest-header h1 {
@@ -316,33 +313,19 @@
             }
 
             .guest-order {
-                margin: 10px;
-                width: calc(100% - 20px);
+                margin: 10px 0;
+                width: 100%;
                 border-radius: 12px;
             }
 
-            /* .refresh-button {
-                bottom: 20px;
-                right: 20px;
-                width: 50px;
-                height: 50px;
-            }
-
-            .refresh-button img {
-                width: 24px;
-                height: 24px;
-            } */
-
             /* Адаптация контента внутри заказов для мобильных */
             .guest-order .section-two__box_Child-1__nav {
-                flex-direction: column;
-                gap: 12px;
+                gap: 0;
             }
 
             .guest-order .section-two__box_Child-1__nav_section {
                 flex-direction: row;
                 justify-content: space-between;
-                width: 100%;
             }
 
             .guest-order .section-two__box_Child-1__info {
@@ -359,6 +342,7 @@
                 margin-left: 8px;
                 padding: 4px 10px;
                 font-size: 11px;
+                display: none;
             }
         }
 
