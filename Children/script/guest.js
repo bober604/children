@@ -9,12 +9,34 @@ if (typeof GuestMode === 'undefined') {
             this.init();
         }
 
+        // Добавляем метод для загрузки данных
+        async loadOrdersFromAPI() {
+            try {
+                const response = await fetch('http://127.0.0.1:8000/orders/active');
+                if (response.ok) {
+                    const orders = await response.json();
+                    this.syncOrders(orders);
+                    return true;
+                }
+                return false;
+            } catch (error) {
+                console.error('Ошибка загрузки заказов из API:', error);
+                return false;
+            }
+        }
+
         init() {
             console.log('Инициализация гостевого режима...');
             this.setupBroadcastChannel();
             this.setupEventListeners();
-            this.loadFromStorage();
-            this.updateDisplay();
+            
+            // Пытаемся загрузить из API, если не получится - из localStorage
+            this.loadOrdersFromAPI().then(success => {
+                if (!success) {
+                    this.loadFromStorage();
+                }
+                this.updateDisplay();
+            });
         }
 
         setupBroadcastChannel() {
@@ -40,6 +62,36 @@ if (typeof GuestMode === 'undefined') {
             }
         }
 
+        updateTimer(orderId, remainingSeconds, isPaused) {
+            if (this.orders.has(orderId)) {
+                const order = this.orders.get(orderId);
+                order.remaining_seconds = remainingSeconds;
+                order.is_paused = isPaused;
+                this.orders.set(orderId, order);
+                
+                // Обновляем отображение
+                this.updateOrderElement(order);
+            }
+        }
+
+        pauseOrder(orderId) {
+            if (this.orders.has(orderId)) {
+                const order = this.orders.get(orderId);
+                order.is_paused = true;
+                this.orders.set(orderId, order);
+                this.updateOrderElement(order);
+            }
+        }
+
+        resumeOrder(orderId) {
+            if (this.orders.has(orderId)) {
+                const order = this.orders.get(orderId);
+                order.is_paused = false;
+                this.orders.set(orderId, order);
+                this.updateOrderElement(order);
+            }
+        }
+
         handleMessage(message) {
             console.log('📨 ПОЛУЧЕНО сообщение:', message.type, message);
             
@@ -50,49 +102,47 @@ if (typeof GuestMode === 'undefined') {
             
             switch (message.type) {
                 case 'NEW_ORDER':
-                    if (!message.order) {
-                        console.error('❌ Нет данных заказа в сообщении NEW_ORDER');
-                        return;
-                    }
+                    if (!message.order) return;
                     console.log('➕ Новый заказ получен:', message.order);
                     this.addOrder(message.order);
                     break;
                     
-                case 'ORDER_UPDATED':
-                    if (!message.order) {
-                        console.error('❌ Нет данных заказа в сообщении ORDER_UPDATED');
-                        return;
-                    }
-                    this.updateOrder(message.order);
-                    break;
-                    
                 case 'ORDER_COMPLETED':
-                    if (!message.order_id) {
-                        console.error('❌ Нет order_id в сообщении ORDER_COMPLETED');
-                        return;
-                    }
+                    if (!message.order_id) return;
                     this.completeOrder(message.order_id);
                     break;
                     
                 case 'ORDER_DELETED':
-                    if (!message.order_id) {
-                        console.error('❌ Нет order_id в сообщении ORDER_DELETED');
-                        return;
-                    }
+                    if (!message.order_id) return;
                     this.deleteOrder(message.order_id);
                     break;
                     
                 case 'SYNC_ALL_ORDERS':
-                    if (!message.orders || !Array.isArray(message.orders)) {
-                        console.error('❌ Нет или некорректные orders в сообщении SYNC_ALL_ORDERS');
-                        return;
-                    }
+                    if (!message.orders || !Array.isArray(message.orders)) return;
                     console.log('🔄 Синхронизация заказов:', message.orders.length);
                     this.syncOrders(message.orders);
                     break;
                     
+                case 'TIMER_UPDATED':
+                    // ТОЛЬКО обновляем визуальное состояние паузы
+                    if (!message.order_id || message.is_paused === undefined) return;
+                    this.updatePauseState(message.order_id, message.is_paused);
+                    break;
+                    
                 default:
                     console.warn('⚠️ Неизвестный тип сообщения:', message.type);
+            }
+        }
+
+        // Добавляем простой метод для обновления состояния паузы
+        updatePauseState(orderId, isPaused) {
+            if (this.orders.has(orderId)) {
+                const order = this.orders.get(orderId);
+                order.is_paused = isPaused;
+                this.orders.set(orderId, order);
+                
+                // Обновляем только визуальное отображение
+                this.updateOrderElement(order);
             }
         }
 
@@ -172,11 +222,14 @@ if (typeof GuestMode === 'undefined') {
         }
 
         getOrderHTML(order) {
-            const displayTime = this.formatDisplayTime(order.start_time);
+            const displayTime = this.formatDisplayTime(order.time); // Исправлено: используем order.time вместо order.start_time
             const durationText = this.getDurationText(order.duration);
             const remainingTime = this.formatTimeFromSeconds(order.remaining_seconds);
-            const statusClass = order.status === 'active' ? 'status-active' : 'status-completed';
-            const statusText = order.status === 'active' ? 'активно' : 'завершено';
+            
+            // Определяем классы для разных состояний
+            const statusClass = order.is_completed ? 'status-completed' : 'status-active';
+            const statusText = order.is_completed ? 'завершено' : 'активно';
+            const timerClass = order.is_paused ? 'timer-paused' : '';
 
             return `
                 <div class="section-two__box_Child-1">
@@ -189,16 +242,17 @@ if (typeof GuestMode === 'undefined') {
                             <p class="section-two__box_Child-1__nav_section_par-1">Посещение</p>
                             <p class="section-two__box_Child-1__nav_section_par-2">${durationText}</p>
                             <span class="order-status ${statusClass}">${statusText}</span>
+                            ${order.is_paused ? '<span class="order-status status-paused">на паузе</span>' : ''}
                         </div>
                     </nav>
                     <div class="section-two__box_Child-1_line"></div>
 
                     <div class="section-two__box_Child-1__info">
                         <div class="section-two__box_Child-1__info_container-sag">
-                            <h3 class="section-two__box_Child-1__info_container-sag_name">${this.escapeHtml(order.child_name)}</h3>
+                            <h3 class="section-two__box_Child-1__info_container-sag_name">${this.escapeHtml(order.child_names)}</h3>
                         </div>
                         <h3 class="section-two__box_Child-1__info_sag">Осталось:</h3>
-                        <h3 class="section-two__box_Child-1__info_time">${remainingTime}</h3>
+                        <h3 class="section-two__box_Child-1__info_time ${timerClass}">${remainingTime}</h3>
                     </div>
                 </div>
             `;
@@ -332,6 +386,13 @@ if (typeof GuestMode === 'undefined') {
                 this.channel.postMessage({ type: 'REQUEST_SYNC' });
                 console.log('📤 Отправлен запрос синхронизации');
             }
+            
+            // Также пытаемся загрузить напрямую из API
+            this.loadOrdersFromAPI().then(success => {
+                if (success) {
+                    console.log('✅ Синхронизация через API успешна');
+                }
+            });
         }
 
         setupPolling() {

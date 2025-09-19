@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Авторизация - Детская комната</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Montserrat', sans-serif;
+        }
+        
+        body {
+            background: #F5F5F5;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .auth-container {
+            background: white;
+            border-radius: 12px;
+            padding: 40px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 450px;
+            text-align: center;
+            border: 1px solid #E0E0E0;
+        }
+        
+        .logo {
+            width: 240px;
+            height: 60px;
+            margin-bottom: 20px;
+            background: #fecd00;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 25px;
+            color: white;
+            font-size: 32px;
+            font-weight: bold;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+            font-weight: 600;
+        }
+        
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 16px;
+            font-weight: 400;
+        }
+        
+        .form-group {
+            margin-bottom: 3px;
+            text-align: left;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+            font-size: 14px;
+        }
+        
+        input {
+            width: 100%;
+            padding: 15px;
+            border: 1px solid #E0E0E0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+            background: #FAFAFA;
+        }
+        
+        input:focus {
+            outline: none;
+            border-color: #fecd00;
+            background: white;
+        }
+        
+        .error-message {
+            color: #E53935;
+            font-size: 14px;
+            margin-top: 5px;
+            min-height: 20px;
+            font-weight: 500;
+        }
+        
+        .auth-button {
+            width: 100%;
+            padding: 15px;
+            background: #fecd00;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .auth-button:hover {
+            background: #e9ba01;
+        }
+        
+        .auth-button:active {
+            background: #fecd00;
+        }
+        
+        .footer {
+            margin-top: 25px;
+            color: #999;
+            font-size: 14px;
+            font-weight: 400;
+        }
+        
+        @media (max-width: 480px) {
+            body {
+                padding: 0;
+            }
+
+            .auth-container {
+                padding: 30px 25px;
+                margin: 10px;
+            }
+            
+            h1 {
+                font-size: 24px;
+            }
+            
+            input, .auth-button {
+                padding: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-container">
+        <div class="logo">BlackPizza</div>
+        <h1>Авторизация администратора</h1>
+        <p class="subtitle">Введите логин и пароль для доступа к панели управления</p>
+        
+        <form id="adminAuthForm">
+            <div class="form-group">
+                <label for="username">Логин:</label>
+                <input type="text" id="username" name="username" required autocomplete="off">
+                <div class="error-message" id="usernameError"></div>
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Пароль:</label>
+                <input type="password" id="password" name="password" required autocomplete="off">
+                <div class="error-message" id="passwordError"></div>
+            </div>
+            
+            <div class="error-message" id="formError"></div>
+            
+            <button type="submit" class="auth-button">Войти</button>
+        </form>
+        
+        <div class="footer">
+            BlackPizza Admin Panel v1.0
+        </div>
+    </div>
+
+    <script>
+        // Учетные данные хранятся прямо на странице авторизации
+        const ADMIN_CREDENTIALS = {
+            login: "admin",
+            password: "admin", // Можно поменять на любой пароль
+            sessionTimeout: 8 * 60 * 60 * 1000 // 8 часов
+        };
+
+        function verifyCredentials(username, password) {
+            // Простая проверка без iframe
+            return username === ADMIN_CREDENTIALS.login && password === ADMIN_CREDENTIALS.password;
+        }
+
+        function showError(message) {
+            const errorElement = document.getElementById('formError');
+            if (errorElement) {
+                errorElement.textContent = message;
+                // Автоматически скрываем ошибку через 3 секунды
+                setTimeout(() => {
+                    errorElement.textContent = '';
+                }, 3000);
+            }
+        }
+
+        function showSuccess(message) {
+            const successElement = document.getElementById('formError');
+            if (successElement) {
+                successElement.textContent = message;
+                successElement.style.color = 'green';
+                setTimeout(() => {
+                    successElement.textContent = '';
+                    successElement.style.color = '#e74c3c';
+                }, 2000);
+            }
+        }
+
+        document.getElementById('adminAuthForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+            
+            // Очищаем предыдущие ошибки
+            document.getElementById('usernameError').textContent = '';
+            document.getElementById('passwordError').textContent = '';
+            document.getElementById('formError').textContent = '';
+            
+            // Простая валидация
+            if (!username) {
+                document.getElementById('usernameError').textContent = 'Введите логин';
+                return;
+            }
+            
+            if (!password) {
+                document.getElementById('passwordError').textContent = 'Введите пароль';
+                return;
+            }
+            
+            // Проверяем учетные данные
+            if (verifyCredentials(username, password)) {
+                showSuccess('Успешный вход!');
+                
+                // Сохраняем авторизацию
+                sessionStorage.setItem('adminAuthenticated', 'true');
+                sessionStorage.setItem('adminAuthTimestamp', Date.now().toString());
+                
+                // Перенаправляем с задержкой чтобы увидеть сообщение
+                setTimeout(() => {
+                    window.location.href = '../index.html';
+                }, 500);
+            } else {
+                showError('Неверный логин или пароль');
+                
+                // Очищаем поле пароля
+                document.getElementById('password').value = '';
+                document.getElementById('password').focus();
+            }
+        });
+        
+        // Очистка полей при загрузке
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('username').value = '';
+            document.getElementById('password').value = '';
+            document.getElementById('username').focus();
+            
+            // Показываем подсказку для тестирования
+            console.log('Тестовые учетные данные:', ADMIN_CREDENTIALS);
+        });
+
+        // Добавляем возможность показать/скрыть пароль
+        function setupPasswordToggle() {
+            const passwordInput = document.getElementById('password');
+            const toggleButton = document.createElement('button');
+            toggleButton.type = 'button';
+            toggleButton.innerHTML = '👁️';
+            toggleButton.style.position = 'absolute';
+            toggleButton.style.right = '10px';
+            toggleButton.style.top = '50%';
+            toggleButton.style.transform = 'translateY(-50%)';
+            toggleButton.style.background = 'none';
+            toggleButton.style.border = 'none';
+            toggleButton.style.cursor = 'pointer';
+            toggleButton.style.fontSize = '16px';
+            
+            const passwordContainer = passwordInput.parentNode;
+            passwordContainer.style.position = 'relative';
+            passwordContainer.appendChild(toggleButton);
+            
+            toggleButton.addEventListener('click', function() {
+                if (passwordInput.type === 'password') {
+                    passwordInput.type = 'text';
+                    toggleButton.innerHTML = '🔒';
+                } else {
+                    passwordInput.type = 'password';
+                    toggleButton.innerHTML = '👁️';
+                }
+            });
+        }
+
+        // Инициализируем переключатель пароля
+        document.addEventListener('DOMContentLoaded', setupPasswordToggle);
+    </script>
+</body>
+</html>

@@ -167,6 +167,18 @@
             color: var(--guest-white);
         }
 
+        .timer-paused {
+            background-color: #666 !important;
+            color: #ccc !important;
+            opacity: 0.7;
+        }
+
+        .status-paused {
+            background: #ff9800 !important;
+            color: #000 !important;
+            margin-left: 8px;
+        }
+
         /* Блок загрузки */
         #loadingBlock {
             text-align: center;
@@ -343,6 +355,12 @@
                 padding: 4px 10px;
                 font-size: 11px;
                 display: none;
+            }
+
+            .status-paused {
+                margin-left: 4px;
+                padding: 3px 8px;
+                font-size: 10px;
             }
         }
 

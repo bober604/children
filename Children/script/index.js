@@ -1,3 +1,49 @@
+// Добавляем в начало файла index.js
+const API_BASE_URL = "http://127.0.0.1:8000";
+
+// Функция для получения всех активных заказов
+async function loadActiveOrdersFromAPI() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/orders/active`);
+        if (response.ok) {
+            return await response.json();
+        }
+        return [];
+    } catch (error) {
+        console.error('Ошибка загрузки заказов из API:', error);
+        return [];
+    }
+}
+
+// Функция для обновления таймера на сервере
+async function updateTimerOnServer(orderId, remainingSeconds, isPaused) {
+    try {
+        await fetch(`${API_BASE_URL}/order/${orderId}/timer`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                remaining_seconds: remainingSeconds,
+                is_paused: isPaused
+            })
+        });
+    } catch (error) {
+        console.error('Ошибка обновления таймера:', error);
+    }
+}
+
+// Функция для отметки заказа как выполненного на сервере
+async function completeOrderOnServer(orderId) {
+    try {
+        await fetch(`${API_BASE_URL}/order/${orderId}/complete`, {
+            method: 'PUT'
+        });
+    } catch (error) {
+        console.error('Ошибка завершения заказа:', error);
+    }
+}
+
 const guestChannel = new BroadcastChannel('guest_orders_channel');
 
 // Функция для отправки сообщений
@@ -19,22 +65,26 @@ guestChannel.onmessage = (event) => {
 // Функция для синхронизации всех заказов
 function syncAllOrders() {
     const orders = [];
-    const orderElements = document.querySelectorAll('.section-two__box');
+    const orderElements = document.querySelectorAll('.section-two__box:not(.in-section-two__box)');
     
     orderElements.forEach(element => {
-        if (element.isConnected && !element.classList.contains('in-section-two__box')) {
-            const order = {
-                id: element.dataset.timerId,
-                child_name: element.querySelector('.section-two__box_Child-1__info_container-sag_name')?.textContent || '',
-                phone: element.querySelector('.section-two__box_Child-1__info_parents_number')?.textContent || '',
-                note: element.querySelector('.section-two__box_Child-1__info_parents_par')?.textContent || '',
-                sum: parseFloat(element.querySelector('.price')?.textContent.replace('руб.', '').trim()) || 0,
-                duration: element.querySelector('.section-two__box_Child-1__nav_section_par-3')?.textContent || '',
-                start_time: element.querySelector('.section-two__box_Child-1__nav_section_par-2')?.textContent || '',
-                remaining_seconds: getRemainingTime(element),
-                status: 'active'
-            };
-            orders.push(order);
+        if (element.isConnected && element.dataset.orderId) {
+            try {
+                const order = {
+                    id: element.dataset.orderId,
+                    child_names: element.querySelector('.section-two__box_Child-1__info_container-sag_name')?.textContent || '',
+                    phone: element.querySelector('.section-two__box_Child-1__info_parents_number')?.textContent || '',
+                    note: element.querySelector('.section-two__box_Child-1__info_parents_par')?.textContent || '',
+                    sum: parseFloat(element.querySelector('.price')?.textContent.replace('руб.', '').trim()) || 0,
+                    duration: element.querySelector('.section-two__box_Child-1__nav_section_par-3')?.textContent || '',
+                    time: element.querySelector('.section-two__box_Child-1__nav_section_par-2')?.textContent || '',
+                    remaining_seconds: getRemainingTime(element),
+                    is_paused: element.querySelector('.section-two__box_Child-1__info_img')?.classList.contains('section-two__box_Child-1__info_img-active') || false
+                };
+                orders.push(order);
+            } catch (error) {
+                console.error('Ошибка получения данных заказа:', error);
+            }
         }
     });
     
@@ -42,6 +92,8 @@ function syncAllOrders() {
         type: 'SYNC_ALL_ORDERS',
         orders: orders
     });
+    
+    console.log('✅ Синхронизировано заказов:', orders.length);
 }
 
 // Вызовем синхронизацию при загрузке
@@ -591,15 +643,24 @@ function startCountdown(selectedButtons, orderContainer, initialSeconds = null) 
     // Инициализируем отображение
     updateDisplay(remainingSeconds);
 
-    const interval = setInterval(() => {
+    const interval = setInterval(async () => {
         if (!isPaused && orderContainer.isConnected) {
             const currentRemaining = getAccurateRemainingTime();
             updateDisplay(currentRemaining);
             
+            // ОБНОВЛЯЕМ ТАЙМЕР НА СЕРВЕРЕ КАЖДУЮ СЕКУНДУ
+            if (orderContainer.dataset.orderId) {
+                await updateTimerOnServer(orderContainer.dataset.orderId, currentRemaining, isPaused);
+            }
+            
             if (currentRemaining <= 0) {
                 clearInterval(interval);
                 activeTimers.delete(orderId);
-                saveOrdersToStorage();
+                
+                // Автоматически отмечаем как завершенный на сервере
+                if (orderContainer.dataset.orderId) {
+                    await completeOrderOnServer(orderContainer.dataset.orderId);
+                }
             }
         }
     }, 1000);
@@ -618,13 +679,21 @@ function startCountdown(selectedButtons, orderContainer, initialSeconds = null) 
         const newPauseButton = pauseButton.cloneNode(true);
         pauseButton.parentNode.replaceChild(newPauseButton, pauseButton);
         
-        newPauseButton.addEventListener("click", function() {
+        newPauseButton.addEventListener("click", async function() {
             isPaused = !isPaused;
             this.classList.toggle("section-two__box_Child-1__info_img-active");
             
-            // Обновляем состояние в хранилище таймеров
-            if (activeTimers.has(orderId)) {
-                activeTimers.get(orderId).isPaused = isPaused;
+            // Обновляем состояние на сервере
+            if (orderContainer.dataset.orderId) {
+                const currentRemaining = getAccurateRemainingTime();
+                await updateTimerOnServer(orderContainer.dataset.orderId, currentRemaining, isPaused);
+                
+                // Отправляем ТОЛЬКО состояние паузы в гостевой режим
+                sendToGuest({
+                    type: 'TIMER_UPDATED',
+                    order_id: orderContainer.dataset.orderId,
+                    is_paused: isPaused
+                });
             }
             
             if (isPaused) {
@@ -632,8 +701,6 @@ function startCountdown(selectedButtons, orderContainer, initialSeconds = null) 
             } else {
                 totalPausedTime += Date.now() - pauseStartTime;
             }
-            
-            saveOrdersToStorage();
         });
     }
     
@@ -704,7 +771,7 @@ function loadOrdersFromStorage() {
     try {
         const savedOrders = JSON.parse(localStorage.getItem('orders') || '[]');
         
-        // Исправляем старые данные: если startTime содержит "руб.", используем creationTime
+        // Исправляем старые данные
         const fixedOrders = savedOrders.map(order => {
             if (order.startTime && order.startTime.includes('руб.')) {
                 order.startTime = order.creationTime || '';
@@ -712,34 +779,45 @@ function loadOrdersFromStorage() {
             return order;
         });
         
-        // Сохраняем исправленные данные
-        if (savedOrders.length > 0 && fixedOrders.some((order, index) => order.startTime !== savedOrders[index].startTime)) {
-            localStorage.setItem('orders', JSON.stringify(fixedOrders));
-        }
-        
-        // Получаем счетчики из DOM или из localStorage
-        const orderCountElement = document.querySelector(".section-two__nav_block_sag-2");
-        const revenueElement = document.querySelector(".revenue");
-        
+        // Получаем счетчики
         let savedOrderCount = parseInt(localStorage.getItem('orderCount') || '0');
         let savedTotalRevenue = parseFloat(localStorage.getItem('totalRevenue') || '0');
         
-        if (orderCountElement && orderCountElement.textContent !== '0') {
-            savedOrderCount = parseInt(orderCountElement.textContent) || savedOrderCount;
-        }
-        
-        if (revenueElement && revenueElement.textContent !== '0') {
-            savedTotalRevenue = parseFloat(revenueElement.textContent) || savedTotalRevenue;
-        }
+        // Дополнительные проверки на валидность
+        if (isNaN(savedOrderCount)) savedOrderCount = 0;
+        if (isNaN(savedTotalRevenue)) savedTotalRevenue = 0;
         
         return {
-            orders: fixedOrders, // Используем исправленные данные
+            orders: fixedOrders,
             orderCount: savedOrderCount,
             totalRevenue: savedTotalRevenue
         };
     } catch (error) {
         console.error('Ошибка загрузки из localStorage:', error);
+        // Возвращаем пустые данные при ошибке
         return { orders: [], orderCount: 0, totalRevenue: 0 };
+    }
+}
+
+async function loadOrdersOnStartup() {
+    try {
+        const orders = await loadActiveOrdersFromAPI();
+        
+        orders.forEach(orderData => {
+            recreateOrderFromAPI(orderData);
+        });
+        
+        updateCounters();
+    } catch (error) {
+        console.error('Ошибка загрузки заказов:', error);
+        // Fallback: пробуем загрузить из localStorage
+        const savedData = loadOrdersFromStorage();
+        if (savedData.orders.length > 0) {
+            savedData.orders.forEach(orderData => {
+                recreateOrderFromStorage(orderData);
+            });
+            updateCounters();
+        }
     }
 }
 
@@ -899,6 +977,104 @@ function recreateOrderFromStorage(orderData) {
     setTimeout(() => {
         setupBurgerMenuHandlers();
     }, 100);
+}
+
+// Функция для воссоздания заказа из данных API
+function recreateOrderFromAPI(orderData) {
+    const orderContainer = document.createElement("div");
+    orderContainer.classList.add("section-two__box");
+    orderContainer.dataset.orderId = orderData.id;
+    
+    // Форматируем время для отображения
+    const displayTime = formatDisplayTime(orderData.time);
+    const timeString = formatTimeFromSeconds(orderData.remaining_seconds);
+    
+    // Создаем HTML структуру (аналогично recreateOrderFromStorage)
+    const orderHTML = `
+        <div class="section-two__box_Child-1">
+            <nav class="section-two__box_Child-1__nav">
+                <div class="section-two__box_Child-1__nav_section">
+                    <p class="section-two__box_Child-1__nav_section_par-1">Сумма</p>
+                    <p class="section-two__box_Child-1__nav_section_par-2 price">${orderData.sum} руб.</p>
+                </div>
+                <div class="section-two__box_Child-1__nav_section">
+                    <p class="section-two__box_Child-1__nav_section_par-1">Зашёл в</p>
+                    <p class="section-two__box_Child-1__nav_section_par-2">${displayTime}</p>
+                </div>
+                <div class="section-two__box_Child-1__nav_section">
+                    <p class="section-two__box_Child-1__nav_section_par-1">Посещение</p>
+                    <p class="section-two__box_Child-1__nav_section_par-2 section-two__box_Child-1__nav_section_par-3">${orderData.duration}</p>
+                </div>
+            </nav>
+            <div class="section-two__box_Child-1_line"></div>
+
+            <div class="section-two__box_Child-1__info">
+                <div class="section-two__box_Child-1__info_parents">
+                    <h5 class="section-two__box_Child-1__info_parents_number">${orderData.phone}</h5>
+                    <p class="section-two__box_Child-1__info_parents_par">${orderData.note}</p>
+                </div>
+                <div class="section-two__box_Child-1__info_line-1"></div>
+                <div class="section-two__box_Child-1__info_container-sag">
+                    <h3 class="section-two__box_Child-1__info_container-sag_name">${orderData.child_names}</h3>
+                </div>
+                <h3 class="section-two__box_Child-1__info_sag">Осталось:</h3>
+                <h3 class="section-two__box_Child-1__info_time">${timeString}</h3>
+                <div class="section-two__box_Child-1__info_img ${orderData.is_paused ? 'section-two__box_Child-1__info_img-active' : ''}"></div>
+                <div class="section-two__box_Child-1__info_line-3-mobile"></div>
+                <img class="section-two__box_Child-1__info_burger" src="./img/burger.svg" alt="burger">
+            </div>
+        </div>
+        
+        <div class="section-two__box_Child-2">
+            <h5 class="section-two__box_Child-2_sag">Заказ выполенен</h5>
+        </div>
+
+        <div class="section-two__box_Child-3">
+            <h5 class="section-two__box_Child-3_sag">Удалить</h5>
+            <div class="section-two__box_Child-3_img"></div>
+        </div>
+        
+        <div class="section-two__box_Child-4">
+            <h5 class="section-two__box_Child-4_sag">Изменить заказ</h5>
+        </div>`;
+
+    orderContainer.innerHTML = orderHTML;
+
+    // Добавляем в DOM
+    const sectionTwoLending = document.querySelector(".section-two_lending");
+    if (sectionTwoLending) {
+        sectionTwoLending.insertBefore(orderContainer, sectionTwoLending.firstChild);
+    }
+
+    // Если заказ завершен, применяем стили
+    if (orderData.is_completed) {
+        markOrderAsCompleted(orderContainer);
+    } else if (orderData.remaining_seconds > 0) {
+        // Запускаем таймер
+        const fakeButtons = [{
+            textContent: orderData.duration,
+            querySelector: () => ({ textContent: orderData.duration })
+        }];
+        
+        startCountdown(fakeButtons, orderContainer, orderData.remaining_seconds);
+        
+        // Восстанавливаем состояние паузы
+        if (orderData.is_paused) {
+            const pauseButton = orderContainer.querySelector('.section-two__box_Child-1__info_img');
+            if (pauseButton) {
+                setTimeout(() => {
+                    pauseButton.click();
+                }, 100);
+            }
+        }
+    }
+
+    // Добавляем обработчики
+    addDeleteFunctionality(orderContainer);
+    addOrderCompletedFunctionality(orderContainer);
+    addEditOrderFunctionality(orderContainer);
+
+    return orderContainer;
 }
 
 // Функция для форматирования времени в нужный формат (HH.MM.SS)
@@ -1349,8 +1525,12 @@ function addEditOrderFunctionality(orderContainer) {
 
 // ==================== ОСНОВНОЙ КОД ====================
 document.addEventListener("DOMContentLoaded", function() {
+    setupLogoutHandler();
+    setupAutoLogout();
+
+
     // Загружаем данные из LocalStorage
-    const savedData = loadOrdersFromStorage();
+    const savedData = loadOrdersOnStartup();
     
     // Обновляем глобальные переменные
     orderCount = savedData.orderCount;
@@ -1361,10 +1541,14 @@ document.addEventListener("DOMContentLoaded", function() {
     if (orderCountElement) orderCountElement.textContent = orderCount;
     
     var revenueElement = document.querySelector(".revenue");
-    if (revenueElement) revenueElement.textContent = totalRevenue.toFixed(0);
+    if (revenueElement && totalRevenue !== undefined) {
+        revenueElement.textContent = Math.round(totalRevenue).toFixed(0);
+    } else if (revenueElement) {
+        revenueElement.textContent = '0';
+    }
 
     // Восстанавливаем заказы из LocalStorage
-    if (savedData.orders.length > 0) {
+    if (savedData && savedData.orders && savedData.orders.length > 0) {
         savedData.orders.forEach(orderData => {
             recreateOrderFromStorage(orderData);
         });
@@ -1571,12 +1755,25 @@ document.addEventListener("DOMContentLoaded", function() {
         const dateStr = formatDateString(currentDate);
         const timeStr = formatTimeString(currentDate);
 
-        // Проверяем доступность функции sendRequest
         if (typeof sendRequest === 'function') {
-            sendRequest("http://127.0.0.1:8000/order", "POST", {
+            const totalSeconds = getTotalDurationInSeconds(selectedButtons);
+            
+            sendRequest(`${API_BASE_URL}/order`, "POST", {
                 sum: currentOrderTotal,
                 date: dateStr,
-                time: timeStr
+                time: timeStr,
+                child_names: document.querySelector('.section-one__container_1').value,
+                phone: document.querySelector('.section-one__container_4').value,
+                note: document.querySelector('.section-one__container_3').value,
+                duration: getDuration(selectedButtons),
+                total_seconds: totalSeconds,
+                remaining_seconds: totalSeconds
+            }).then(result => {
+                if (result && result.id) {
+                    // Сохраняем ID заказа из ответа сервера
+                    orderContainer.dataset.orderId = result.id;
+                    console.log('✅ Заказ создан с ID:', result.id);
+                }
             });
         }
 
@@ -1895,4 +2092,36 @@ document.addEventListener("DOMContentLoaded", function() {
 
     // Настройка обработчиков бургер-меню
     setupBurgerMenuHandlers();
+
+
+    // ==================== АВТОРИЗАЦИЯ И ВЫХОД ====================
+    // Обработчик кнопки выхода
+    function setupLogoutHandler() {
+        const logoutButton = document.getElementById('logoutButton');
+        if (logoutButton) {
+            logoutButton.addEventListener('click', function() {
+                if (confirm('Вы уверены, что хотите выйти?')) {
+                    // Очищаем данные авторизации
+                    sessionStorage.removeItem('adminAuthenticated');
+                    sessionStorage.removeItem('adminAuthTimestamp');
+                    
+                    // Перенаправляем на страницу авторизации
+                    window.location.href = './check/checkpoint-admin.html';
+                }
+            });
+        }
+    }
+
+    // Автоматический выход при бездействии (8 часов)
+    function setupAutoLogout() {
+        setInterval(() => {
+            const authTimestamp = sessionStorage.getItem('adminAuthTimestamp');
+            if (authTimestamp && (Date.now() - parseInt(authTimestamp)) > 8 * 60 * 60 * 1000) {
+                sessionStorage.removeItem('adminAuthenticated');
+                sessionStorage.removeItem('adminAuthTimestamp');
+                alert('Сессия истекла. Пожалуйста, войдите снова.');
+                window.location.href = './check/checkpoint-admin.html';
+            }
+        }, 60000); // Проверяем каждую минуту
+    }
 });

@@ -3,7 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Детская комната</title>
+    <title>Админ - Детская комната</title>
+
+    <script>
+        // Конфигурация авторизации - хранится в админской странице
+        const ADMIN_CREDENTIALS = {
+            login: "admin",
+            password: "admin", // Рекомендуется сменить на более сложный пароль
+            sessionTimeout: 8 * 60 * 60 * 1000 // 8 часов в миллисекундах
+        };
+
+        // Функция проверки авторизации
+        function checkAdminAuth() {
+            const isAuthenticated = sessionStorage.getItem('adminAuthenticated');
+            const authTimestamp = sessionStorage.getItem('adminAuthTimestamp');
+            
+            // Проверяем, что авторизация была не более 8 часов назад
+            const isExpired = authTimestamp && (Date.now() - parseInt(authTimestamp)) > 8 * 60 * 60 * 1000;
+            
+            if (!isAuthenticated || isExpired) {
+                // Перенаправляем на страницу авторизации
+                window.location.href = './check/checkpoint-admin.html';
+                return false;
+            }
+            return true;
+        }
+
+        // Проверяем авторизацию при загрузке страницы
+        (function() {
+            if (!checkAdminAuth()) {
+                return;
+            }
+        })();
+    </script>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -81,6 +113,12 @@
                             <h4 class="section-two__nav_block-5_sag">Инструкция</h4>
                         </div>
                     </a>
+                </div>
+                <div class="section-two__nav_block section-two__nav_block-logout" id="logoutButton">
+                    <h4 class="section-two__nav_block_sag-1">Выйти</h4>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M17 7L15.59 8.41L18.17 11H8V13H18.17L15.59 15.58L17 17L22 12L17 7ZM4 5H12V3H4C2.9 3 2 3.9 2 5V19C2 20.1 2.9 21 4 21H12V19H4V5Z" fill="#ff6b6b"/>
+                    </svg>
                 </div>
 
                 <div class="section-two__nav_button">
