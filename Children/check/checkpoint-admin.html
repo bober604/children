@@ -272,7 +272,24 @@
             const passwordInput = document.getElementById('password');
             const toggleButton = document.createElement('button');
             toggleButton.type = 'button';
-            toggleButton.innerHTML = '👁️';
+            
+            // Создаем элемент изображения для открытого глаза
+            const openEyeImg = document.createElement('img');
+            openEyeImg.src = '../img/padlock.png';
+            openEyeImg.alt = 'Показать пароль';
+            openEyeImg.style.width = '20px';
+            openEyeImg.style.height = '20px';
+            
+            // Создаем элемент изображения для закрытого замка
+            const closedLockImg = document.createElement('img');
+            closedLockImg.src = '../img/open-eye.png';
+            closedLockImg.alt = 'Скрыть пароль';
+            closedLockImg.style.width = '20px';
+            closedLockImg.style.height = '20px';
+            
+            // Добавляем начальное изображение
+            toggleButton.appendChild(closedLockImg);
+            
             toggleButton.style.position = 'absolute';
             toggleButton.style.right = '10px';
             toggleButton.style.top = '50%';
@@ -280,7 +297,8 @@
             toggleButton.style.background = 'none';
             toggleButton.style.border = 'none';
             toggleButton.style.cursor = 'pointer';
-            toggleButton.style.fontSize = '16px';
+            toggleButton.style.padding = '5px';
+            toggleButton.style.borderRadius = '3px';
             
             const passwordContainer = passwordInput.parentNode;
             passwordContainer.style.position = 'relative';
@@ -289,10 +307,14 @@
             toggleButton.addEventListener('click', function() {
                 if (passwordInput.type === 'password') {
                     passwordInput.type = 'text';
-                    toggleButton.innerHTML = '🔒';
+                    // Очищаем кнопку и добавляем изображение открытого глаза
+                    toggleButton.innerHTML = '';
+                    toggleButton.appendChild(openEyeImg);
                 } else {
                     passwordInput.type = 'password';
-                    toggleButton.innerHTML = '👁️';
+                    // Очищаем кнопку и добавляем изображение замка
+                    toggleButton.innerHTML = '';
+                    toggleButton.appendChild(closedLockImg);
                 }
             });
         }
