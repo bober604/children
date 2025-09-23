@@ -1,5 +1,5 @@
 import asyncio
-from fastapi import FastAPI, Depends, WebSocket, WebSocketDisconnect, BackgroundTasks
+from fastapi import FastAPI, Depends, WebSocket, WebSocketDisconnect, BackgroundTasks, HTTPException
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta, time as time_cls
@@ -19,18 +19,104 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-LOCAL_TZ = zoneinfo.ZoneInfo("Asia/Yekaterinburg")  # можно заменить на нужную зону
+LOCAL_TZ = zoneinfo.ZoneInfo("Asia/Yekaterinburg")
 
 # ----------------------
-# REST endpoints
+# НОВЫЕ эндпоинты API
+# ----------------------
+
+@app.get("/orders/active", response_model=list[schemas.OrderOut])
+def get_active_orders(db: Session = Depends(database.get_db)):
+    """Получить все активные заказы"""
+    return crud.get_active_orders(db)
+
+@app.put("/order/{order_id}/timer")
+def update_order_timer(
+    order_id: int, 
+    timer_update: schemas.OrderTimerUpdate, 
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(database.get_db)
+):
+    """Обновить таймер заказа"""
+    db_order = crud.update_order_timer(db, order_id, timer_update.remaining_seconds, timer_update.is_paused)
+    if not db_order:
+        raise HTTPException(status_code=404, detail="Order not found")
+    
+    background_tasks.add_task(broadcast_today_stats)
+    background_tasks.add_task(broadcast_active_orders)
+    return {"message": "Timer updated successfully"}
+
+@app.put("/order/{order_id}/complete")
+def complete_order(
+    order_id: int, 
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(database.get_db)
+):
+    """Отметить заказ как выполненный"""
+    db_order = crud.complete_order(db, order_id)
+    if not db_order:
+        raise HTTPException(status_code=404, detail="Order not found")
+    
+    background_tasks.add_task(broadcast_today_stats)
+    background_tasks.add_task(broadcast_active_orders)
+    return {"message": "Order completed successfully"}
+
+@app.delete("/order/{order_id}")
+def delete_order_by_id(
+    order_id: int, 
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(database.get_db)
+):
+    """Удалить заказ по ID"""
+    deleted = crud.delete_order(db, order_id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Order not found")
+    
+    background_tasks.add_task(broadcast_today_stats)
+    background_tasks.add_task(broadcast_active_orders)
+    return {"message": "Order deleted successfully"}
+
+# ----------------------
+# ОБНОВЛЕННЫЕ эндпоинты
 # ----------------------
 
 @app.post("/order", response_model=schemas.OrderOut)
-def add_order(order: schemas.OrderCreate, db: Session = Depends(database.get_db)):
-    o = crud.create_order(db, order.sum, order.date, order.time)
-    # после создания — рассылаем обновлённую статистику по дню
-    # asyncio.create_task(broadcast_today_stats())
+def add_order(order: schemas.OrderCreate, background_tasks: BackgroundTasks, db: Session = Depends(database.get_db)):
+    """Создание заказа (расширенная версия)"""
+    o = crud.create_order(
+        db, 
+        order.sum, 
+        order.date, 
+        order.time,
+        child_names=order.child_names,
+        phone=order.phone,
+        note=order.note,
+        duration=order.duration,
+        total_seconds=order.total_seconds,
+        remaining_seconds=order.remaining_seconds
+    )
+    background_tasks.add_task(broadcast_today_stats)
+    background_tasks.add_task(broadcast_active_orders)
     return o
+
+@app.delete("/order")
+def delete_order_legacy(
+    payload: schemas.OrderDelete, 
+    background_tasks: BackgroundTasks, 
+    db: Session = Depends(database.get_db)
+):
+    """Старая версия удаления (для обратной совместимости)"""
+    deleted = crud.delete_order_legacy(db, payload.sum, payload.date, payload.time)
+    background_tasks.add_task(broadcast_today_stats)
+    background_tasks.add_task(broadcast_active_orders)
+    
+    if deleted:
+        return {"message": "Order deleted successfully"}
+    return JSONResponse(status_code=404, content={"detail": "not found"})
+
+# ----------------------
+# СУЩЕСТВУЮЩИЕ эндпоинты (не изменяем)
+# ----------------------
 
 @app.get("/orders/{date_str}")
 def get_orders(date_str: str, db: Session = Depends(database.get_db)):
@@ -56,36 +142,31 @@ def orders_range(start_date: str, end_date: str, db: Session = Depends(database.
     ed = datetime.strptime(end_date, "%d.%m.%Y").date()
     return crud.get_orders_by_range(db, sd, ed)
 
-
-@app.delete("/order")
-def delete_order(payload: schemas.OrderDelete, background_tasks: BackgroundTasks, db: Session = Depends(database.get_db)):
-    deleted = crud.delete_order(db, payload.sum, payload.date, payload.time)
-    background_tasks.add_task(broadcast_today_stats)
-    if deleted:
-        return {"message": "Order deleted successfully"}
-    return JSONResponse(status_code=404, content={"detail": "not found"})
-
 @app.post("/order/update")
 def update_order(
-    payload: schemas.OrderUpdate, background_tasks: BackgroundTasks, db: Session = Depends(database.get_db)):
+    payload: schemas.OrderUpdate, 
+    background_tasks: BackgroundTasks, 
+    db: Session = Depends(database.get_db)
+):
     updated = crud.update_order(db, payload.old_sum, payload.date, payload.time, payload.new_sum)
     background_tasks.add_task(broadcast_today_stats)
+    background_tasks.add_task(broadcast_active_orders)
+    
     if updated:
         return updated
     return JSONResponse(status_code=404, content={"detail": "not found"})
 
 # ----------------------
-# WebSocket endpoint
+# WebSocket endpoint (обновленный)
 # ----------------------
 
 @app.websocket("/ws/stats")
 async def ws_stats(websocket: WebSocket):
     await ws_manager.manager.connect(websocket)
     try:
-        # при подключении сразу отправляем текущую статистику на сегодня
-        await websocket.send_json(await get_today_stats_payload())
+        # При подключении отправляем текущую статистику и активные заказы
+        await websocket.send_json(await get_combined_payload())
         while True:
-            # клиенты могут присылать ping/pong или фильтры — сейчас просто читаем, но не требуем
             await websocket.receive_text()
     except WebSocketDisconnect:
         await ws_manager.manager.disconnect(websocket)
@@ -93,7 +174,7 @@ async def ws_stats(websocket: WebSocket):
         await ws_manager.manager.disconnect(websocket)
 
 # ----------------------
-# Статистика / broadcast helpers
+# Вспомогательные функции для WebSocket
 # ----------------------
 
 async def get_today_stats_payload():
@@ -105,43 +186,98 @@ async def get_today_stats_payload():
         count = crud.get_orders_count_by_date(db, today)
         avg = crud.get_average_check_by_date(db, today)
         return {
-            "date": today.isoformat(),
-            "orders_count": int(count),
-            "total_revenue": int(total),
-            "average_check": float(avg)
+            "type": "today_stats",
+            "data": {
+                "date": today.isoformat(),
+                "orders_count": int(count),
+                "total_revenue": int(total),
+                "average_check": float(avg)
+            }
         }
     finally:
         db.close()
 
+async def get_active_orders_payload():
+    from .database import SessionLocal
+    db = SessionLocal()
+    try:
+        orders = crud.get_active_orders(db)
+        # Конвертируем ORM объекты в словари
+        orders_data = []
+        for order in orders:
+            order_dict = {
+                "id": order.id,
+                "sum": order.sum,
+                "date": order.date,
+                "time": order.time,
+                "child_names": order.child_names,
+                "phone": order.phone,
+                "note": order.note,
+                "duration": order.duration,
+                "total_seconds": order.total_seconds,
+                "remaining_seconds": order.remaining_seconds,
+                "is_paused": order.is_paused,
+                "is_completed": order.is_completed,
+                "created_at": order.created_at.isoformat() if order.created_at else None
+            }
+            orders_data.append(order_dict)
+        
+        return {
+            "type": "active_orders",
+            "data": orders_data
+        }
+    finally:
+        db.close()
+
+async def get_combined_payload():
+    """Возвращает комбинированный payload со статистикой и активными заказами"""
+    stats = await get_today_stats_payload()
+    orders = await get_active_orders_payload()
+    return {
+        "type": "initial_data",
+        "data": {
+            "stats": stats["data"],
+            "active_orders": orders["data"]
+        }
+    }
+
 async def broadcast_today_stats():
     payload = await get_today_stats_payload()
-    await ws_manager.manager.broadcast_json({"type": "today_stats", "data": payload})
+    await ws_manager.manager.broadcast_json(payload)
+
+async def broadcast_active_orders():
+    payload = await get_active_orders_payload()
+    await ws_manager.manager.broadcast_json(payload)
+
+async def broadcast_combined():
+    """Рассылает обновленные данные по статистике и активным заказам"""
+    await broadcast_today_stats()
+    await broadcast_active_orders()
 
 # ----------------------
-# Фоновая задача: оповещение о новом дне в 00:00 локального времени
+# Фоновая задача
 # ----------------------
 
 async def midnight_notifier_loop():
-    # расчёт времени до следующего локального полуночи
     while True:
         now = datetime.now(LOCAL_TZ)
-        # следующий день в 00:00:00
         next_midnight = datetime.combine((now + timedelta(days=1)).date(), time_cls.min).replace(tzinfo=LOCAL_TZ)
         wait_seconds = (next_midnight - now).total_seconds()
-        # safety sleep
         await asyncio.sleep(wait_seconds + 0.5)
-        # в момент после 00:00 — оповещаем всех: статистика сегодня = 0 (пока нет заказов)
+        
         payload = {
             "type": "new_day",
-            "date": next_midnight.date().isoformat(),
-            "data": {"orders_count": 0, "total_revenue": 0, "average_check": 0.0}
+            "data": {
+                "date": next_midnight.date().isoformat(),
+                "orders_count": 0, 
+                "total_revenue": 0, 
+                "average_check": 0.0
+            }
         }
         await ws_manager.manager.broadcast_json(payload)
-        # также можем сразу расшарить актуальную (пока нулевая) today_stats
         await broadcast_today_stats()
 
 @app.on_event("startup")
 async def startup_event():
-    # запускаем фоновой цикл (в отдельных задачах)
     loop = asyncio.get_event_loop()
     loop.create_task(midnight_notifier_loop())

@@ -1,24 +1,32 @@
 from pydantic import BaseModel, validator
 from datetime import datetime, date, time
+from typing import Optional
 
 class OrderCreate(BaseModel):
     sum: int
-    date: str  # ожидаем "dd.mm.yyyy"
-    time: str  # ожидаем "hh.mm.ss"
-
-    @validator("date")
-    def parse_date(cls, v):
-        return datetime.strptime(v, "%d.%m.%Y").date()
-
-    @validator("time")
-    def parse_time(cls, v):
-        return datetime.strptime(v, "%H.%M.%S").time()
+    date: str  # формат "dd.mm.yyyy"
+    time: str  # формат "hh.mm.ss"
+    child_names: str = ""
+    phone: str = ""
+    note: str = ""
+    duration: str = ""
+    total_seconds: int = 0
+    remaining_seconds: int = 0
 
 class OrderOut(BaseModel):
     id: int
     sum: int
-    date: date
-    time: time
+    date: str
+    time: str
+    child_names: str
+    phone: str
+    note: str
+    duration: str
+    total_seconds: int
+    remaining_seconds: int
+    is_paused: bool
+    is_completed: bool
+    created_at: datetime
 
     class Config:
         orm_mode = True
@@ -32,6 +40,7 @@ class OrderUpdate(BaseModel):
     @validator("date")
     def parse_date(cls, v):
         return datetime.strptime(v, "%d.%m.%Y").date()
+    
     @validator("time")
     def parse_time(cls, v):
         return datetime.strptime(v, "%H.%M.%S").time()
@@ -44,6 +53,12 @@ class OrderDelete(BaseModel):
     @validator("date")
     def parse_date(cls, v):
         return datetime.strptime(v, "%d.%m.%Y").date()
+    
     @validator("time")
     def parse_time(cls, v):
         return datetime.strptime(v, "%H.%M.%S").time()
+
+# Новые схемы
+class OrderTimerUpdate(BaseModel):
+    remaining_seconds: int
+    is_paused: bool

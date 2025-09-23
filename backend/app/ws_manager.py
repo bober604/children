@@ -24,7 +24,6 @@ class ConnectionManager:
             try:
                 await ws.send_json(data)
             except Exception:
-                # best-effort: ignore send errors; disconnect will be cleaned up later
                 pass
 
 manager = ConnectionManager()
