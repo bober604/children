@@ -7,6 +7,24 @@ if (typeof GuestMode === 'undefined') {
             this.channel = null;
             this.isConnected = false;
             this.init();
+            this.syncInterval = null;
+        }
+
+        // Метод для периодической синхронизации
+        startPeriodicSync() {
+            // Синхронизируем каждые 30 секунд
+            this.syncInterval = setInterval(() => {
+                this.loadOrdersFromAPI().then(success => {
+                });
+            }, 1000);
+        }
+
+        // Добавьте этот метод для полного обновления состояния
+        refreshOrderState(orderId) {
+            if (this.orders.has(orderId)) {
+                const order = this.orders.get(orderId);
+                this.updateOrderElement(order);
+            }
         }
 
         // Добавляем метод для загрузки данных
@@ -36,6 +54,7 @@ if (typeof GuestMode === 'undefined') {
                     this.loadFromStorage();
                 }
                 this.updateDisplay();
+                this.startPeriodicSync(); // Запускаем периодическую синхронизацию
             });
         }
 
@@ -109,7 +128,7 @@ if (typeof GuestMode === 'undefined') {
                     
                 case 'ORDER_COMPLETED':
                     if (!message.order_id) return;
-                    this.completeOrder(message.order_id);
+                    this.deleteOrder(message.order_id);
                     break;
                     
                 case 'ORDER_DELETED':
@@ -124,7 +143,7 @@ if (typeof GuestMode === 'undefined') {
                     break;
                     
                 case 'TIMER_UPDATED':
-                    // ТОЛЬКО обновляем визуальное состояние паузы
+                    // Обновляем ВСЕ состояния: паузу и визуальное отображение
                     if (!message.order_id || message.is_paused === undefined) return;
                     this.updatePauseState(message.order_id, message.is_paused);
                     break;
@@ -138,18 +157,17 @@ if (typeof GuestMode === 'undefined') {
         updatePauseState(orderId, isPaused) {
             if (this.orders.has(orderId)) {
                 const order = this.orders.get(orderId);
+                
+                // Обновляем только состояние паузы, remaining_seconds остается из БД
                 order.is_paused = isPaused;
                 this.orders.set(orderId, order);
                 
-                // Обновляем только визуальное отображение
+                // Всегда обновляем отображение при изменении паузы
                 this.updateOrderElement(order);
             }
         }
 
         addOrder(orderData) {
-            console.log('Добавление нового заказа:', orderData);
-            
-            // Создаем объект заказа
             const order = {
                 id: orderData.id || this.generateId(),
                 child_name: orderData.child_name,
@@ -160,13 +178,14 @@ if (typeof GuestMode === 'undefined') {
                 start_time: orderData.start_time,
                 remaining_seconds: orderData.remaining_seconds,
                 status: orderData.status || 'active',
-                created_at: Date.now()
+                created_at: Date.now() // Добавляем timestamp создания
             };
 
             this.orders.set(order.id, order);
             this.saveToStorage();
+            
+            // Сначала обновляем отображение, чтобы новый заказ добавился в начало
             this.updateDisplay();
-            this.createOrderElement(order);
         }
 
         updateOrder(orderData) {
@@ -184,9 +203,16 @@ if (typeof GuestMode === 'undefined') {
                 const order = this.orders.get(orderId);
                 order.status = 'completed';
                 order.remaining_seconds = 0;
+                order.is_paused = false;
                 this.orders.set(orderId, order);
                 this.saveToStorage();
                 this.updateOrderElement(order);
+                
+                // Останавливаем таймер
+                const orderElement = document.querySelector(`[data-order-id="${orderId}"]`);
+                if (orderElement && orderElement.dataset.timerId) {
+                    clearInterval(orderElement.dataset.timerId);
+                }
             }
         }
 
@@ -199,11 +225,14 @@ if (typeof GuestMode === 'undefined') {
         }
 
         syncOrders(ordersArray) {
-            console.log('Синхронизация всех заказов:', ordersArray.length);
+            // console.log('Синхронизация всех заказов:', ordersArray.length);
             this.orders.clear();
+            
             ordersArray.forEach(order => {
+                // Используем значение remaining_seconds из БД без изменений
                 this.orders.set(order.id, order);
             });
+            
             this.saveToStorage();
             this.updateDisplay();
         }
@@ -217,19 +246,36 @@ if (typeof GuestMode === 'undefined') {
             orderElement.dataset.orderId = order.id;
             orderElement.innerHTML = this.getOrderHTML(order);
 
-            ordersBlock.appendChild(orderElement);
+            // Добавляем в НАЧАЛО списка (первым элементом)
+            if (ordersBlock.firstChild) {
+                ordersBlock.insertBefore(orderElement, ordersBlock.firstChild);
+            } else {
+                ordersBlock.appendChild(orderElement);
+            }
+            
             this.startTimer(orderElement, order.remaining_seconds);
         }
 
         getOrderHTML(order) {
-            const displayTime = this.formatDisplayTime(order.time); // Исправлено: используем order.time вместо order.start_time
+            const displayTime = this.formatDisplayTime(order.time);
             const durationText = this.getDurationText(order.duration);
             const remainingTime = this.formatTimeFromSeconds(order.remaining_seconds);
             
-            // Определяем классы для разных состояний
-            const statusClass = order.is_completed ? 'status-completed' : 'status-active';
-            const statusText = order.is_completed ? 'завершено' : 'активно';
-            const timerClass = order.is_paused ? 'timer-paused' : '';
+            // Определяем статусы - ТОЛЬКО ОДИН статус активен в каждый момент времени
+            const isCompleted = order.status === 'completed' || order.remaining_seconds <= 0;
+            const isPaused = !isCompleted && order.is_paused;
+            const isActive = !isCompleted && !order.is_paused;
+
+            // Формируем HTML для статусов - показываем ТОЛЬКО ОДИН статус
+            let statusHTML = '';
+            
+            if (isCompleted) {
+                statusHTML = '<span class="order-status status-completed">завершено</span>';
+            } else if (isPaused) {
+                statusHTML = '<span class="order-status status-paused">на паузе</span>';
+            } else {
+                statusHTML = '<span class="order-status status-active">активно</span>';
+            }
 
             return `
                 <div class="section-two__box_Child-1">
@@ -241,8 +287,7 @@ if (typeof GuestMode === 'undefined') {
                         <div class="section-two__box_Child-1__nav_section">
                             <p class="section-two__box_Child-1__nav_section_par-1">Посещение</p>
                             <p class="section-two__box_Child-1__nav_section_par-2">${durationText}</p>
-                            <span class="order-status ${statusClass}">${statusText}</span>
-                            ${order.is_paused ? '<span class="order-status status-paused">на паузе</span>' : ''}
+                            ${statusHTML}
                         </div>
                     </nav>
                     <div class="section-two__box_Child-1_line"></div>
@@ -252,7 +297,7 @@ if (typeof GuestMode === 'undefined') {
                             <h3 class="section-two__box_Child-1__info_container-sag_name">${this.escapeHtml(order.child_names)}</h3>
                         </div>
                         <h3 class="section-two__box_Child-1__info_sag">Осталось:</h3>
-                        <h3 class="section-two__box_Child-1__info_time ${timerClass}">${remainingTime}</h3>
+                        <h3 class="section-two__box_Child-1__info_time ${isPaused ? 'timer-paused' : ''}">${remainingTime}</h3>
                     </div>
                 </div>
             `;
@@ -263,26 +308,59 @@ if (typeof GuestMode === 'undefined') {
             if (!countdownElement || initialSeconds <= 0) return;
 
             let remainingSeconds = initialSeconds;
-            const timerId = setInterval(() => {
-                if (remainingSeconds <= 0) {
+            let lastUpdateTime = Date.now();
+            let isTabActive = true;
+
+            const handleVisibilityChange = () => {
+                isTabActive = !document.hidden;
+                if (isTabActive) {
+                    lastUpdateTime = Date.now();
+                }
+            };
+
+            document.addEventListener('visibilitychange', handleVisibilityChange);
+
+            const updateTimer = () => {
+                const orderId = orderElement.dataset.orderId;
+                if (!this.orders.has(orderId)) {
                     clearInterval(timerId);
-                    countdownElement.textContent = "00:00:00";
-                    this.updateOrderStatus(orderElement.dataset.orderId, 'completed');
+                    document.removeEventListener('visibilitychange', handleVisibilityChange);
                     return;
                 }
 
-                remainingSeconds--;
-                countdownElement.textContent = this.formatTimeFromSeconds(remainingSeconds);
+                const order = this.orders.get(orderId);
                 
-                // Обновляем оставшееся время в данных
-                if (this.orders.has(orderElement.dataset.orderId)) {
-                    const order = this.orders.get(orderElement.dataset.orderId);
-                    order.remaining_seconds = remainingSeconds;
-                    this.orders.set(orderElement.dataset.orderId, order);
+                // Если заказ на паузе или завершен - не обновляем таймер
+                if (order.is_paused || order.status === 'completed') {
+                    return;
                 }
-            }, 1000);
 
+                if (!isTabActive) return;
+
+                const currentTime = Date.now();
+                const elapsedSeconds = Math.floor((currentTime - lastUpdateTime) / 1000);
+                
+                if (elapsedSeconds >= 1) {
+                    remainingSeconds = Math.max(0, remainingSeconds - elapsedSeconds);
+                    lastUpdateTime = currentTime;
+
+                    countdownElement.textContent = this.formatTimeFromSeconds(remainingSeconds);
+                    
+                    // Обновляем значение в данных (локально)
+                    order.remaining_seconds = remainingSeconds;
+                    this.orders.set(orderId, order);
+
+                    if (remainingSeconds <= 0) {
+                        this.completeOrder(orderId);
+                        clearInterval(timerId);
+                        document.removeEventListener('visibilitychange', handleVisibilityChange);
+                    }
+                }
+            };
+
+            const timerId = setInterval(updateTimer, 100);
             orderElement.dataset.timerId = timerId;
+            countdownElement.textContent = this.formatTimeFromSeconds(remainingSeconds);
         }
 
         updateOrderStatus(orderId, status) {
@@ -298,9 +376,13 @@ if (typeof GuestMode === 'undefined') {
         updateOrderElement(order) {
             const orderElement = document.querySelector(`[data-order-id="${order.id}"]`);
             if (orderElement) {
+                // НЕ сохраняем время из DOM - используем значение из order (которое из БД)
                 orderElement.outerHTML = this.getOrderHTML(order);
-                if (order.status === 'active' && order.remaining_seconds > 0) {
-                    this.startTimer(orderElement, order.remaining_seconds);
+                
+                // Перезапускаем таймер только если заказ активен, время осталось и НЕ на паузе
+                const newOrderElement = document.querySelector(`[data-order-id="${order.id}"]`);
+                if (order.status === 'active' && order.remaining_seconds > 0 && !order.is_paused) {
+                    this.startTimer(newOrderElement, order.remaining_seconds);
                 }
             }
         }
@@ -328,7 +410,18 @@ if (typeof GuestMode === 'undefined') {
                     ordersBlock.style.display = 'block';
                     ordersBlock.innerHTML = '';
                     
-                    this.orders.forEach(order => {
+                    // Сортируем заказы: сначала новые (по created_at или id)
+                    const sortedOrders = Array.from(this.orders.values()).sort((a, b) => {
+                        // Сначала по дате создания (новые первыми)
+                        if (a.created_at && b.created_at) {
+                            return b.created_at - a.created_at;
+                        }
+                        // Или по ID (больший ID = новее заказ)
+                        return b.id - a.id;
+                    });
+                    
+                    // Добавляем заказы в отсортированном порядке
+                    sortedOrders.forEach(order => {
                         this.createOrderElement(order);
                     });
                 }
