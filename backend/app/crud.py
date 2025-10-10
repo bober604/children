@@ -117,13 +117,22 @@ def update_order_timer(db: Session, order_id: int, remaining_seconds: int, is_pa
     return db_order
 
 def complete_order(db: Session, order_id: int):
+    """Отметить заказ как выполненный или возобновить"""
     db_order = db.query(models.Order).filter(models.Order.id == order_id).first()
     if db_order:
-        db_order.is_completed = True
-        db_order.remaining_seconds = 0
-        db_order.is_paused = False
+        # Переключаем статус выполнения
+        db_order.is_completed = not db_order.is_completed
+        
+        if db_order.is_completed:
+            # Если завершаем - ставим на паузу
+            db_order.is_paused = True
+        else:
+            # Если возобновляем - снимаем с паузы
+            db_order.is_paused = False
+        
         db.commit()
         db.refresh(db_order)
+        
     return db_order
 
 def get_order_by_id(db: Session, order_id: int):

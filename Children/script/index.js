@@ -189,9 +189,19 @@ function addDeleteFunctionality(orderContainer) {
             var secondConfirmation = confirm("Вы точно уверены?");
             
             if (secondConfirmation) {
-                // Получаем сумму из data-атрибута или из DOM
+                // Получаем данные из data-атрибутов или DOM
+                const orderId = orderContainer.dataset.orderId;
                 const sum = parseFloat(orderContainer.dataset.creationSum) || 
                            parseFloat(orderContainer.querySelector('.price')?.textContent.replace('руб.', '').trim()) || 0;
+                const date = orderContainer.dataset.creationDate;
+                const time = orderContainer.dataset.creationTime;
+
+                console.log('Данные для удаления:', {
+                    orderId: orderId,
+                    sum: sum,
+                    date: date,
+                    time: time
+                });
 
                 // Останавливаем таймер
                 const timerId = orderContainer.dataset.timerId;
@@ -199,76 +209,88 @@ function addDeleteFunctionality(orderContainer) {
                     stopTimer(timerId);
                 }
 
-                // Используем АКТУАЛЬНУЮ сумму из data-атрибута
-                const currentSum = orderContainer.dataset.creationSum || sum;
-                const creationDate = orderContainer.dataset.creationDate;
-                const creationTime = orderContainer.dataset.creationTime;
-
-                console.log('Данные для удаления:', {
-                    sum: currentSum,
-                    date: creationDate,
-                    time: creationTime
-                });
-
-                // Отправляем запрос на удаление (если функция доступна)
-                if (typeof sendRequest === 'function') {
-                    // ИСПРАВЛЕННЫЙ URL - добавлен слеш в конце
-                    sendRequest("http://127.0.0.1:8000/order/", "DELETE", {
-                        sum: currentSum,
-                        date: creationDate,
-                        time: creationTime
-                    }).then(result => {
-                        if (result && result.message) {
+                // ПРЕИМУЩЕСТВЕННО ИСПОЛЬЗУЕМ УДАЛЕНИЕ ПО ID (новый метод)
+                if (orderId) {
+                    console.log('🔄 Удаление заказа по ID:', orderId);
+                    
+                    // Используем новый эндпоинт удаления по ID
+                    fetch(`${API_BASE_URL}/order/${orderId}`, {
+                        method: 'DELETE'
+                    })
+                    .then(response => {
+                        if (response.ok) {
+                            console.log('✅ Заказ успешно удален из БД по ID');
                             // УСПЕШНО УДАЛЕНО - ОБНОВЛЯЕМ ИНТЕРФЕЙС
-                            orderContainer.remove();
-                            orderCount--;
-                            
-                            var orderCountElement = document.querySelector(".section-two__nav_block_sag-2");
-                            if (orderCountElement) {
-                                orderCountElement.textContent = orderCount;
-                            }
-                            
-                            totalRevenue -= currentSum;
-                            
-                            var revenueElement = document.querySelector(".revenue");
-                            if (revenueElement) {
-                                revenueElement.textContent = Math.max(0, totalRevenue).toFixed(0);
-                            }
-                            
-                            console.log('✅ Заказ успешно удален');
-                            
-                            if (typeof saveOrdersToStorage === 'function') {
-                                saveOrdersToStorage();
-                            }
+                            removeOrderFromInterface(orderContainer);
+                            return true;
                         } else {
-                            console.log('❌ Ошибка при удалении заказа');
-                            // Удаляем локально даже при ошибке сервера
-                            orderContainer.remove();
-                            updateCounters();
-                            saveOrdersToStorage();
+                            console.error('❌ Ошибка при удалении заказа по ID:', response.status);
+                            // Пробуем старый метод как fallback
+                            return deleteByLegacyMethod(sum, date, time, orderContainer);
                         }
-                    }).catch(error => {
-                        console.log('❌ Ошибка сети при удалении заказа:', error);
-                        // Удаляем локально при ошибке сети
-                        orderContainer.remove();
-                        updateCounters();
-                        saveOrdersToStorage();
+                    })
+                    .catch(error => {
+                        console.error('❌ Ошибка сети при удалении по ID:', error);
+                        // Пробуем старый метод как fallback
+                        return deleteByLegacyMethod(sum, date, time, orderContainer);
                     });
+                    
                 } else {
-                    // Если sendRequest недоступна, удаляем локально
-                    orderContainer.remove();
-                    updateCounters();
-                    saveOrdersToStorage();
+                    // Если нет orderId, используем старый метод
+                    console.log('🔄 Удаление заказа по legacy методу');
+                    deleteByLegacyMethod(sum, date, time, orderContainer);
                 }
 
+                // Отправляем уведомление в гостевой режим
                 const deleteData = {
                     type: 'ORDER_DELETED', 
-                    order_id: orderContainer.dataset.timerId
+                    order_id: orderId || orderContainer.dataset.timerId
                 };
                 sendToGuest(deleteData);
             }
         }
     });
+}
+
+// Вспомогательная функция для удаления legacy методом
+function deleteByLegacyMethod(sum, date, time, orderContainer) {
+    if (!date || !time) {
+        console.error('❌ Недостаточно данных для legacy удаления:', {sum, date, time});
+        // Все равно удаляем локально
+        removeOrderFromInterface(orderContainer);
+        return false;
+    }
+
+    return sendRequest("http://127.0.0.1:8000/order/", "DELETE", {
+        sum: sum,
+        date: date,
+        time: time
+    }).then(result => {
+        if (result && result.message) {
+            console.log('✅ Заказ успешно удален из БД (legacy метод)');
+            removeOrderFromInterface(orderContainer);
+            return true;
+        } else {
+            console.log('❌ Ошибка при удалении заказа (legacy метод)');
+            // Удаляем локально даже при ошибке сервера
+            removeOrderFromInterface(orderContainer);
+            return false;
+        }
+    }).catch(error => {
+        console.log('❌ Ошибка сети при удалении заказа (legacy метод):', error);
+        // Удаляем локально при ошибке сети
+        removeOrderFromInterface(orderContainer);
+        return false;
+    });
+}
+
+// Вспомогательная функция для удаления из интерфейса
+function removeOrderFromInterface(orderContainer) {
+    orderContainer.remove();
+    updateCounters();
+    if (typeof saveOrdersToStorage === 'function') {
+        saveOrdersToStorage();
+    }
 }
 
 // Функция для получения текущего времени
@@ -826,8 +848,10 @@ function loadOrdersFromStorage() {
 
 async function loadOrdersOnStartup() {
     try {
-        // ПЕРВОЕ: загружаем из API (БД)
-        const orders = await loadActiveOrdersFromAPI();
+        // ЗАГРУЖАЕМ ВСЕ ЗАКАЗЫ ЗА СЕГОДНЯШНИЙ ДЕНЬ, а не только активные
+        const today = new Date();
+        const dateStr = formatDateString(today);
+        const orders = await fetch(`${API_BASE_URL}/orders/${dateStr}`).then(res => res.ok ? res.json() : []);
         
         // Очищаем текущие заказы в DOM
         const sectionTwoLending = document.querySelector(".section-two_lending");
@@ -842,7 +866,7 @@ async function loadOrdersOnStartup() {
             });
         }
         
-        // Обновляем счетчики
+        // Обновляем счетчики (только активные заказы)
         updateCounters();
         
         console.log('✅ Заказы загружены из БД:', orders.length);
@@ -1057,13 +1081,23 @@ function recreateOrderFromAPI(orderData) {
     orderContainer.classList.add("section-two__box");
     orderContainer.dataset.orderId = orderData.id;
     
+    // Если заказ завершен, добавляем соответствующий класс
+    if (orderData.is_completed) {
+        orderContainer.classList.add("in-section-two__box");
+    }
+    
     // Форматируем время для отображения
     const displayTime = formatDisplayTime(orderData.time);
     const timeString = formatTimeFromSeconds(orderData.remaining_seconds);
     
-    // Создаем HTML структуру (аналогично recreateOrderFromStorage)
+    // Определяем классы для завершенных заказов
+    const boxChild1Class = orderData.is_completed ? "section-two__box_Child-1 in-section-two__box_Child-1" : "section-two__box_Child-1";
+    const timeClass = orderData.is_completed ? "section-two__box_Child-1__info_time in-section-two__box_Child-1__info_time" : "section-two__box_Child-1__info_time";
+    const pauseClass = orderData.is_completed ? "section-two__box_Child-1__info_img in-section-two__box_Child-1__info_img" : "section-two__box_Child-1__info_img";
+    
+    // Создаем HTML структуру
     const orderHTML = `
-        <div class="section-two__box_Child-1">
+        <div class="${boxChild1Class}">
             <nav class="section-two__box_Child-1__nav">
                 <div class="section-two__box_Child-1__nav_section">
                     <p class="section-two__box_Child-1__nav_section_par-1">Сумма</p>
@@ -1078,36 +1112,36 @@ function recreateOrderFromAPI(orderData) {
                     <p class="section-two__box_Child-1__nav_section_par-2 section-two__box_Child-1__nav_section_par-3">${orderData.duration}</p>
                 </div>
             </nav>
-            <div class="section-two__box_Child-1_line"></div>
+            <div class="section-two__box_Child-1_line ${orderData.is_completed ? 'in-section-two__box_Child-1_line' : ''}"></div>
 
             <div class="section-two__box_Child-1__info">
                 <div class="section-two__box_Child-1__info_parents">
                     <h5 class="section-two__box_Child-1__info_parents_number">${orderData.phone}</h5>
                     <p class="section-two__box_Child-1__info_parents_par">${orderData.note}</p>
                 </div>
-                <div class="section-two__box_Child-1__info_line-1"></div>
+                <div class="section-two__box_Child-1__info_line-1 ${orderData.is_completed ? 'in-section-two__box_Child-1__info_line-1' : ''}"></div>
                 <div class="section-two__box_Child-1__info_container-sag">
-                    <h3 class="section-two__box_Child-1__info_container-sag_name">${orderData.child_names}</h3>
+                    <h3 class="section-two__box_Child-1__info_container-sag_name ${orderData.is_completed ? 'in-section-two__box_Child-1__info_container-sag_name' : ''}">${orderData.child_names}</h3>
                 </div>
                 <h3 class="section-two__box_Child-1__info_sag">Осталось:</h3>
-                <h3 class="section-two__box_Child-1__info_time">${timeString}</h3>
-                <div class="section-two__box_Child-1__info_img ${orderData.is_paused ? 'section-two__box_Child-1__info_img-active' : ''}"></div>
+                <h3 class="${timeClass}">${timeString}</h3>
+                <div class="${pauseClass} ${orderData.is_paused ? 'section-two__box_Child-1__info_img-active' : ''}"></div>
                 <div class="section-two__box_Child-1__info_line-3-mobile"></div>
                 <img class="section-two__box_Child-1__info_burger" src="./img/burger.svg" alt="burger">
             </div>
         </div>
         
-        <div class="section-two__box_Child-2">
-            <h5 class="section-two__box_Child-2_sag">Заказ выполенен</h5>
+        <div class="section-two__box_Child-2 ${orderData.is_completed ? 'in-section-two__box_Child-2' : ''}">
+            <h5 class="section-two__box_Child-2_sag ${orderData.is_completed ? 'in-section-two__box_Child-2_sag' : ''}">Заказ выполенен</h5>
         </div>
 
-        <div class="section-two__box_Child-3">
-            <h5 class="section-two__box_Child-3_sag">Удалить</h5>
+        <div class="section-two__box_Child-3 ${orderData.is_completed ? 'in-section-two__box_Child-3' : ''}">
+            <h5 class="section-two__box_Child-3_sag ${orderData.is_completed ? 'in-section-two__box_Child-3_sag' : ''}">Удалить</h5>
             <div class="section-two__box_Child-3_img"></div>
         </div>
         
-        <div class="section-two__box_Child-4">
-            <h5 class="section-two__box_Child-4_sag">Изменить заказ</h5>
+        <div class="section-two__box_Child-4 ${orderData.is_completed ? 'in-section-two__box_Child-4' : ''}">
+            <h5 class="section-two__box_Child-4_sag ${orderData.is_completed ? 'in-section-two__box_Child-4_sag' : ''}">Изменить заказ</h5>
         </div>`;
 
     orderContainer.innerHTML = orderHTML;
@@ -1118,11 +1152,8 @@ function recreateOrderFromAPI(orderData) {
         sectionTwoLending.insertBefore(orderContainer, sectionTwoLending.firstChild);
     }
 
-    // Если заказ завершен, применяем стили
-    if (orderData.is_completed) {
-        markOrderAsCompleted(orderContainer);
-    } else if (orderData.remaining_seconds > 0) {
-        // Запускаем таймер
+    // Если заказ не завершен и есть оставшееся время, запускаем таймер
+    if (!orderData.is_completed && orderData.remaining_seconds > 0) {
         const fakeButtons = [{
             textContent: orderData.duration,
             querySelector: () => ({ textContent: orderData.duration })
@@ -1174,93 +1205,126 @@ function addOrderCompletedFunctionality(orderContainer) {
     const newCompleteButton = completeButton.cloneNode(true);
     completeButton.parentNode.replaceChild(newCompleteButton, completeButton);
 
-    newCompleteButton.addEventListener("click", function() {
+    newCompleteButton.addEventListener("click", async function() {
         const targetBlock = orderContainer.closest(".section-two__box");
         if (!targetBlock) return;
         
-        const isCompleting = !targetBlock.classList.contains('in-section-two__box');
+        const orderId = targetBlock.dataset.orderId;
         
-        if (isCompleting) {
-            // ЗАВЕРШАЕМ ЗАКАЗ - останавливаем таймер
-            const timerId = targetBlock.dataset.timerId;
-            if (timerId && typeof stopTimer === 'function') {
-                stopTimer(timerId);
-            }
-        } else {
-            // ВОЗОБНОВЛЯЕМ ЗАКАЗ - перезапускаем таймер
-            const durationElement = targetBlock.querySelector('.section-two__box_Child-1__nav_section_par-3');
-            if (durationElement) {
-                const durationText = durationElement.textContent.trim();
-                const fakeButtons = [{
-                    textContent: durationText,
-                    querySelector: () => ({ textContent: durationText })
-                }];
+        if (orderId) {
+            try {
+                console.log('📡 Отправка запроса на переключение статуса заказа:', orderId);
                 
-                // Получаем оставшееся время из элемента
-                const countdownElement = targetBlock.querySelector(".section-two__box_Child-1__info_time");
-                if (countdownElement) {
-                    const timeText = countdownElement.textContent.trim();
-                    const timeParts = timeText.split(':');
+                // Получаем текущее значение таймера перед остановкой
+                const currentRemainingSeconds = getRemainingTime(targetBlock);
+                console.log('⏱️ Текущее оставшееся время:', currentRemainingSeconds);
+                
+                // ОСТАНАВЛИВАЕМ ТАЙМЕР НЕМЕДЛЕННО
+                const timerId = targetBlock.dataset.timerId;
+                if (timerId && typeof stopTimer === 'function') {
+                    stopTimer(timerId);
+                }
+                
+                // Также останавливаем все таймеры для этого контейнера
+                stopAllTimersForContainer(targetBlock);
+                
+                const response = await fetch(`${API_BASE_URL}/order/${orderId}/complete`, {
+                    method: 'PUT'
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    console.log('✅ Статус заказа переключен в БД:', orderId, result);
                     
-                    if (timeParts.length === 3) {
-                        const hours = parseInt(timeParts[0]) || 0;
-                        const minutes = parseInt(timeParts[1]) || 0;
-                        const seconds = parseInt(timeParts[2]) || 0;
-                        const remainingSeconds = hours * 3600 + minutes * 60 + seconds;
-                        
-                        if (remainingSeconds > 0) {
-                            // Перезапускаем таймер с оставшимся временем
-                            startCountdown(fakeButtons, targetBlock, remainingSeconds);
+                    // Если заказ завершается, сохраняем текущее значение таймера
+                    const isCompleting = !targetBlock.classList.contains('in-section-two__box');
+                    
+                    // ОБНОВЛЯЕМ ВИЗУАЛЬНОЕ СОСТОЯНИЕ ПАУЗЫ
+                    const pauseButton = targetBlock.querySelector(".section-two__box_Child-1__info_img");
+                    if (pauseButton) {
+                        if (isCompleting) {
+                            // При завершении - визуально показываем "паузу" (красный цвет)
+                            pauseButton.classList.add("section-two__box_Child-1__info_img-active");
+                        } else {
+                            // При возобновлении - убираем "паузу"
+                            pauseButton.classList.remove("section-two__box_Child-1__info_img-active");
                         }
                     }
+                    
+                    if (isCompleting) {
+                        // НЕ обнуляем таймер, оставляем текущее значение
+                        const countdownElement = targetBlock.querySelector(".section-two__box_Child-1__info_time");
+                        if (countdownElement) {
+                            // Время остается как было, просто останавливается
+                            console.log('🛑 Таймер остановлен на значении:', countdownElement.textContent);
+                        }
+                    } else {
+                        // Если возобновляем заказ, перезапускаем таймер с сохраненным временем
+                        const durationElement = targetBlock.querySelector('.section-two__box_Child-1__nav_section_par-3');
+                        if (durationElement) {
+                            const durationText = durationElement.textContent.trim();
+                            const fakeButtons = [{
+                                textContent: durationText,
+                                querySelector: () => ({ textContent: durationText })
+                            }];
+                            
+                            // Перезапускаем таймер с текущим оставшимся временем
+                            const newTimerId = startCountdown(fakeButtons, targetBlock, currentRemainingSeconds);
+                            targetBlock.dataset.timerId = newTimerId;
+                            console.log('▶️ Таймер перезапущен с временем:', currentRemainingSeconds);
+                        }
+                    }
+                    
+                    // Переключаем визуальное состояние
+                    targetBlock.classList.toggle("in-section-two__box");
+                    
+                    // Переключаем классы для всех элементов
+                    const toggleClass = (selector, className) => {
+                        const element = targetBlock.querySelector(selector);
+                        if (element) element.classList.toggle(className);
+                    };
+                    
+                    const classesToToggle = [
+                        [".section-two__box_Child-1", "in-section-two__box_Child-1"],
+                        [".section-two__box_Child-1_line", "in-section-two__box_Child-1_line"],
+                        [".section-two__box_Child-1__info_line-1", "in-section-two__box_Child-1__info_line-1"],
+                        [".section-two__box_Child-1__info_container-sag_name", "in-section-two__box_Child-1__info_container-sag_name"],
+                        [".section-two__box_Child-2", "in-section-two__box_Child-2"],
+                        [".section-two__box_Child-2_sag", "in-section-two__box_Child-2_sag"],
+                        [".section-two__box_Child-3", "in-section-two__box_Child-3"],
+                        [".section-two__box_Child-3_sag", "in-section-two__box_Child-3_sag"],
+                        [".section-two__box_Child-4", "in-section-two__box_Child-4"],
+                        [".section-two__box_Child-4_sag", "in-section-two__box_Child-4_sag"],
+                        [".section-two__box_Child-1__info_time", "in-section-two__box_Child-1__info_time"],
+                        [".section-two__box_Child-1__info_img", "in-section-two__box_Child-1__info_img"]
+                    ];
+                    
+                    classesToToggle.forEach(([selector, className]) => {
+                        toggleClass(selector, className);
+                    });
+                    
+                    // Сохраняем состояние
+                    if (typeof saveOrdersToStorage === 'function') {
+                        setTimeout(saveOrdersToStorage, 100);
+                    }
+
+                    // Отправляем уведомление в гостевой режим
+                    const isCompleted = targetBlock.classList.contains('in-section-two__box');
+                    const completeData = {
+                        type: isCompleted ? 'ORDER_COMPLETED' : 'ORDER_UPDATED',
+                        order_id: orderId,
+                        remaining_seconds: currentRemainingSeconds,
+                        is_paused: isCompleted // Передаем состояние паузы в гостевой режим
+                    };
+                    sendToGuest(completeData);
+                    
+                } else {
+                    console.error('❌ Ошибка при переключении статуса заказа:', response.status);
                 }
+            } catch (error) {
+                console.error('❌ Ошибка сети при переключении статуса заказа:', error);
             }
         }
-        
-        // Переключаем визуальное состояние
-        targetBlock.classList.toggle("in-section-two__box");
-        
-        // Переключаем классы для всех элементов
-        const toggleClass = (selector, className) => {
-            const element = targetBlock.querySelector(selector);
-            if (element) element.classList.toggle(className);
-        };
-        
-        const classesToToggle = [
-            [".section-two__box_Child-1", "in-section-two__box_Child-1"],
-            [".section-two__box_Child-1_line", "in-section-two__box_Child-1_line"],
-            [".section-two__box_Child-1__info_line-1", "in-section-two__box_Child-1__info_line-1"],
-            [".section-two__box_Child-1__info_container-sag_name", "in-section-two__box_Child-1__info_container-sag_name"],
-            [".section-two__box_Child-2", "in-section-two__box_Child-2"],
-            [".section-two__box_Child-2_sag", "in-section-two__box_Child-2_sag"],
-            [".section-two__box_Child-3", "in-section-two__box_Child-3"],
-            [".section-two__box_Child-3_sag", "in-section-two__box_Child-3_sag"],
-            [".section-two__box_Child-4", "in-section-two__box_Child-4"],
-            [".section-two__box_Child-4_sag", "in-section-two__box_Child-4_sag"],
-            [".section-two__box_Child-1__info_time", "in-section-two__box_Child-1__info_time"],
-            [".section-two__box_Child-1__info_img", "in-section-two__box_Child-1__info_img"]
-        ];
-        
-        classesToToggle.forEach(([selector, className]) => {
-            toggleClass(selector, className);
-        });
-        
-        // Обновляем состояние паузы
-        const pauseButton = targetBlock.querySelector(".section-two__box_Child-1__info_img");
-        if (pauseButton && pauseButton.classList.contains("section-two__box_Child-1__info_img-active")) {
-            pauseButton.click(); // Снимаем паузу при возобновлении
-        }
-        
-        // Сохраняем состояние
-        if (typeof saveOrdersToStorage === 'function') {
-            setTimeout(saveOrdersToStorage, 100);
-        }
-
-        const completeData = {
-            type: 'ORDER_COMPLETED',
-            order_id: targetBlock.dataset.timerId
-        };
-        sendToGuest(completeData);
     });
 }
 
