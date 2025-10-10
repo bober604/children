@@ -61,6 +61,37 @@ def complete_order(
     background_tasks.add_task(broadcast_active_orders)
     return {"message": "Order completed successfully"}
 
+@app.put("/order/{order_id}/update-full")
+def update_order_full(
+    order_id: int,
+    payload: dict,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(database.get_db)
+):
+    """Полное обновление заказа"""
+    db_order = crud.get_order_by_id(db, order_id)
+    if not db_order:
+        raise HTTPException(status_code=404, detail="Order not found")
+    
+    # Обновляем все поля
+    update_data = {
+        "child_names": payload.get("child_names", db_order.child_names),
+        "phone": payload.get("phone", db_order.phone),
+        "note": payload.get("note", db_order.note),
+        "duration": payload.get("duration", db_order.duration),
+        "sum": payload.get("sum", db_order.sum),
+        "total_seconds": payload.get("total_seconds", db_order.total_seconds),
+        "remaining_seconds": payload.get("remaining_seconds", db_order.remaining_seconds),
+        "is_paused": payload.get("is_paused", db_order.is_paused)
+    }
+    
+    updated_order = crud.update_order_full(db, order_id, update_data)
+    
+    background_tasks.add_task(broadcast_today_stats)
+    background_tasks.add_task(broadcast_active_orders)
+    
+    return {"message": "Order fully updated", "order": updated_order}
+
 @app.delete("/order/{order_id}")
 def delete_order_by_id(
     order_id: int, 

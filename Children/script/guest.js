@@ -12,11 +12,59 @@ if (typeof GuestMode === 'undefined') {
 
         // Метод для периодической синхронизации
         startPeriodicSync() {
-            // Синхронизируем каждые 30 секунд
+            // Синхронизируем каждую секунду
             this.syncInterval = setInterval(() => {
                 this.loadOrdersFromAPI().then(success => {
                 });
             }, 1000);
+        }
+
+        startDataSync() {
+            // Синхронизация данных каждые 3 секунды
+            this.dataSyncInterval = setInterval(() => {
+                this.syncOrderDataFromAPI();
+            }, 3000);
+        }
+
+        // Метод для синхронизации данных заказов
+        async syncOrderDataFromAPI() {
+            try {
+                const response = await fetch('http://127.0.0.1:8000/orders/active');
+                if (response.ok) {
+                    const orders = await response.json();
+                    this.updateOrderData(orders);
+                }
+            } catch (error) {
+                console.error('Ошибка синхронизации данных заказов:', error);
+            }
+        }
+
+        // Метод для обновления данных существующих заказов
+        updateOrderData(ordersFromAPI) {
+            ordersFromAPI.forEach(apiOrder => {
+                if (this.orders.has(apiOrder.id)) {
+                    const existingOrder = this.orders.get(apiOrder.id);
+                    
+                    // Проверяем, изменились ли критичные данные
+                    const isDataChanged = 
+                        existingOrder.child_names !== apiOrder.child_names ||
+                        existingOrder.duration !== apiOrder.duration ||
+                        existingOrder.remaining_seconds !== apiOrder.remaining_seconds;
+                    
+                    if (isDataChanged) {
+                        console.log('🔄 Обновление данных заказа:', apiOrder.id);
+                        
+                        // Обновляем только необходимые поля
+                        existingOrder.child_names = apiOrder.child_names;
+                        existingOrder.duration = apiOrder.duration;
+                        existingOrder.remaining_seconds = apiOrder.remaining_seconds;
+                        existingOrder.is_paused = apiOrder.is_paused;
+                        
+                        this.orders.set(apiOrder.id, existingOrder);
+                        this.updateOrderElement(existingOrder);
+                    }
+                }
+            });
         }
 
         // Добавьте этот метод для полного обновления состояния
@@ -55,6 +103,7 @@ if (typeof GuestMode === 'undefined') {
                 }
                 this.updateDisplay();
                 this.startPeriodicSync(); // Запускаем периодическую синхронизацию
+                this.startDataSync(); // ← ДОБАВЬТЕ ЭТУ СТРОКУ для запуска синхронизации данных
             });
         }
 
@@ -143,9 +192,14 @@ if (typeof GuestMode === 'undefined') {
                     break;
                     
                 case 'TIMER_UPDATED':
-                    // Обновляем ВСЕ состояния: паузу и визуальное отображение
                     if (!message.order_id || message.is_paused === undefined) return;
                     this.updatePauseState(message.order_id, message.is_paused);
+                    break;
+                    
+                case 'ORDER_UPDATED':
+                    if (!message.order) return;
+                    console.log('✏️ Заказ обновлен:', message.order);
+                    this.updateOrderData([message.order]);
                     break;
                     
                 default:
@@ -261,12 +315,12 @@ if (typeof GuestMode === 'undefined') {
             const durationText = this.getDurationText(order.duration);
             const remainingTime = this.formatTimeFromSeconds(order.remaining_seconds);
             
-            // Определяем статусы - ТОЛЬКО ОДИН статус активен в каждый момент времени
+            // Определяем статусы
             const isCompleted = order.status === 'completed' || order.remaining_seconds <= 0;
             const isPaused = !isCompleted && order.is_paused;
             const isActive = !isCompleted && !order.is_paused;
 
-            // Формируем HTML для статусов - показываем ТОЛЬКО ОДИН статус
+            // Формируем HTML для статусов
             let statusHTML = '';
             
             if (isCompleted) {
@@ -376,7 +430,7 @@ if (typeof GuestMode === 'undefined') {
         updateOrderElement(order) {
             const orderElement = document.querySelector(`[data-order-id="${order.id}"]`);
             if (orderElement) {
-                // НЕ сохраняем время из DOM - используем значение из order (которое из БД)
+                // Полностью заменяем HTML элемента
                 orderElement.outerHTML = this.getOrderHTML(order);
                 
                 // Перезапускаем таймер только если заказ активен, время осталось и НЕ на паузе

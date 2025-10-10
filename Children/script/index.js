@@ -1,4 +1,3 @@
-// Добавляем в начало файла index.js
 const API_BASE_URL = "http://127.0.0.1:8000";
 
 // Функция для получения всех активных заказов
@@ -100,6 +99,32 @@ function syncAllOrders() {
 document.addEventListener("DOMContentLoaded", function() {
     setTimeout(syncAllOrders, 1000);
 });
+
+// Функция для форматирования времени из секунд в HH:MM:SS
+function formatTimeFromSeconds(totalSeconds) {
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+    return `${formatTime(hours)}:${formatTime(minutes)}:${formatTime(seconds)}`;
+}
+
+// Функция для получения данных из localStorage (если используется)
+function loadOrdersFromStorage() {
+    try {
+        const savedOrders = JSON.parse(localStorage.getItem('orders') || '[]');
+        const savedOrderCount = parseInt(localStorage.getItem('orderCount') || '0');
+        const savedTotalRevenue = parseFloat(localStorage.getItem('totalRevenue') || '0');
+        
+        return {
+            orders: savedOrders,
+            orderCount: savedOrderCount,
+            totalRevenue: savedTotalRevenue
+        };
+    } catch (error) {
+        console.error('Ошибка загрузки из localStorage:', error);
+        return { orders: [], orderCount: 0, totalRevenue: 0 };
+    }
+}
 
 // ==================== ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ====================
 let activeTimers = new Map();
@@ -801,23 +826,70 @@ function loadOrdersFromStorage() {
 
 async function loadOrdersOnStartup() {
     try {
+        // ПЕРВОЕ: загружаем из API (БД)
         const orders = await loadActiveOrdersFromAPI();
         
-        orders.forEach(orderData => {
-            recreateOrderFromAPI(orderData);
-        });
+        // Очищаем текущие заказы в DOM
+        const sectionTwoLending = document.querySelector(".section-two_lending");
+        if (sectionTwoLending) {
+            sectionTwoLending.innerHTML = '';
+        }
         
+        // Создаем заказы из данных API
+        if (orders && orders.length > 0) {
+            orders.forEach(orderData => {
+                recreateOrderFromAPI(orderData);
+            });
+        }
+        
+        // Обновляем счетчики
         updateCounters();
+        
+        console.log('✅ Заказы загружены из БД:', orders.length);
+        
     } catch (error) {
-        console.error('Ошибка загрузки заказов:', error);
+        console.error('Ошибка загрузки заказов из API:', error);
         // Fallback: пробуем загрузить из localStorage
         const savedData = loadOrdersFromStorage();
-        if (savedData.orders.length > 0) {
+        if (savedData.orders && savedData.orders.length > 0) {
             savedData.orders.forEach(orderData => {
                 recreateOrderFromStorage(orderData);
             });
             updateCounters();
         }
+    }
+}
+
+async function updateCountersFromAPI() {
+    try {
+        const today = new Date();
+        const dateStr = formatDateString(today);
+        
+        // Загружаем актуальные данные с сервера
+        const [revenueResponse, countResponse] = await Promise.all([
+            fetch(`${API_BASE_URL}/revenue/${dateStr}`),
+            fetch(`${API_BASE_URL}/orders/${dateStr}`)
+        ]);
+        
+        if (revenueResponse.ok && countResponse.ok) {
+            const revenueData = await revenueResponse.json();
+            const orders = await countResponse.json();
+            
+            // Обновляем глобальные переменные
+            orderCount = orders.length;
+            totalRevenue = revenueData.total_revenue || 0;
+            
+            // Обновляем DOM
+            const orderCountElement = document.querySelector(".section-two__nav_block_sag-2");
+            const revenueElement = document.querySelector(".revenue");
+            
+            if (orderCountElement) orderCountElement.textContent = orderCount;
+            if (revenueElement) revenueElement.textContent = totalRevenue.toFixed(0);
+        }
+    } catch (error) {
+        console.error('Ошибка обновления счетчиков из API:', error);
+        // Используем локальные счетчики как fallback
+        updateCounters();
     }
 }
 
@@ -1281,93 +1353,93 @@ function addEditOrderFunctionality(orderContainer) {
                 console.log("Прошедшее время в секундах:", elapsedSeconds);
                 
 
-                // Создаём блок для изменения заказа
-                const newOrderBlock = document.createElement("div");
-                newOrderBlock.classList.add("section-one__orderChange__box__buttons_block-1__counter");
+            // Создаём блок для изменения заказа
+            const newOrderBlock = document.createElement("div");
+            newOrderBlock.classList.add("section-one__orderChange__box__buttons_block-1__counter");
 
-                newOrderBlock.innerHTML = `
-                    <div class="section-one__orderChange">
-                        <div class="section-one__orderChange_line"></div> <!-- линия -->
-                        <div class="section-one__orderChange_header">
-                            <img class="section-one__orderChange_img" src="./img/back.svg" alt="back">
-                            <h1 class="section-one__orderChange_sag">Изменить заказ</h1>
+            newOrderBlock.innerHTML = `
+                <div class="section-one__orderChange">
+                    <div class="section-one__orderChange_line"></div> <!-- линия -->
+                    <div class="section-one__orderChange_header">
+                        <img class="section-one__orderChange_img" src="./img/back.svg" alt="back">
+                        <h1 class="section-one__orderChange_sag">Изменить заказ</h1>
+                    </div>
+                    <div class="section-one__orderChange_line-mobile"></div> <!-- линия -->
+                    <div class="section-one__orderChange__box">
+                        <div class="section-one__orderChange__box__input">
+                            <input id="order-1" class="section-one__orderChange__box__input_item" placeholder="Имя" type="text" value="${nameValue}">
+                            <input id="order-2" class="section-one__orderChange__box__input_item" placeholder="Номер телефона" type="tel" value="${phoneValue}">
+                            <input id="order-3" class="section-one__orderChange__box__input_item section-one__orderChange__box__input_item-mobile" placeholder="Примечание" type="text" value="${noteValue}">
                         </div>
-                        <div class="section-one__orderChange_line-mobile"></div> <!-- линия -->
-                        <div class="section-one__orderChange__box">
-                            <div class="section-one__orderChange__box__input">
-                                <input id="order-1" class="section-one__orderChange__box__input_item" placeholder="Имя" type="text" value="${nameValue}">
-                                <input id="order-2" class="section-one__orderChange__box__input_item" placeholder="Номер телефона" type="tel" value="${phoneValue}">
-                                <input id="order-3" class="section-one__orderChange__box__input_item section-one__orderChange__box__input_item-mobile" placeholder="Примечание" type="text" value="${noteValue}">
+
+                        <div class="section-one__orderChange__box__buttons">
+
+                            <div class="section-one__orderChange__box__buttons_block-1 section-one__orderChange__box__buttons_element-1">
+                                <h2 class="section-one__orderChange__box__buttons_block-1_sag">30 мин.</h2>
+                                <div class="${durationValue === '30 мин.' ? 'section-one__orderChange__box__buttons_block-1_active' : 'section-one__orderChange__box__buttons_block-1_inactive'}"></div>
                             </div>
 
-                            <div class="section-one__orderChange__box__buttons">
+                            <div class="section-one__orderChange__box__buttons_block-1 section-one__orderChange__box__buttons_element-2">
+                                <h2 class="section-one__orderChange__box__buttons_block-1_sag">1 час</h2>
+                                <div class="${durationValue === '1 час' ? 'section-one__orderChange__box__buttons_block-1_active' : 'section-one__orderChange__box__buttons_block-1_inactive'}"></div>
+                            </div>
 
-                                <div class="section-one__orderChange__box__buttons_block-1 section-one__orderChange__box__buttons_element-1">
-                                    <h2 class="section-one__orderChange__box__buttons_block-1_sag">30 мин.</h2>
-                                    <div class="${durationValue === '30 мин.' ? 'section-one__orderChange__box__buttons_block-1_active' : 'section-one__orderChange__box__buttons_block-1_inactive'}"></div>
-                                </div>
+                            <div class="section-one__orderChange__box__buttons_block-1 section-one__orderChange__box__buttons_element-3">
+                                <h2 class="section-one__orderChange__box__buttons_block-1_sag">2 часа</h2>
+                                <div class="${durationValue === '2 часа' ? 'section-one__orderChange__box__buttons_block-1_active' : 'section-one__orderChange__box__buttons_block-1_inactive'}"></div>
+                            </div>
 
-                                <div class="section-one__orderChange__box__buttons_block-1 section-one__orderChange__box__buttons_element-2">
-                                    <h2 class="section-one__orderChange__box__buttons_block-1_sag">1 час</h2>
-                                    <div class="${durationValue === '1 час' ? 'section-one__orderChange__box__buttons_block-1_active' : 'section-one__orderChange__box__buttons_block-1_inactive'}"></div>
-                                </div>
-
-                                <div class="section-one__orderChange__box__buttons_block-1 section-one__orderChange__box__buttons_element-3">
-                                    <h2 class="section-one__orderChange__box__buttons_block-1_sag">2 часа</h2>
-                                    <div class="${durationValue === '2 часа' ? 'section-one__orderChange__box__buttons_block-1_active' : 'section-one__orderChange__box__buttons_block-1_inactive'}"></div>
-                                </div>
-
-                                <div class="section-one__orderChange__box__buttons_block-2 section-one__orderChange__box__buttons_element-4">
-                                    <h2 class="section-one__orderChange__box__buttons_block-1_sag section-one__orderChange__box__buttons_block-2_sag">Аренда 1 час</h2>
-                                    <div class="${durationValue === 'Аренда 1 час' ? 'section-one__orderChange__box__buttons_block-1_active' : 'section-one__orderChange__box__buttons_block-1_inactive'}"></div>
-                                </div>
+                            <div class="section-one__orderChange__box__buttons_block-2 section-one__orderChange__box__buttons_element-4">
+                                <h2 class="section-one__orderChange__box__buttons_block-1_sag section-one__orderChange__box__buttons_block-2_sag">Аренда 1 час</h2>
+                                <div class="${durationValue === 'Аренда 1 час' ? 'section-one__orderChange__box__buttons_block-1_active' : 'section-one__orderChange__box__buttons_block-1_inactive'}"></div>
+                            </div>
                                 
-                                <div class="section-one__orderChange__box_cancellation section-one__orderChange__box__buttons_element-5">
-                                    <h2 class="section-one__orderChange__box_cancellation_sag">Отмена</h2>
-                                </div>
+                            <div class="section-one__orderChange__box_cancellation section-one__orderChange__box__buttons_element-5">
+                                <h2 class="section-one__orderChange__box_cancellation_sag">Отмена</h2>
+                            </div>
 
-                                <div class="section-one__orderChange__box__buttons_block-3 section-one__orderChange__box__buttons_element-6">
-                                    <h2 class="section-one__orderChange__box__buttons_block-1_sag section-one__orderChange__box__buttons_block-2_sag">Аренда 2 часа</h2>
-                                    <div class="${durationValue === 'Аренда 2 часа' ? 'section-one__orderChange__box__buttons_block-1_active' : 'section-one__orderChange__box__buttons_block-1_inactive'}"></div>
-                                </div>
+                            <div class="section-one__orderChange__box__buttons_block-3 section-one__orderChange__box__buttons_element-6">
+                                <h2 class="section-one__orderChange__box__buttons_block-1_sag section-one__orderChange__box__buttons_block-2_sag">Аренда 2 часа</h2>
+                                <div class="${durationValue === 'Аренда 2 часа' ? 'section-one__orderChange__box__buttons_block-1_active' : 'section-one__orderChange__box__buttons_block-1_inactive'}"></div>
+                            </div>
 
-                                <div class="section-one__orderChange__box_save section-one__orderChange__box__buttons_element-7">
-                                    <h2 class="section-one__orderChange__box_save_sag">Сохранить</h2>
-                                </div>
+                            <div class="section-one__orderChange__box_save section-one__orderChange__box__buttons_element-7">
+                                <h2 class="section-one__orderChange__box_save_sag">Сохранить</h2>
                             </div>
                         </div>
                     </div>
-                `;
+                </div>
+            `;
                 
-                sectionOne.appendChild(newOrderBlock);
+            sectionOne.appendChild(newOrderBlock);
 
-                // Обработка клика по кнопкам времени
-                newOrderBlock.querySelectorAll(".section-one__orderChange__box__buttons_block-1, .section-one__orderChange__box__buttons_block-2, .section-one__orderChange__box__buttons_block-3").forEach(button => {
-                    button.addEventListener("click", function () {
-                        // Сначала сбрасываем все выделения
-                        newOrderBlock.querySelectorAll(".section-one__orderChange__box__buttons_block-1_active").forEach(activeBtn => {
-                            activeBtn.classList.remove("section-one__orderChange__box__buttons_block-1_active");
-                            activeBtn.classList.add("section-one__orderChange__box__buttons_block-1_inactive");
-                        });
-                        
-                        // Затем выделяем текущую кнопку
-                        const timeDiv = this.querySelector('div');
-                        if (timeDiv) {
-                            timeDiv.classList.remove("section-one__orderChange__box__buttons_block-1_inactive");
-                            timeDiv.classList.add("section-one__orderChange__box__buttons_block-1_active");
-                        }
+            // Обработка клика по кнопкам времени
+            newOrderBlock.querySelectorAll(".section-one__orderChange__box__buttons_block-1, .section-one__orderChange__box__buttons_block-2, .section-one__orderChange__box__buttons_block-3").forEach(button => {
+                button.addEventListener("click", function () {
+                    // Сначала сбрасываем все выделения
+                    newOrderBlock.querySelectorAll(".section-one__orderChange__box__buttons_block-1_active").forEach(activeBtn => {
+                        activeBtn.classList.remove("section-one__orderChange__box__buttons_block-1_active");
+                        activeBtn.classList.add("section-one__orderChange__box__buttons_block-1_inactive");
                     });
+                        
+                    // Затем выделяем текущую кнопку
+                    const timeDiv = this.querySelector('div');
+                    if (timeDiv) {
+                        timeDiv.classList.remove("section-one__orderChange__box__buttons_block-1_inactive");
+                        timeDiv.classList.add("section-one__orderChange__box__buttons_block-1_active");
+                    }
                 });
+            });
 
-                // Сопоставление времени и стоимости
-                const timePrices = {
-                    "15 мин.": 50,
-                    "30 мин.": 100,
-                    "1 час": 150,
-                    "2 часа": 250,
-                    "Аренда 1 час": 2000,
-                    "Аренда 2 часа": 4000,
-                };
+            // Сопоставление времени и стоимости
+            const timePrices = {
+                "15 мин.": 50,
+                "30 мин.": 100,
+                "1 час": 150,
+                "2 часа": 250,
+                "Аренда 1 час": 2000,
+                "Аренда 2 часа": 4000,
+            };
 
             function getOriginalDurationSeconds(orderContainer) {
                 const durationElement = orderContainer.querySelector(".section-two__box_Child-1__nav_section_par-3");
@@ -1387,7 +1459,7 @@ function addEditOrderFunctionality(orderContainer) {
 
             // Обработка сохранения изменений
             const saveButton = newOrderBlock.querySelector(".section-one__orderChange__box_save");
-            saveButton.addEventListener("click", function () {
+            saveButton.addEventListener("click", async function () {
                 const selectedButtons = newOrderBlock.querySelectorAll(".section-one__orderChange__box__buttons_block-1_active");
 
                 if (selectedButtons.length === 0) {
@@ -1396,23 +1468,22 @@ function addEditOrderFunctionality(orderContainer) {
                 }
 
                 // Получаем новое время и рассчитываем БАЗОВУЮ цену (за одно имя)
-                const timeText = selectedButtons[0].previousElementSibling.textContent.trim();
+                const timeText = selectedButtons[0].closest('.section-one__orderChange__box__buttons_block-1, .section-one__orderChange__box__buttons_block-2, .section-one__orderChange__box__buttons_block-3')
+                    .querySelector('h2').textContent.trim();
                 const basePriceForOneName = calculatePriceFromDuration(timeText);
                 
                 const newName = document.getElementById("order-1").value;
                 const newPhone = document.getElementById("order-2").value;
                 const newNote = document.getElementById("order-3").value;
 
-                // === ИСПРАВЛЕНИЕ: Подсчитываем количество имен из ПОЛЯ ВВОДА в блоке изменения ===
-                // Считаем количество имен (слов, разделенных пробелами) из поля ввода
+                // Подсчитываем количество имен из поля ввода
                 const newNames = newName.split(/\s+/).filter(name => name.length > 0);
                 const nameCount = newNames.length;
-                // ================================================================
 
                 // Проверяем, выбрана ли аренда (цена аренды не умножается на кол-во имен)
                 const isRental = timeText.includes('Аренда');
                 
-                // РАССЧИТЫВАЕМ ИТОГОВУЮ ЦЕНУ: для аренды берем базовую цену, для времени - умножаем на кол-во имен
+                // Рассчитываем итоговую цену
                 const newPrice = isRental ? basePriceForOneName : basePriceForOneName * nameCount;
 
                 // Получаем оставшееся время из текущего таймера
@@ -1423,6 +1494,12 @@ function addEditOrderFunctionality(orderContainer) {
                     
                 // Вычисляем прошедшее время (исходное время - оставшееся время)
                 const elapsedSeconds = Math.max(originalDurationSeconds - remainingSeconds, 0);
+
+                // Вычисляем новое общее время в секундах
+                const newTotalSeconds = getTotalDurationInSeconds([{ textContent: timeText }]);
+                
+                // Вычисляем новое оставшееся время
+                const newRemainingSeconds = Math.max(newTotalSeconds - elapsedSeconds, 0);
 
                 // Обновляем данные в DOM
                 parentOrder.querySelector(".section-two__box_Child-1__info_container-sag_name").textContent = newName;
@@ -1440,26 +1517,43 @@ function addEditOrderFunctionality(orderContainer) {
                 var revenueElement = document.querySelector(".section-two__nav_block-3 .revenue");
                 if (revenueElement) revenueElement.textContent = totalRevenue.toFixed(0);
 
-                // ИСПОЛЬЗУЕМ ДАННЫЕ ИЗ РОДИТЕЛЬСКОГО ЗАКАЗА (parentOrder), а не orderContainer
-                const originalDate = parentOrder.dataset.creationDate;
-                const originalTime = parentOrder.dataset.creationTime;
+                // === ОБНОВЛЯЕМ ВСЕ ДАННЫЕ В БАЗЕ ДАННЫХ ===
+                const orderId = parentOrder.dataset.orderId;
+                
+                if (orderId) {
+                    try {
+                        const response = await fetch(`${API_BASE_URL}/order/${orderId}/update-full`, {
+                            method: 'PUT',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                child_names: newName,
+                                phone: newPhone,
+                                note: newNote,
+                                duration: timeText,
+                                sum: newPrice,
+                                total_seconds: newTotalSeconds,
+                                remaining_seconds: newRemainingSeconds,
+                                is_paused: false // сбрасываем паузу при изменении
+                            })
+                        });
 
-                if (typeof sendRequest === 'function') {
-                    sendRequest("http://127.0.0.1:8000/order/update", "POST", {
-                        old_sum: oldPrice,
-                        date: originalDate,
-                        time: originalTime,
-                        new_sum: newPrice
-                    }).then(result => {
-                        if (result && result.id) {
-                            // ОБНОВЛЯЕМ ДАННЫЕ В РОДИТЕЛЬСКОМ ЗАКАЗЕ
+                        if (response.ok) {
+                            const result = await response.json();
+                            console.log('✅ Данные заказа полностью обновлены в БД:', result);
+                            
+                            // Обновляем данные в родительском заказе
                             parentOrder.dataset.creationSum = newPrice;
                             
-                            console.log('✅ Данные заказа обновлены:', result);
                         } else {
-                            console.log('❌ Ошибка при обновлении заказа:', result);
+                            console.error('❌ Ошибка при обновлении заказа в БД:', response.status);
+                            alert('Ошибка при сохранении изменений в базе данных');
                         }
-                    });
+                    } catch (error) {
+                        console.error('❌ Ошибка сети при обновлении заказа:', error);
+                        alert('Ошибка сети при сохранении изменений');
+                    }
                 }
 
                 // Перезапускаем таймер с новым временем
@@ -1474,18 +1568,6 @@ function addEditOrderFunctionality(orderContainer) {
                     }
                 }];
 
-                // Вычисляем новое общее время
-                const newTotalSeconds = getTotalDurationInSeconds(fakeButtons);
-                    
-                // Вычитаем прошедшее время из нового общего времени
-                const initialSeconds = Math.max(newTotalSeconds - elapsedSeconds, 0);
-
-                console.log("New name input:", newName);
-                console.log("Name count:", nameCount);
-                console.log("New price calculation:", isRental ? 
-                    `Rental (${basePriceForOneName})` : 
-                    `Time (${basePriceForOneName} × ${nameCount} = ${newPrice})`);
-
                 // 1. ОСТАНАВЛИВАЕМ СТАРЫЙ ТАЙМЕР
                 const oldTimerId = parentOrder.dataset.timerId;
                 if (oldTimerId && typeof stopTimer === 'function') {
@@ -1494,11 +1576,8 @@ function addEditOrderFunctionality(orderContainer) {
 
                 // 2. Перезапускаем таймер с новым временем
                 stopAllTimersForContainer(parentOrder);
-                const newTimerId = startCountdown(fakeButtons, parentOrder, initialSeconds);
+                const newTimerId = startCountdown(fakeButtons, parentOrder, newRemainingSeconds);
                 parentOrder.dataset.timerId = newTimerId;
-
-                // ПОСЛЕ СОХРАНЕНИЯ ИЗМЕНЕНИЙ:
-                saveOrdersToStorage();
 
                 // Удаляем блок изменения заказа
                 newOrderBlock.remove();
@@ -1528,35 +1607,28 @@ document.addEventListener("DOMContentLoaded", function() {
     setupLogoutHandler();
     setupAutoLogout();
 
+    // // Загружаем данные из LocalStorage
+    // const savedData = loadOrdersOnStartup();
 
-    // Загружаем данные из LocalStorage
-    const savedData = loadOrdersOnStartup();
+    // ЗАГРУЖАЕМ ИЗ БД, А НЕ ИЗ LOCALSTORAGE
+    loadOrdersOnStartup().then(() => {
+        console.log('✅ Приложение инициализировано с данными из БД');
+    });
+
+    // Обновляем глобальные переменные из DOM
+    updateCounters();
     
-    // Обновляем глобальные переменные
-    orderCount = savedData.orderCount;
-    totalRevenue = savedData.totalRevenue;
+        // Инициализируем глобальные переменные нулями
+    orderCount = 0;
+    totalRevenue = 0;
 
     // Обновляем счетчики в DOM
     var orderCountElement = document.querySelector(".section-two__nav_block_sag-2");
     if (orderCountElement) orderCountElement.textContent = orderCount;
     
     var revenueElement = document.querySelector(".revenue");
-    if (revenueElement && totalRevenue !== undefined) {
-        revenueElement.textContent = Math.round(totalRevenue).toFixed(0);
-    } else if (revenueElement) {
+    if (revenueElement) {
         revenueElement.textContent = '0';
-    }
-
-    // Восстанавливаем заказы из LocalStorage
-    if (savedData && savedData.orders && savedData.orders.length > 0) {
-        savedData.orders.forEach(orderData => {
-            recreateOrderFromStorage(orderData);
-        });
-        
-        // После восстановления обновляем счетчики
-        if (typeof updateCounters === 'function') {
-            updateCounters();
-        }
     }
 
     // Настраиваем ежедневную очистку заказов

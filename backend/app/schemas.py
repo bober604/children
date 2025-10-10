@@ -62,3 +62,13 @@ class OrderDelete(BaseModel):
 class OrderTimerUpdate(BaseModel):
     remaining_seconds: int
     is_paused: bool
+
+class OrderFullUpdate(BaseModel):
+    child_names: Optional[str] = None
+    phone: Optional[str] = None
+    note: Optional[str] = None
+    duration: Optional[str] = None
+    sum: Optional[int] = None
+    total_seconds: Optional[int] = None
+    remaining_seconds: Optional[int] = None
+    is_paused: Optional[bool] = None

@@ -128,3 +128,21 @@ def complete_order(db: Session, order_id: int):
 
 def get_order_by_id(db: Session, order_id: int):
     return db.query(models.Order).filter(models.Order.id == order_id).first()
+
+def get_order_by_id(db: Session, order_id: int):
+    """Получить заказ по ID"""
+    return db.query(models.Order).filter(models.Order.id == order_id).first()
+
+def update_order_full(db: Session, order_id: int, update_data: dict):
+    """Полное обновление заказа"""
+    db_order = get_order_by_id(db, order_id)
+    if not db_order:
+        return None
+    
+    for field, value in update_data.items():
+        if hasattr(db_order, field):
+            setattr(db_order, field, value)
+    
+    db.commit()
+    db.refresh(db_order)
+    return db_order
