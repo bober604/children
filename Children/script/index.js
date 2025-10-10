@@ -621,16 +621,17 @@ function getTotalDurationInSeconds(selectedButtons) {
 function startCountdown(selectedButtons, orderContainer, initialSeconds = null) {
     let orderId = orderContainer.dataset.timerId;
     
-    // Гарантированно останавливаем предыдущий таймер для этого контейнера
+    // Останавливаем предыдущий таймер
     if (orderId && activeTimers.has(orderId)) {
-        clearInterval(activeTimers.get(orderId).interval);
-        if (activeTimers.get(orderId).worker) {
-            activeTimers.get(orderId).worker.terminate();
+        const timerInfo = activeTimers.get(orderId);
+        if (timerInfo.worker) {
+            timerInfo.worker.postMessage({ type: 'STOP' });
+            timerInfo.worker.terminate();
         }
+        clearInterval(timerInfo.interval);
         activeTimers.delete(orderId);
     }
     
-    // Создаем новый ID если нужно
     if (!orderId) {
         orderId = 'timer_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
         orderContainer.dataset.timerId = orderId;
@@ -640,26 +641,9 @@ function startCountdown(selectedButtons, orderContainer, initialSeconds = null) 
     const pauseButton = orderContainer.querySelector(".section-two__box_Child-1__info_img");
     
     const totalSeconds = getTotalDurationInSeconds(selectedButtons);
-    
-    // Вычисляем оставшееся время
     let remainingSeconds = initialSeconds !== null ? initialSeconds : totalSeconds;
     
-    if (initialSeconds === null && orderContainer.dataset.creationTime) {
-        const creationTime = orderContainer.dataset.creationTime;
-        const now = new Date();
-        
-        const [hours, minutes, seconds] = creationTime.split(/[.:]/).map(Number);
-        const creationDate = new Date();
-        creationDate.setHours(hours, minutes, seconds || 0, 0);
-        
-        const elapsedSeconds = Math.floor((now - creationDate) / 1000);
-        remainingSeconds = Math.max(0, totalSeconds - elapsedSeconds);
-    }
-
-    const startTime = Date.now();
     let isPaused = false;
-    let pauseStartTime = 0;
-    let totalPausedTime = 0;
 
     function updateDisplay(seconds) {
         if (!countdownElement) return;
@@ -670,59 +654,54 @@ function startCountdown(selectedButtons, orderContainer, initialSeconds = null) 
         
         countdownElement.textContent = formatTime(hours) + ":" + formatTime(minutes) + ":" + formatTime(secondsLeft);
         
-        // Автоматически помечаем как завершенный при достижении 0
         if (seconds <= 0 && !orderContainer.classList.contains('in-section-two__box')) {
             const completeButton = orderContainer.querySelector(".section-two__box_Child-2");
             if (completeButton) completeButton.click();
         }
     }
 
-    function getAccurateRemainingTime() {
-        if (isPaused) {
-            return remainingSeconds;
-        }
-        
-        const currentTime = Date.now();
-        const elapsedSeconds = Math.floor((currentTime - startTime - totalPausedTime) / 1000);
-        return Math.max(0, remainingSeconds - elapsedSeconds);
-    }
-
-    // Инициализируем отображение
     updateDisplay(remainingSeconds);
 
-    const interval = setInterval(async () => {
-        if (!isPaused && orderContainer.isConnected) {
-            const currentRemaining = getAccurateRemainingTime();
-            updateDisplay(currentRemaining);
-            
-            // ОБНОВЛЯЕМ ТАЙМЕР НА СЕРВЕРЕ КАЖДУЮ СЕКУНДУ
-            if (orderContainer.dataset.orderId) {
-                await updateTimerOnServer(orderContainer.dataset.orderId, currentRemaining, isPaused);
-            }
-            
-            if (currentRemaining <= 0) {
-                clearInterval(interval);
-                activeTimers.delete(orderId);
+    // Создаем Web Worker для точного таймера
+    const worker = new Worker('./script/timer-worker.js');
+    
+    worker.onmessage = async function(e) {
+        const { type, remaining } = e.data;
+        
+        switch(type) {
+            case 'TICK':
+                updateDisplay(remaining);
+                remainingSeconds = remaining;
                 
-                // Автоматически отмечаем как завершенный на сервере
+                // Обновляем на сервере каждую секунду
+                if (orderContainer.dataset.orderId) {
+                    await updateTimerOnServer(orderContainer.dataset.orderId, remaining, isPaused);
+                }
+                break;
+                
+            case 'COMPLETED':
                 if (orderContainer.dataset.orderId) {
                     await completeOrderOnServer(orderContainer.dataset.orderId);
                 }
-            }
+                break;
         }
-    }, 1000);
-    
+    };
+
+    // Запускаем воркер
+    worker.postMessage({
+        type: 'START',
+        data: { remainingSeconds: remainingSeconds }
+    });
+
     // Сохраняем информацию о таймере
     activeTimers.set(orderId, { 
-        interval: interval, 
+        worker: worker,
         isPaused: isPaused,
-        remainingSeconds: remainingSeconds,
         container: orderContainer
     });
 
     // Обработчик паузы
     if (pauseButton) {
-        // Удаляем старые обработчики
         const newPauseButton = pauseButton.cloneNode(true);
         pauseButton.parentNode.replaceChild(newPauseButton, pauseButton);
         
@@ -730,23 +709,23 @@ function startCountdown(selectedButtons, orderContainer, initialSeconds = null) 
             isPaused = !isPaused;
             this.classList.toggle("section-two__box_Child-1__info_img-active");
             
-            // Обновляем состояние на сервере
+            if (isPaused) {
+                worker.postMessage({ type: 'PAUSE' });
+            } else {
+                worker.postMessage({ 
+                    type: 'RESUME',
+                    data: { remainingSeconds: remainingSeconds }
+                });
+            }
+            
             if (orderContainer.dataset.orderId) {
-                const currentRemaining = getAccurateRemainingTime();
-                await updateTimerOnServer(orderContainer.dataset.orderId, currentRemaining, isPaused);
+                await updateTimerOnServer(orderContainer.dataset.orderId, remainingSeconds, isPaused);
                 
-                // Отправляем ТОЛЬКО состояние паузы в гостевой режим
                 sendToGuest({
                     type: 'TIMER_UPDATED',
                     order_id: orderContainer.dataset.orderId,
                     is_paused: isPaused
                 });
-            }
-            
-            if (isPaused) {
-                pauseStartTime = Date.now();
-            } else {
-                totalPausedTime += Date.now() - pauseStartTime;
             }
         });
     }
@@ -1738,7 +1717,21 @@ document.addEventListener("DOMContentLoaded", function() {
     var timeButtons = document.querySelectorAll(".section-one__box__button-1, .section-one__box__button-2");
     timeButtons.forEach(function(button) {
         button.addEventListener("click", function() {
-            button.classList.toggle("selected");
+            // Если кнопка уже выбрана - снимаем выделение
+            if (button.classList.contains("selected")) {
+                button.classList.remove("selected");
+                button.classList.remove("scaled");
+            } else {
+                // Снимаем выделение со всех других кнопок
+                timeButtons.forEach(function(otherButton) {
+                    otherButton.classList.remove("selected");
+                    otherButton.classList.remove("scaled");
+                });
+                
+                // Выделяем текущую кнопку
+                button.classList.add("selected");
+                button.classList.add("scaled");
+            }
         });
     });
 

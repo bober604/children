@@ -246,7 +246,7 @@ async def get_active_orders_payload():
                 "note": order.note,
                 "duration": order.duration,
                 "total_seconds": order.total_seconds,
-                "remaining_seconds": order.remaining_seconds,
+                "remaining_seconds": order.remaining_seconds,  # ← ВАЖНО: передаем оставшееся время
                 "is_paused": order.is_paused,
                 "is_completed": order.is_completed,
                 "created_at": order.created_at.isoformat() if order.created_at else None

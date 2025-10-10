@@ -279,12 +279,15 @@ if (typeof GuestMode === 'undefined') {
         }
 
         syncOrders(ordersArray) {
-            // console.log('Синхронизация всех заказов:', ordersArray.length);
             this.orders.clear();
             
             ordersArray.forEach(order => {
-                // Используем значение remaining_seconds из БД без изменений
-                this.orders.set(order.id, order);
+                // Используем remaining_seconds из БД для отображения текущего времени
+                const orderWithCorrectTime = {
+                    ...order,
+                    remaining_seconds: order.remaining_seconds // ← используем актуальное оставшееся время
+                };
+                this.orders.set(order.id, orderWithCorrectTime);
             });
             
             this.saveToStorage();

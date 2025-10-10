@@ -127,8 +127,9 @@ def complete_order(db: Session, order_id: int):
             # Если завершаем - ставим на паузу
             db_order.is_paused = True
         else:
-            # Если возобновляем - снимаем с паузы
+            # Если возобновляем - снимаем с паузу
             db_order.is_paused = False
+            # НЕ меняем remaining_seconds - оставляем как есть
         
         db.commit()
         db.refresh(db_order)
