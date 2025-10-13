@@ -488,10 +488,6 @@
                 // Если соглашение не принято или истекло - деактивируем
                 agreeCheckbox.checked = false;
                 acceptButton.disabled = true;
-                
-                // Очищаем устаревшие данные
-                sessionStorage.removeItem('agreementAccepted');
-                sessionStorage.removeItem('agreementTimestamp');
             }
         }
 
@@ -507,6 +503,9 @@
             sessionStorage.removeItem('agreementTimestamp');
         }
 
+        // Переменная для отслеживания пользовательского взаимодействия
+        let userInteractedWithCheckbox = false;
+
         document.addEventListener("DOMContentLoaded", function() {
             const agreeCheckbox = document.getElementById('agreeCheckbox');
             const acceptButton = document.getElementById('acceptButton');
@@ -514,13 +513,22 @@
             // Обновляем состояние интерфейса при загрузке
             updateInterfaceState();
 
-            // Динамическое отслеживание изменения состояния чекбокса
+            // Отслеживаем пользовательское взаимодействие с чекбоксом
+            agreeCheckbox.addEventListener('click', function() {
+                userInteractedWithCheckbox = true;
+            });
+
             agreeCheckbox.addEventListener('change', function() {
-                acceptButton.disabled = !this.checked;
+                userInteractedWithCheckbox = true;
                 
-                // Если сняли галочку - очищаем соглашение
-                if (!this.checked) {
+                if (this.checked) {
+                    // Если поставили галочку - сохраняем соглашение
+                    saveAgreement();
+                    acceptButton.disabled = false;
+                } else {
+                    // Если сняли галочку - очищаем соглашение
                     clearAgreement();
+                    acceptButton.disabled = true;
                 }
             });
 
@@ -535,25 +543,42 @@
                 }
             });
 
-            // Периодическая проверка состояния (на случай если данные изменились в другой вкладке)
-            setInterval(updateInterfaceState, 1000);
+            // Улучшенная периодическая проверка состояния
+            setInterval(function() {
+                // Если пользователь не взаимодействовал с чекбоксом - обновляем состояние
+                if (!userInteractedWithCheckbox) {
+                    updateInterfaceState();
+                }
+            }, 1000);
+
+            // Сбрасываем флаг взаимодействия при потере фокуса страницей
+            document.addEventListener('visibilitychange', function() {
+                if (document.hidden) {
+                    userInteractedWithCheckbox = false;
+                }
+            });
 
             // Также проверяем при возврате фокуса на страницу
-            window.addEventListener('focus', updateInterfaceState);
+            window.addEventListener('focus', function() {
+                userInteractedWithCheckbox = false;
+                updateInterfaceState();
+            });
         });
 
         // Дополнительная защита: сброс при возврате на страницу через кнопку "Назад"
         window.addEventListener('pageshow', function(event) {
             if (event.persisted) {
                 // Страница загружена из кэша браузера - обновляем состояние
+                userInteractedWithCheckbox = false;
                 setTimeout(updateInterfaceState, 100);
             }
         });
 
-        // Обработка видимости страницы (для случаев когда пользователь переключается между вкладками)
+        // Обработка видимости страницы
         document.addEventListener('visibilitychange', function() {
             if (!document.hidden) {
                 // Страница стала видимой - проверяем состояние
+                userInteractedWithCheckbox = false;
                 updateInterfaceState();
             }
         });
