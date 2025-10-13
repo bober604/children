@@ -5,8 +5,15 @@ from sqlalchemy.orm import Session
 from datetime import datetime, timedelta, time as time_cls
 import zoneinfo
 from fastapi.middleware.cors import CORSMiddleware
+import hashlib
 
 from . import models, database, crud, schemas, ws_manager
+
+from pydantic import BaseModel
+
+class AuthRequest(BaseModel):
+    username: str
+    password: str
 
 models.Base.metadata.create_all(bind=database.engine)
 
@@ -20,6 +27,51 @@ app.add_middleware(
 )
 
 LOCAL_TZ = zoneinfo.ZoneInfo("Asia/Yekaterinburg")
+
+# ----------------------
+# КОНФИГУРАЦИЯ АДМИНИСТРАТОРА
+# ----------------------
+
+# Для генерации хэшей используйте: https://emn178.github.io/online-tools/sha256.html
+ADMIN_CREDENTIALS = {
+    "username_hash": "8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918",  # admin
+    "password_hash": "1d7d1f63300144a76270d9616c386f48da2902bccc311501e5318e1aa67502a3"  # 2025bober2006
+}
+
+def hash_string(text: str) -> str:
+    """Функция для хэширования строки в SHA-256"""
+    return hashlib.sha256(text.encode()).hexdigest()
+
+# ----------------------
+# ЭНДПОИНТЫ АВТОРИЗАЦИИ
+# ----------------------
+
+class AuthRequest(BaseModel):
+    username: str
+    password: str
+
+@app.post("/admin/auth")
+async def admin_auth(auth_data: AuthRequest):
+    """
+    Аутентификация администратора
+    """
+    # Хэшируем введенные данные
+    username_hash = hash_string(auth_data.username.lower().strip())
+    password_hash = hash_string(auth_data.password)
+    
+    # Сравниваем с хранимыми хэшами
+    if (username_hash == ADMIN_CREDENTIALS["username_hash"] and 
+        password_hash == ADMIN_CREDENTIALS["password_hash"]):
+        return {
+            "success": True, 
+            "message": "Авторизация успешна",
+            "session_timeout": 8 * 60 * 60  # 8 часов в секундах
+        }
+    else:
+        raise HTTPException(
+            status_code=401, 
+            detail="Неверные учетные данные"
+        )
 
 # ----------------------
 # НОВЫЕ эндпоинты API
@@ -146,7 +198,7 @@ def delete_order_legacy(
     return JSONResponse(status_code=404, content={"detail": "not found"})
 
 # ----------------------
-# СУЩЕСТВУЮЩИЕ эндпоинты (не изменяем)
+# СУЩЕСТВУЮЩИЕ эндпоинты
 # ----------------------
 
 @app.get("/orders/{date_str}")

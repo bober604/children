@@ -464,54 +464,99 @@
     </div>
 
     <script>
+        // Функция для проверки состояния соглашения
+        function checkAgreementState() {
+            const isAgreementAccepted = sessionStorage.getItem('agreementAccepted');
+            const agreementTimestamp = sessionStorage.getItem('agreementTimestamp');
+            
+            // Проверяем, что соглашение было принято не более 2 часов назад
+            const isExpired = agreementTimestamp && (Date.now() - parseInt(agreementTimestamp)) > 2 * 60 * 60 * 1000;
+            
+            return !!(isAgreementAccepted && !isExpired);
+        }
+
+        // Функция для обновления состояния интерфейса
+        function updateInterfaceState() {
+            const agreeCheckbox = document.getElementById('agreeCheckbox');
+            const acceptButton = document.getElementById('acceptButton');
+            
+            if (checkAgreementState()) {
+                // Если соглашение уже принято - активируем интерфейс
+                agreeCheckbox.checked = true;
+                acceptButton.disabled = false;
+            } else {
+                // Если соглашение не принято или истекло - деактивируем
+                agreeCheckbox.checked = false;
+                acceptButton.disabled = true;
+                
+                // Очищаем устаревшие данные
+                sessionStorage.removeItem('agreementAccepted');
+                sessionStorage.removeItem('agreementTimestamp');
+            }
+        }
+
+        // Функция для сохранения соглашения
+        function saveAgreement() {
+            sessionStorage.setItem('agreementAccepted', 'true');
+            sessionStorage.setItem('agreementTimestamp', Date.now().toString());
+        }
+
+        // Функция для очистки соглашения
+        function clearAgreement() {
+            sessionStorage.removeItem('agreementAccepted');
+            sessionStorage.removeItem('agreementTimestamp');
+        }
+
         document.addEventListener("DOMContentLoaded", function() {
             const agreeCheckbox = document.getElementById('agreeCheckbox');
             const acceptButton = document.getElementById('acceptButton');
 
-            // Принудительно сбрасываем состояние при каждой загрузке страницы
-            agreeCheckbox.checked = false;
-            acceptButton.disabled = true;
+            // Обновляем состояние интерфейса при загрузке
+            updateInterfaceState();
 
-            // Активация кнопки при согласии
+            // Динамическое отслеживание изменения состояния чекбокса
             agreeCheckbox.addEventListener('change', function() {
                 acceptButton.disabled = !this.checked;
+                
+                // Если сняли галочку - очищаем соглашение
+                if (!this.checked) {
+                    clearAgreement();
+                }
             });
 
             // Обработка принятия соглашения
             acceptButton.addEventListener('click', function() {
                 if (agreeCheckbox.checked) {
-                    // Сохраняем факт соглашения в sessionStorage
-                    sessionStorage.setItem('agreementAccepted', 'true');
-                    sessionStorage.setItem('agreementTimestamp', Date.now());
+                    // Сохраняем факт соглашения
+                    saveAgreement();
                     
                     // Перенаправляем на гостевой режим
                     window.location.href = '../guest.html';
                 }
             });
 
-            // Дополнительная защита: сброс при возврате на страницу
-            window.addEventListener('pageshow', function(event) {
-                if (event.persisted) {
-                    agreeCheckbox.checked = false;
-                    acceptButton.disabled = true;
-                }
-            });
+            // Периодическая проверка состояния (на случай если данные изменились в другой вкладке)
+            setInterval(updateInterfaceState, 1000);
+
+            // Также проверяем при возврате фокуса на страницу
+            window.addEventListener('focus', updateInterfaceState);
         });
 
-        // Полный сброс при любом заходе на страницу
-        window.onload = function() {
-            const agreeCheckbox = document.getElementById('agreeCheckbox');
-            const acceptButton = document.getElementById('acceptButton');
-            
-            if (agreeCheckbox && acceptButton) {
-                agreeCheckbox.checked = false;
-                acceptButton.disabled = true;
+        // Дополнительная защита: сброс при возврате на страницу через кнопку "Назад"
+        window.addEventListener('pageshow', function(event) {
+            if (event.persisted) {
+                // Страница загружена из кэша браузера - обновляем состояние
+                setTimeout(updateInterfaceState, 100);
             }
-            
-            // Очищаем предыдущее соглашение
-            sessionStorage.removeItem('agreementAccepted');
-            sessionStorage.removeItem('agreementTimestamp');
-        }
+        });
+
+        // Обработка видимости страницы (для случаев когда пользователь переключается между вкладками)
+        document.addEventListener('visibilitychange', function() {
+            if (!document.hidden) {
+                // Страница стала видимой - проверяем состояние
+                updateInterfaceState();
+            }
+        });
     </script>
 </body>
 </html>

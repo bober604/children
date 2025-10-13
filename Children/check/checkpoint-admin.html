@@ -179,23 +179,42 @@
     </div>
 
     <script>
-        // Учетные данные хранятся прямо на странице авторизации
-        const ADMIN_CREDENTIALS = {
-            login: "admin",
-            password: "admin", // Можно поменять на любой пароль
-            sessionTimeout: 8 * 60 * 60 * 1000 // 8 часов
-        };
+        // Конфигурация
+        const API_BASE_URL = "http://127.0.0.1:8000";
+        const SESSION_TIMEOUT = 8 * 60 * 60 * 1000; // 8 часов
 
-        function verifyCredentials(username, password) {
-            // Простая проверка без iframe
-            return username === ADMIN_CREDENTIALS.login && password === ADMIN_CREDENTIALS.password;
+        // Функция для проверки учетных данных через сервер
+        async function verifyCredentials(username, password) {
+            try {
+                const response = await fetch(`${API_BASE_URL}/admin/auth`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        username: username,
+                        password: password
+                    })
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    return result.success;
+                } else {
+                    const errorData = await response.json();
+                    console.error('Ошибка авторизации:', errorData);
+                    return false;
+                }
+            } catch (error) {
+                console.error('Ошибка при проверке учетных данных:', error);
+                return false;
+            }
         }
 
         function showError(message) {
             const errorElement = document.getElementById('formError');
             if (errorElement) {
                 errorElement.textContent = message;
-                // Автоматически скрываем ошибку через 3 секунды
                 setTimeout(() => {
                     errorElement.textContent = '';
                 }, 3000);
@@ -214,7 +233,7 @@
             }
         }
 
-        document.getElementById('adminAuthForm').addEventListener('submit', function(e) {
+        document.getElementById('adminAuthForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
             const username = document.getElementById('username').value.trim();
@@ -225,7 +244,7 @@
             document.getElementById('passwordError').textContent = '';
             document.getElementById('formError').textContent = '';
             
-            // Простая валидация
+            // Валидация
             if (!username) {
                 document.getElementById('usernameError').textContent = 'Введите логин';
                 return;
@@ -236,24 +255,39 @@
                 return;
             }
             
-            // Проверяем учетные данные
-            if (verifyCredentials(username, password)) {
-                showSuccess('Успешный вход!');
+            // Показываем загрузку
+            const submitButton = this.querySelector('button[type="submit"]');
+            const originalText = submitButton.textContent;
+            submitButton.textContent = 'Проверка...';
+            submitButton.disabled = true;
+            
+            try {
+                // Проверяем учетные данные через сервер
+                const isValid = await verifyCredentials(username, password);
                 
-                // Сохраняем авторизацию
-                sessionStorage.setItem('adminAuthenticated', 'true');
-                sessionStorage.setItem('adminAuthTimestamp', Date.now().toString());
-                
-                // Перенаправляем с задержкой чтобы увидеть сообщение
-                setTimeout(() => {
-                    window.location.href = '../index.html';
-                }, 500);
-            } else {
-                showError('Неверный логин или пароль');
-                
-                // Очищаем поле пароля
-                document.getElementById('password').value = '';
-                document.getElementById('password').focus();
+                if (isValid) {
+                    showSuccess('Успешный вход!');
+                    
+                    // Сохраняем авторизацию
+                    sessionStorage.setItem('adminAuthenticated', 'true');
+                    sessionStorage.setItem('adminAuthTimestamp', Date.now().toString());
+                    
+                    // Перенаправляем
+                    setTimeout(() => {
+                        window.location.href = '../index.html';
+                    }, 500);
+                } else {
+                    showError('Неверный логин или пароль');
+                    document.getElementById('password').value = '';
+                    document.getElementById('password').focus();
+                }
+            } catch (error) {
+                showError('Ошибка соединения с сервером');
+                console.error('Auth error:', error);
+            } finally {
+                // Восстанавливаем кнопку
+                submitButton.textContent = originalText;
+                submitButton.disabled = false;
             }
         });
         
@@ -262,9 +296,6 @@
             document.getElementById('username').value = '';
             document.getElementById('password').value = '';
             document.getElementById('username').focus();
-            
-            // Показываем подсказку для тестирования
-            console.log('Тестовые учетные данные:', ADMIN_CREDENTIALS);
         });
 
         // Добавляем возможность показать/скрыть пароль
@@ -319,8 +350,10 @@
             });
         }
 
-        // Инициализируем переключатель пароля
         document.addEventListener('DOMContentLoaded', setupPasswordToggle);
+
+        // Показываем подсказку для отладки
+        console.log('Админская авторизация: используйте эндпоинт /admin/auth');
     </script>
 </body>
 </html>
