@@ -19,6 +19,29 @@ if (typeof GuestMode === 'undefined') {
             }, 1000);
         }
 
+        async loadTodayOrdersFromAPI() {
+            try {
+                const today = new Date();
+                const day = String(today.getDate()).padStart(2, '0');
+                const month = String(today.getMonth() + 1).padStart(2, '0');
+                const year = today.getFullYear();
+                const dateStr = `${day}.${month}.${year}`;
+                
+                const response = await fetch(`http://127.0.0.1:8000/orders/${dateStr}`);
+                if (response.ok) {
+                    const orders = await response.json();
+                    // Фильтруем только активные заказы
+                    const activeOrders = orders.filter(order => !order.is_completed);
+                    this.syncOrders(activeOrders);
+                    return true;
+                }
+                return false;
+            } catch (error) {
+                console.error('Ошибка загрузки сегодняшних заказов из API:', error);
+                return false;
+            }
+        }
+
         startDataSync() {
             // Синхронизация данных каждые 3 секунды
             this.dataSyncInterval = setInterval(() => {
@@ -96,14 +119,14 @@ if (typeof GuestMode === 'undefined') {
             this.setupBroadcastChannel();
             this.setupEventListeners();
             
-            // Пытаемся загрузить из API, если не получится - из localStorage
-            this.loadOrdersFromAPI().then(success => {
+            // Пытаемся загрузить из API только сегодняшние заказы
+            this.loadTodayOrdersFromAPI().then(success => {
                 if (!success) {
                     this.loadFromStorage();
                 }
                 this.updateDisplay();
-                this.startPeriodicSync(); // Запускаем периодическую синхронизацию
-                this.startDataSync(); // ← ДОБАВЬТЕ ЭТУ СТРОКУ для запуска синхронизации данных
+                this.startPeriodicSync();
+                this.startDataSync();
             });
         }
 

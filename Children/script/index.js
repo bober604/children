@@ -495,6 +495,17 @@ function clearDailyOrders() {
     // Находим все заказы
     const orders = document.querySelectorAll('.section-two__box');
     
+    // Останавливаем все таймеры
+    orders.forEach(order => {
+        const orderId = order.dataset.timerId;
+        if (orderId && activeTimers.has(orderId)) {
+            stopTimer(orderId);
+        }
+    });
+    
+    // Очищаем Map с таймерами
+    activeTimers.clear();
+    
     // Удаляем все заказы из DOM
     orders.forEach(order => {
         order.remove();
@@ -507,12 +518,18 @@ function clearDailyOrders() {
     // Обновляем отображение счетчиков
     updateCounters();
     
-    // Очищаем localStorage от заказов (но сохраняем другие данные если нужно)
+    // Очищаем localStorage от заказов
     localStorage.removeItem('orders');
     localStorage.setItem('orderCount', '0');
     localStorage.setItem('totalRevenue', '0');
     
     console.log('Все заказы очищены (ежедневная очистка)');
+    
+    // Отправляем уведомление в гостевой режим о сбросе
+    sendToGuest({
+        type: 'SYNC_ALL_ORDERS',
+        orders: [] // Пустой массив = очистить все
+    });
 }
 
 function checkAndClearDailyOrders() {
@@ -827,7 +844,7 @@ function loadOrdersFromStorage() {
 
 async function loadOrdersOnStartup() {
     try {
-        // ЗАГРУЖАЕМ ВСЕ ЗАКАЗЫ ЗА СЕГОДНЯШНИЙ ДЕНЬ, а не только активные
+        // ЗАГРУЖАЕМ ТОЛЬКО ЗАКАЗЫ ЗА ТЕКУЩИЙ ДЕНЬ
         const today = new Date();
         const dateStr = formatDateString(today);
         const orders = await fetch(`${API_BASE_URL}/orders/${dateStr}`).then(res => res.ok ? res.json() : []);
@@ -838,24 +855,32 @@ async function loadOrdersOnStartup() {
             sectionTwoLending.innerHTML = '';
         }
         
-        // Создаем заказы из данных API
+        // Создаем заказы из данных API (только за сегодня)
         if (orders && orders.length > 0) {
             orders.forEach(orderData => {
                 recreateOrderFromAPI(orderData);
             });
         }
         
-        // Обновляем счетчики (только активные заказы)
+        // Обновляем счетчики (только активные заказы за сегодня)
         updateCounters();
         
-        console.log('✅ Заказы загружены из БД:', orders.length);
+        console.log('✅ Заказы за сегодня загружены из БД:', orders.length);
         
     } catch (error) {
         console.error('Ошибка загрузки заказов из API:', error);
-        // Fallback: пробуем загрузить из localStorage
+        // Fallback: пробуем загрузить из localStorage, но тоже только за сегодня
         const savedData = loadOrdersFromStorage();
         if (savedData.orders && savedData.orders.length > 0) {
-            savedData.orders.forEach(orderData => {
+            const today = new Date();
+            const todayStr = formatDateString(today);
+            
+            // Фильтруем заказы только за сегодня
+            const todayOrders = savedData.orders.filter(order => 
+                order.creationDate === todayStr
+            );
+            
+            todayOrders.forEach(orderData => {
                 recreateOrderFromStorage(orderData);
             });
             updateCounters();
