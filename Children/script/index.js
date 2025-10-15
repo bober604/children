@@ -1,5 +1,201 @@
 const API_BASE_URL = "http://127.0.0.1:8000";
 
+// ==================== СИНХРОНИЗАЦИЯ С СЕРВЕРОМ ====================
+
+// Функция для периодической синхронизации активных заказов
+function startPeriodicSync() {
+    // Синхронизируем каждую секунду
+    setInterval(() => {
+        syncOrdersFromAPI();
+    }, 1000);
+}
+
+// Функция для синхронизации заказов из API
+// Функция для синхронизации заказов из API
+async function syncOrdersFromAPI() {
+    try {
+        const today = new Date();
+        const todayStr = formatDateString(today);
+        
+        const response = await fetch(`${API_BASE_URL}/orders/${todayStr}`);
+        if (response.ok) {
+            const ordersFromAPI = await response.json();
+            
+            // ФИЛЬТРУЕМ ТОЛЬКО ЗАКАЗЫ ЗА СЕГОДНЯ
+            const todayOrders = ordersFromAPI.filter(order => 
+                (order.date || '').includes(todayStr)
+            );
+            
+            updateLocalOrders(todayOrders);
+            
+            // Также обновляем счетчики
+            await updateCountersFromAPI();
+        }
+    } catch (error) {
+        console.error('Ошибка синхронизации заказов:', error);
+    }
+}
+
+// Функция для обновления локальных заказов данными из API
+function updateLocalOrders(ordersFromAPI) {
+    const orderElements = document.querySelectorAll('.section-two__box[data-order-id]');
+    
+    ordersFromAPI.forEach(apiOrder => {
+        const orderElement = document.querySelector(`[data-order-id="${apiOrder.id}"]`);
+        
+        if (orderElement) {
+            updateOrderElement(orderElement, apiOrder);
+        } else {
+            // Если заказа нет в DOM, но есть в API - создаем его
+            recreateOrderFromAPI(apiOrder);
+        }
+    });
+    
+    // Удаляем заказы, которых нет в API
+    const apiOrderIds = ordersFromAPI.map(order => order.id.toString());
+    orderElements.forEach(element => {
+        const orderId = element.dataset.orderId;
+        if (orderId && !apiOrderIds.includes(orderId)) {
+            element.remove();
+        }
+    });
+}
+
+// Функция для обновления элемента заказа
+function updateOrderElement(orderElement, apiOrder) {
+    // Обновляем оставшееся время
+    const timeElement = orderElement.querySelector('.section-two__box_Child-1__info_time');
+    if (timeElement) {
+        const timeString = formatTimeFromSeconds(apiOrder.remaining_seconds);
+        timeElement.textContent = timeString;
+    }
+    
+    // Обновляем состояние паузы
+    const pauseButton = orderElement.querySelector('.section-two__box_Child-1__info_img');
+    if (pauseButton) {
+        if (apiOrder.is_paused) {
+            pauseButton.classList.add('section-two__box_Child-1__info_img-active');
+        } else {
+            pauseButton.classList.remove('section-two__box_Child-1__info_img-active');
+        }
+    }
+    
+    // Обновляем состояние завершения
+    if (apiOrder.is_completed && !orderElement.classList.contains('in-section-two__box')) {
+        // Если заказ завершен в БД, но не в интерфейсе
+        completeOrderInInterface(orderElement);
+    } else if (!apiOrder.is_completed && orderElement.classList.contains('in-section-two__box')) {
+        // Если заказ возобновлен в БД, но не в интерфейсе
+        resumeOrderInInterface(orderElement);
+    }
+    
+    // Обновляем данные в локальном таймере
+    updateLocalTimer(orderElement, apiOrder.remaining_seconds, apiOrder.is_paused);
+}
+
+// Функция для обновления локального таймера
+function updateLocalTimer(orderElement, remainingSeconds, isPaused) {
+    const orderId = orderElement.dataset.timerId;
+    
+    if (orderId && activeTimers.has(orderId)) {
+        const timerInfo = activeTimers.get(orderId);
+        
+        // Обновляем оставшееся время
+        timerInfo.remainingSeconds = remainingSeconds;
+        timerInfo.isPaused = isPaused;
+        timerInfo.lastUpdate = Date.now();
+        
+        // Синхронизируем визуальное состояние кнопки паузы
+        const pauseButton = orderElement.querySelector('.section-two__box_Child-1__info_img');
+        if (pauseButton) {
+            if (isPaused) {
+                pauseButton.classList.add('section-two__box_Child-1__info_img-active');
+            } else {
+                pauseButton.classList.remove('section-two__box_Child-1__info_img-active');
+            }
+        }
+        
+        activeTimers.set(orderId, timerInfo);
+    }
+}
+
+// Функция для завершения заказа в интерфейсе
+function completeOrderInInterface(orderElement) {
+    if (orderElement.classList.contains('in-section-two__box')) return;
+    
+    // Останавливаем таймер
+    const orderId = orderElement.dataset.timerId;
+    if (orderId && activeTimers.has(orderId)) {
+        stopTimer(orderId);
+    }
+    
+    // Применяем стили завершенного заказа
+    orderElement.classList.add("in-section-two__box");
+    
+    const classesToToggle = [
+        [".section-two__box_Child-1", "in-section-two__box_Child-1"],
+        [".section-two__box_Child-1_line", "in-section-two__box_Child-1_line"],
+        [".section-two__box_Child-1__info_line-1", "in-section-two__box_Child-1__info_line-1"],
+        [".section-two__box_Child-1__info_container-sag_name", "in-section-two__box_Child-1__info_container-sag_name"],
+        [".section-two__box_Child-2", "in-section-two__box_Child-2"],
+        [".section-two__box_Child-2_sag", "in-section-two__box_Child-2_sag"],
+        [".section-two__box_Child-3", "in-section-two__box_Child-3"],
+        [".section-two__box_Child-3_sag", "in-section-two__box_Child-3_sag"],
+        [".section-two__box_Child-4", "in-section-two__box_Child-4"],
+        [".section-two__box_Child-4_sag", "in-section-two__box_Child-4_sag"],
+        [".section-two__box_Child-1__info_time", "in-section-two__box_Child-1__info_time"],
+        [".section-two__box_Child-1__info_img", "in-section-two__box_Child-1__info_img"]
+    ];
+    
+    classesToToggle.forEach(([selector, className]) => {
+        const element = orderElement.querySelector(selector);
+        if (element) element.classList.add(className);
+    });
+}
+
+// Функция для возобновления заказа в интерфейсе
+function resumeOrderInInterface(orderElement) {
+    if (!orderElement.classList.contains('in-section-two__box')) return;
+    
+    // Убираем стили завершенного заказа
+    orderElement.classList.remove("in-section-two__box");
+    
+    const classesToToggle = [
+        [".section-two__box_Child-1", "in-section-two__box_Child-1"],
+        [".section-two__box_Child-1_line", "in-section-two__box_Child-1_line"],
+        [".section-two__box_Child-1__info_line-1", "in-section-two__box_Child-1__info_line-1"],
+        [".section-two__box_Child-1__info_container-sag_name", "in-section-two__box_Child-1__info_container-sag_name"],
+        [".section-two__box_Child-2", "in-section-two__box_Child-2"],
+        [".section-two__box_Child-2_sag", "in-section-two__box_Child-2_sag"],
+        [".section-two__box_Child-3", "in-section-two__box_Child-3"],
+        [".section-two__box_Child-3_sag", "in-section-two__box_Child-3_sag"],
+        [".section-two__box_Child-4", "in-section-two__box_Child-4"],
+        [".section-two__box_Child-4_sag", "in-section-two__box_Child-4_sag"],
+        [".section-two__box_Child-1__info_time", "in-section-two__box_Child-1__info_time"],
+        [".section-two__box_Child-1__info_img", "in-section-two__box_Child-1__info_img"]
+    ];
+    
+    classesToToggle.forEach(([selector, className]) => {
+        const element = orderElement.querySelector(selector);
+        if (element) element.classList.remove(className);
+    });
+    
+    // Перезапускаем таймер
+    const durationElement = orderElement.querySelector('.section-two__box_Child-1__nav_section_par-3');
+    if (durationElement) {
+        const durationText = durationElement.textContent.trim();
+        const fakeButtons = [{
+            textContent: durationText,
+            querySelector: () => ({ textContent: durationText })
+        }];
+        
+        // Получаем актуальное оставшееся время из элемента
+        const remainingSeconds = getRemainingTime(orderElement);
+        const newTimerId = startCountdown(fakeButtons, orderElement, remainingSeconds);
+        orderElement.dataset.timerId = newTimerId;
+    }
+}
+
 // Функция для получения всех активных заказов
 async function loadActiveOrdersFromAPI() {
     try {
@@ -17,7 +213,7 @@ async function loadActiveOrdersFromAPI() {
 // Функция для обновления таймера на сервере
 async function updateTimerOnServer(orderId, remainingSeconds, isPaused) {
     try {
-        await fetch(`${API_BASE_URL}/order/${orderId}/timer`, {
+        const response = await fetch(`${API_BASE_URL}/order/${orderId}/timer`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
@@ -27,8 +223,14 @@ async function updateTimerOnServer(orderId, remainingSeconds, isPaused) {
                 is_paused: isPaused
             })
         });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        console.log(`✅ Таймер заказа ${orderId} обновлен на сервере: ${remainingSeconds}с, пауза: ${isPaused}`);
     } catch (error) {
-        console.error('Ошибка обновления таймера:', error);
+        console.error('❌ Ошибка обновления таймера:', error);
     }
 }
 
@@ -163,10 +365,11 @@ function sendRequest(url, method, data) {
 function stopTimer(orderId) {
     if (activeTimers.has(orderId)) {
         const timerInfo = activeTimers.get(orderId);
-        clearInterval(timerInfo.interval);
-        if (timerInfo.worker) {
-            timerInfo.worker.terminate();
+        // Очищаем только если interval существует
+        if (timerInfo.interval) {
+            clearInterval(timerInfo.interval);
         }
+        // Web Worker больше не используется
         activeTimers.delete(orderId);
         return true;
     }
@@ -342,12 +545,28 @@ function calculatePriceFromDuration(durationText) {
 }
 
 function updateCounters() {
-    const orders = document.querySelectorAll('.section-two__box');
-    let currentOrderCount = orders.length;
+    // Считаем ВСЕ заказы (и активные, и завершенные)
+    const activeOrders = document.querySelectorAll('.section-two__box:not(.in-section-two__box)');
+    const completedOrders = document.querySelectorAll('.in-section-two__box');
+    const allOrders = document.querySelectorAll('.section-two__box, .in-section-two__box');
     
+    let currentOrderCount = allOrders.length;
     let currentTotalRevenue = 0;
-    orders.forEach(order => {
-        const priceElement = order.querySelector('.price');
+    
+    // Обрабатываем активные заказы
+    activeOrders.forEach(order => {
+        const priceElement = order.querySelector('.section-two__box_Child-1__nav_section_par-2.price');
+        if (priceElement) {
+            const priceText = priceElement.textContent.replace('руб.', '').trim();
+            currentTotalRevenue += parseFloat(priceText) || 0;
+        }
+    });
+    
+    // Обрабатываем завершенные заказы (у них другие классы)
+    completedOrders.forEach(order => {
+        // Для завершенных заказов ищем цену в другом месте
+        const priceElement = order.querySelector('.in-section-two__box_Child-1 .section-two__box_Child-1__nav_section_par-2.price') || 
+                           order.querySelector('.section-two__box_Child-1__nav_section_par-2.price');
         if (priceElement) {
             const priceText = priceElement.textContent.replace('руб.', '').trim();
             currentTotalRevenue += parseFloat(priceText) || 0;
@@ -604,11 +823,6 @@ function getRemainingTime(orderContainer) {
     const minutes = parseInt(timeParts[1]) || 0;
     const seconds = parseInt(timeParts[2]) || 0;
     
-    // Если время "00:00:00", возвращаем 0
-    if (hours === 0 && minutes === 0 && seconds === 0) {
-        return 0;
-    }
-    
     return hours * 3600 + minutes * 60 + seconds;
 }
 
@@ -640,13 +854,7 @@ function startCountdown(selectedButtons, orderContainer, initialSeconds = null) 
     
     // Останавливаем предыдущий таймер
     if (orderId && activeTimers.has(orderId)) {
-        const timerInfo = activeTimers.get(orderId);
-        if (timerInfo.worker) {
-            timerInfo.worker.postMessage({ type: 'STOP' });
-            timerInfo.worker.terminate();
-        }
-        clearInterval(timerInfo.interval);
-        activeTimers.delete(orderId);
+        stopTimer(orderId);
     }
     
     if (!orderId) {
@@ -661,6 +869,7 @@ function startCountdown(selectedButtons, orderContainer, initialSeconds = null) 
     let remainingSeconds = initialSeconds !== null ? initialSeconds : totalSeconds;
     
     let isPaused = false;
+    let lastUpdateTime = Date.now();
 
     function updateDisplay(seconds) {
         if (!countdownElement) return;
@@ -670,80 +879,63 @@ function startCountdown(selectedButtons, orderContainer, initialSeconds = null) 
         const secondsLeft = seconds % 60;
         
         countdownElement.textContent = formatTime(hours) + ":" + formatTime(minutes) + ":" + formatTime(secondsLeft);
-        
-        if (seconds <= 0 && !orderContainer.classList.contains('in-section-two__box')) {
-            const completeButton = orderContainer.querySelector(".section-two__box_Child-2");
-            if (completeButton) completeButton.click();
-        }
     }
 
+    // Инициализируем отображение
     updateDisplay(remainingSeconds);
 
-    // Создаем Web Worker для точного таймера
-    const worker = new Worker('./script/timer-worker.js');
-    
-    worker.onmessage = async function(e) {
-        const { type, remaining } = e.data;
-        
-        switch(type) {
-            case 'TICK':
-                updateDisplay(remaining);
-                remainingSeconds = remaining;
-                
-                // Обновляем на сервере каждую секунду
-                if (orderContainer.dataset.orderId) {
-                    await updateTimerOnServer(orderContainer.dataset.orderId, remaining, isPaused);
-                }
-                break;
-                
-            case 'COMPLETED':
-                if (orderContainer.dataset.orderId) {
-                    await completeOrderOnServer(orderContainer.dataset.orderId);
-                }
-                break;
-        }
-    };
-
-    // Запускаем воркер
-    worker.postMessage({
-        type: 'START',
-        data: { remainingSeconds: remainingSeconds }
-    });
-
-    // Сохраняем информацию о таймере
+    // НЕ создаем локальный интервал - полагаемся только на синхронизацию с сервером
+    // Вместо этого просто сохраняем состояние
     activeTimers.set(orderId, { 
-        worker: worker,
+        container: orderContainer,
         isPaused: isPaused,
-        container: orderContainer
+        remainingSeconds: remainingSeconds,
+        lastUpdate: lastUpdateTime,
+        // Убираем interval и worker
+        interval: null,
+        worker: null
     });
 
-    // Обработчик паузы
+    // Обработчик паузы - УПРОЩЕННАЯ ВЕРСИЯ
     if (pauseButton) {
+        // Удаляем старые обработчики
         const newPauseButton = pauseButton.cloneNode(true);
         pauseButton.parentNode.replaceChild(newPauseButton, pauseButton);
         
         newPauseButton.addEventListener("click", async function() {
             isPaused = !isPaused;
+            
+            // Обновляем визуальное состояние кнопки
             this.classList.toggle("section-two__box_Child-1__info_img-active");
             
-            if (isPaused) {
-                worker.postMessage({ type: 'PAUSE' });
-            } else {
-                worker.postMessage({ 
-                    type: 'RESUME',
-                    data: { remainingSeconds: remainingSeconds }
-                });
+            // Обновляем состояние в локальном таймере
+            if (activeTimers.has(orderId)) {
+                const timerInfo = activeTimers.get(orderId);
+                timerInfo.isPaused = isPaused;
+                timerInfo.lastUpdate = Date.now();
+                
+                // Получаем актуальное оставшееся время из DOM
+                const currentRemaining = getRemainingTime(orderContainer);
+                timerInfo.remainingSeconds = currentRemaining;
+                
+                activeTimers.set(orderId, timerInfo);
             }
             
+            // Обновляем состояние на сервере
             if (orderContainer.dataset.orderId) {
-                await updateTimerOnServer(orderContainer.dataset.orderId, remainingSeconds, isPaused);
+                const currentRemaining = getRemainingTime(orderContainer);
+                await updateTimerOnServer(orderContainer.dataset.orderId, currentRemaining, isPaused);
                 
+                // Отправляем уведомление в гостевой режим
                 sendToGuest({
                     type: 'TIMER_UPDATED',
                     order_id: orderContainer.dataset.orderId,
-                    is_paused: isPaused
+                    is_paused: isPaused,
+                    remaining_seconds: currentRemaining
                 });
             }
+            
+            console.log(`Таймер ${orderId} ${isPaused ? 'приостановлен' : 'возобновлен'}`);
         });
     }
     
@@ -855,9 +1047,15 @@ async function loadOrdersOnStartup() {
             sectionTwoLending.innerHTML = '';
         }
         
+        // ФИЛЬТРУЕМ ТОЛЬКО АКТИВНЫЕ ЗАКАЗЫ ЗА СЕГОДНЯ
+        const todayOrders = orders.filter(order => {
+            const orderDate = order.date || order.creationDate;
+            return orderDate === dateStr;
+        });
+        
         // Создаем заказы из данных API (только за сегодня)
-        if (orders && orders.length > 0) {
-            orders.forEach(orderData => {
+        if (todayOrders && todayOrders.length > 0) {
+            todayOrders.forEach(orderData => {
                 recreateOrderFromAPI(orderData);
             });
         }
@@ -865,7 +1063,7 @@ async function loadOrdersOnStartup() {
         // Обновляем счетчики (только активные заказы за сегодня)
         updateCounters();
         
-        console.log('✅ Заказы за сегодня загружены из БД:', orders.length);
+        console.log('✅ Заказы за сегодня загружены из БД:', todayOrders.length);
         
     } catch (error) {
         console.error('Ошибка загрузки заказов из API:', error);
@@ -893,7 +1091,7 @@ async function updateCountersFromAPI() {
         const today = new Date();
         const dateStr = formatDateString(today);
         
-        // Загружаем актуальные данные с сервера
+        // Загружаем актуальные данные с сервера ЗА СЕГОДНЯ
         const [revenueResponse, countResponse] = await Promise.all([
             fetch(`${API_BASE_URL}/revenue/${dateStr}`),
             fetch(`${API_BASE_URL}/orders/${dateStr}`)
@@ -903,9 +1101,19 @@ async function updateCountersFromAPI() {
             const revenueData = await revenueResponse.json();
             const orders = await countResponse.json();
             
+            // СЧИТАЕМ ВСЕ ЗАКАЗЫ ЗА СЕГОДНЯ (и активные, и завершенные)
+            const allOrders = orders.filter(order => 
+                (order.date || '').includes(dateStr)
+            );
+            
+            // Считаем общую выручку из всех заказов
+            const totalRevenueFromAPI = allOrders.reduce((sum, order) => {
+                return sum + (parseFloat(order.sum) || 0);
+            }, 0);
+            
             // Обновляем глобальные переменные
-            orderCount = orders.length;
-            totalRevenue = revenueData.total_revenue || 0;
+            orderCount = allOrders.length;
+            totalRevenue = totalRevenueFromAPI;
             
             // Обновляем DOM
             const orderCountElement = document.querySelector(".section-two__nav_block_sag-2");
@@ -1156,22 +1364,23 @@ function recreateOrderFromAPI(orderData) {
         sectionTwoLending.insertBefore(orderContainer, sectionTwoLending.firstChild);
     }
 
-    // Если заказ не завершен и есть оставшееся время, запускаем таймер
+    // Если заказ не завершен, создаем таймер
     if (!orderData.is_completed && orderData.remaining_seconds > 0) {
         const fakeButtons = [{
             textContent: orderData.duration,
             querySelector: () => ({ textContent: orderData.duration })
         }];
         
-        startCountdown(fakeButtons, orderContainer, orderData.remaining_seconds);
+        // Запускаем таймер с текущим временем
+        const timerId = startCountdown(fakeButtons, orderContainer, orderData.remaining_seconds);
+        orderContainer.dataset.timerId = timerId;
         
         // Восстанавливаем состояние паузы
         if (orderData.is_paused) {
-            const pauseButton = orderContainer.querySelector('.section-two__box_Child-1__info_img');
-            if (pauseButton) {
-                setTimeout(() => {
-                    pauseButton.click();
-                }, 100);
+            const timerInfo = activeTimers.get(timerId);
+            if (timerInfo) {
+                timerInfo.isPaused = true;
+                activeTimers.set(timerId, timerInfo);
             }
         }
     }
@@ -1182,6 +1391,17 @@ function recreateOrderFromAPI(orderData) {
     addEditOrderFunctionality(orderContainer);
 
     return orderContainer;
+}
+
+function cleanupAllTimers() {
+    for (const [orderId, timerInfo] of activeTimers.entries()) {
+        clearInterval(timerInfo.interval);
+        if (timerInfo.worker) {
+            timerInfo.worker.terminate();
+        }
+        activeTimers.delete(orderId);
+    }
+    console.log('Все таймеры очищены');
 }
 
 // Функция для форматирования времени в нужный формат (HH.MM.SS)
@@ -1219,51 +1439,27 @@ function addOrderCompletedFunctionality(orderContainer) {
             try {
                 console.log('📡 Отправка запроса на переключение статуса заказа:', orderId);
                 
-                // Получаем текущее значение таймера перед остановкой
+                // Получаем текущее значение таймера
                 const currentRemainingSeconds = getRemainingTime(targetBlock);
                 console.log('⏱️ Текущее оставшееся время:', currentRemainingSeconds);
                 
-                // ОСТАНАВЛИВАЕМ ТАЙМЕР НЕМЕДЛЕННО
+                // ОСТАНАВЛИВАЕМ ЛОКАЛЬНЫЙ ТАЙМЕР
                 const timerId = targetBlock.dataset.timerId;
                 if (timerId && typeof stopTimer === 'function') {
                     stopTimer(timerId);
                 }
-                
-                // Также останавливаем все таймеры для этого контейнера
-                stopAllTimersForContainer(targetBlock);
                 
                 const response = await fetch(`${API_BASE_URL}/order/${orderId}/complete`, {
                     method: 'PUT'
                 });
                 
                 if (response.ok) {
-                    const result = await response.json();
-                    console.log('✅ Статус заказа переключен в БД:', orderId, result);
-                    
-                    // Если заказ завершается, сохраняем текущее значение таймера
-                    const isCompleting = !targetBlock.classList.contains('in-section-two__box');
-                    
-                    // ОБНОВЛЯЕМ ВИЗУАЛЬНОЕ СОСТОЯНИЕ ПАУЗЫ
-                    const pauseButton = targetBlock.querySelector(".section-two__box_Child-1__info_img");
-                    if (pauseButton) {
-                        if (isCompleting) {
-                            // При завершении - визуально показываем "паузу" (красный цвет)
-                            pauseButton.classList.add("section-two__box_Child-1__info_img-active");
-                        } else {
-                            // При возобновлении - убираем "паузу"
-                            pauseButton.classList.remove("section-two__box_Child-1__info_img-active");
-                        }
-                    }
-                    
-                    if (isCompleting) {
-                        // НЕ обнуляем таймер, оставляем текущее значение
-                        const countdownElement = targetBlock.querySelector(".section-two__box_Child-1__info_time");
-                        if (countdownElement) {
-                            // Время остается как было, просто останавливается
-                            console.log('🛑 Таймер остановлен на значении:', countdownElement.textContent);
-                        }
-                    } else {
-                        // Если возобновляем заказ, перезапускаем таймер с сохраненным временем
+                    // ПЕРЕКЛЮЧАЕМ СТИЛИ (не удаляем заказ)
+                    if (targetBlock.classList.contains('in-section-two__box')) {
+                        // Если заказ уже завершен - возобновляем
+                        resumeOrderInInterface(targetBlock);
+                        
+                        // Перезапускаем таймер с текущим временем
                         const durationElement = targetBlock.querySelector('.section-two__box_Child-1__nav_section_par-3');
                         if (durationElement) {
                             const durationText = durationElement.textContent.trim();
@@ -1272,62 +1468,38 @@ function addOrderCompletedFunctionality(orderContainer) {
                                 querySelector: () => ({ textContent: durationText })
                             }];
                             
-                            // Перезапускаем таймер с текущим оставшимся временем
                             const newTimerId = startCountdown(fakeButtons, targetBlock, currentRemainingSeconds);
                             targetBlock.dataset.timerId = newTimerId;
-                            console.log('▶️ Таймер перезапущен с временем:', currentRemainingSeconds);
                         }
+                    } else {
+                        // Если заказ активен - завершаем
+                        completeOrderInInterface(targetBlock);
                     }
                     
-                    // Переключаем визуальное состояние
-                    targetBlock.classList.toggle("in-section-two__box");
+                    // Обновляем счетчики
+                    updateCounters();
                     
-                    // Переключаем классы для всех элементов
-                    const toggleClass = (selector, className) => {
-                        const element = targetBlock.querySelector(selector);
-                        if (element) element.classList.toggle(className);
-                    };
+                    console.log('✅ Статус заказа переключен');
                     
-                    const classesToToggle = [
-                        [".section-two__box_Child-1", "in-section-two__box_Child-1"],
-                        [".section-two__box_Child-1_line", "in-section-two__box_Child-1_line"],
-                        [".section-two__box_Child-1__info_line-1", "in-section-two__box_Child-1__info_line-1"],
-                        [".section-two__box_Child-1__info_container-sag_name", "in-section-two__box_Child-1__info_container-sag_name"],
-                        [".section-two__box_Child-2", "in-section-two__box_Child-2"],
-                        [".section-two__box_Child-2_sag", "in-section-two__box_Child-2_sag"],
-                        [".section-two__box_Child-3", "in-section-two__box_Child-3"],
-                        [".section-two__box_Child-3_sag", "in-section-two__box_Child-3_sag"],
-                        [".section-two__box_Child-4", "in-section-two__box_Child-4"],
-                        [".section-two__box_Child-4_sag", "in-section-two__box_Child-4_sag"],
-                        [".section-two__box_Child-1__info_time", "in-section-two__box_Child-1__info_time"],
-                        [".section-two__box_Child-1__info_img", "in-section-two__box_Child-1__info_img"]
-                    ];
-                    
-                    classesToToggle.forEach(([selector, className]) => {
-                        toggleClass(selector, className);
-                    });
-                    
-                    // Сохраняем состояние
-                    if (typeof saveOrdersToStorage === 'function') {
-                        setTimeout(saveOrdersToStorage, 100);
-                    }
-
                     // Отправляем уведомление в гостевой режим
-                    const isCompleted = targetBlock.classList.contains('in-section-two__box');
-                    const completeData = {
-                        type: isCompleted ? 'ORDER_COMPLETED' : 'ORDER_UPDATED',
+                    sendToGuest({
+                        type: 'ORDER_COMPLETED',
                         order_id: orderId,
-                        remaining_seconds: currentRemainingSeconds,
-                        is_paused: isCompleted // Передаем состояние паузы в гостевой режим
-                    };
-                    sendToGuest(completeData);
-                    
-                } else {
-                    console.error('❌ Ошибка при переключении статуса заказа:', response.status);
+                        is_completed: targetBlock.classList.contains('in-section-two__box')
+                    });
                 }
             } catch (error) {
                 console.error('❌ Ошибка сети при переключении статуса заказа:', error);
+                alert('Ошибка сети при изменении статуса заказа');
             }
+        } else {
+            // Fallback для заказов без ID (старые заказы)
+            if (targetBlock.classList.contains('in-section-two__box')) {
+                resumeOrderInInterface(targetBlock);
+            } else {
+                completeOrderInInterface(targetBlock);
+            }
+            updateCounters();
         }
     });
 }
@@ -1672,21 +1844,23 @@ function addEditOrderFunctionality(orderContainer) {
 
 // ==================== ОСНОВНОЙ КОД ====================
 document.addEventListener("DOMContentLoaded", function() {
+    cleanupAllTimers();
+
     setupLogoutHandler();
     setupAutoLogout();
 
-    // // Загружаем данные из LocalStorage
-    // const savedData = loadOrdersOnStartup();
-
-    // ЗАГРУЖАЕМ ИЗ БД, А НЕ ИЗ LOCALSTORAGE
+    // Загружаем данные из БД
     loadOrdersOnStartup().then(() => {
         console.log('✅ Приложение инициализировано с данными из БД');
+        
+        // Запускаем периодическую синхронизацию
+        startPeriodicSync();
     });
 
     // Обновляем глобальные переменные из DOM
     updateCounters();
     
-        // Инициализируем глобальные переменные нулями
+    // Инициализируем глобальные переменные нулями
     orderCount = 0;
     totalRevenue = 0;
 

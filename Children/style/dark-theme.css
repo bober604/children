@@ -1,0 +1,317 @@
+[data-theme="dark"] {
+    /* Основные цвета темной темы */
+    --dark-bg-primary: #1a1a1a;
+    --dark-bg-secondary: #1a1a1a;
+    --dark-bg-tertiary: #3d3d3d;
+    --dark-text-primary: #ffffff;
+    --dark-text-secondary: #b0b0b0;
+    --dark-text-muted: #888888;
+    --dark-border: #404040;
+    --dark-accent: #ecc206;
+    --dark-accent-hover: #ffd700;
+    --dark-shadow: rgba(0, 0, 0, 0.5);
+}
+
+[data-theme="dark"] .body {
+    background: #0a0a0a;
+    color: var(--dark-text-primary);
+}
+
+/* Секция 1 - форма создания заказа */
+[data-theme="dark"] .section-one {
+    background: var(--dark-bg-secondary);
+    border: 1px solid var(--dark-border);
+}
+
+[data-theme="dark"] .section-one__mobile {
+    background: var(--dark-bg-tertiary);
+    border-bottom: 1px solid var(--dark-border);
+}
+
+[data-theme="dark"] .section-one__mobile__container_sag {
+    color: var(--dark-text-primary);
+}
+
+[data-theme="dark"] .section-one__box__button-1,
+[data-theme="dark"] .section-one__box__button-2 {
+    background: var(--dark-bg-tertiary);
+    border: 1px solid var(--dark-border);
+    color: var(--dark-text-primary);
+}
+
+[data-theme="dark"] .section-one__box__button-1:hover,
+[data-theme="dark"] .section-one__box__button-2:hover {
+    background: var(--dark-bg-primary);
+    border-color: var(--dark-accent);
+}
+
+[data-theme="dark"] .section-one__box__button-1.selected,
+[data-theme="dark"] .section-one__box__button-2.selected {
+    background: var(--dark-bg-primary);
+    color: #000000;
+    border-color: var(--dark-accent);
+}
+
+[data-theme="dark"] .section-one__box__button-1_sag-2 {
+    color: var(--dark-text-secondary);
+}
+
+[data-theme="dark"] .section-one__container_1 {
+    background: var(--dark-bg-tertiary);
+    border: 1px solid var(--dark-border);
+    color: var(--dark-text-primary);
+}
+
+[data-theme="dark"] .section-one__container__parent_2 {
+    background: var(--dark-bg-tertiary);
+    border: 1px solid var(--dark-border);
+    color: var(--dark-text-primary);
+}
+
+[data-theme="dark"] .section-one__button {
+    background: var(--dark-accent);
+    color: #000000;
+}
+
+[data-theme="dark"] .section-one__button:hover {
+    background: var(--dark-accent-hover);
+}
+
+[data-theme="dark"] .section-one__orderChange_line {
+    border: 1px solid var(--dark-text-primary);
+}
+
+[data-theme="dark"] .section-one__orderChange_sag {
+    color: #ecc206;
+}
+
+[data-theme="dark"] .section-one__orderChange__box__input_item {
+    background: var(--dark-bg-tertiary);
+    border: 1px solid var(--dark-border);
+    color: var(--dark-text-primary);
+}
+
+[data-theme="dark"] .section-one__orderChange__box__buttons_block-1 {
+    background: var(--dark-bg-tertiary);
+    border: 1px solid var(--dark-border);
+    width: 113px;
+}
+
+[data-theme="dark"] .section-one__orderChange__box__buttons_block-1_sag {
+    color: var(--dark-text-secondary);
+}
+
+[data-theme="dark"] .section-one__orderChange__box__buttons_block-2,
+[data-theme="dark"] .section-one__orderChange__box__buttons_block-3 {
+    background: var(--dark-bg-tertiary);
+    border: 1px solid var(--dark-border);
+    width: 173px;
+}
+
+/* Секция 2 - список заказов */
+[data-theme="dark"] .section-two {
+    background: var(--dark-bg-secondary);
+    border: 1px solid var(--dark-border);
+}
+
+[data-theme="dark"] .section-two__nav_block {
+    background: var(--dark-bg-secondary);
+    border: 1px solid #ecc206;
+}
+
+[data-theme="dark"] .section-two__nav_block_sag-1 {
+    color: var(--dark-text-secondary);
+}
+
+[data-theme="dark"] .section-two__nav_block-1 {
+    border: none;
+    border-bottom: 1px solid #ecc206;
+    border-radius: 16px 16px 0px 0px;
+}
+
+[data-theme="dark"] .section-two__nav_block-3 {
+    border: none;
+    border-bottom: 1px solid #ecc206;
+    border-radius: 16px 16px 0px 0px;
+}
+
+[data-theme="dark"] .section-two__nav_block-4_sag {
+    color: var(--dark-text-secondary);
+}
+
+[data-theme="dark"] .section-two__nav_block-5_sag {
+    color: var(--dark-text-secondary);
+}
+
+[data-theme="dark"] .section-two__nav_block-logout {
+    border: 1px solid #EF5350;
+}
+
+[data-theme="dark"] .section-two__nav_link {
+    color: var(--dark-text-primary);
+}
+
+[data-theme="dark"] .section-two__nav_button-1:hover {
+    background: var(--dark-accent-hover);
+}
+
+[data-theme="dark"] .section-two_line {
+    background: #5a5a5a;
+}
+
+/* Карточки заказов */
+[data-theme="dark"] .section-two_lending {
+    padding-top: 2px;
+}
+
+[data-theme="dark"] .section-two__box {
+    background: var(--dark-bg-secondary);
+    border: none;
+}
+
+[data-theme="dark"] .section-two__box_Child-1 {
+    background: var(--dark-bg-secondary);
+    border: 1px solid var(--dark-accent);
+}
+
+[data-theme="dark"] .section-two__box_Child-1__nav_section_par-1 {
+    color: var(--dark-text-secondary);
+}
+
+[data-theme="dark"] .section-two__box_Child-1__nav_section_par-2 {
+    color: var(--dark-text-primary);
+}
+
+[data-theme="dark"] .section-two__box_Child-1_line {
+    border: 1px solid var(--dark-border);
+}
+
+[data-theme="dark"] .section-two__box_Child-1__info_parents_number,
+[data-theme="dark"] .section-two__box_Child-1__info_container-sag_name {
+    color: var(--dark-text-primary);
+}
+
+[data-theme="dark"] .section-two__box_Child-1__info_parents_par {
+    color: var(--dark-text-secondary);
+}
+
+[data-theme="dark"] .section-two__box_Child-1__info_line-1 {
+    border: 1px solid var(--dark-border);
+}
+
+[data-theme="dark"] .section-two__box_Child-1__info_sag {
+    color: var(--dark-text-secondary);
+}
+
+[data-theme="dark"] .section-two__box_Child-1__info_time {
+    background: rgba(236, 194, 6, 0.15);
+    color: var(--dark-accent);
+    border: 1px solid rgba(236, 194, 6, 0.3);
+}
+
+/* Кнопки действий */
+[data-theme="dark"] .section-two__box_Child-2,
+[data-theme="dark"] .section-two__box_Child-3,
+[data-theme="dark"] .section-two__box_Child-4 {
+    background: var(--dark-bg-primary);
+    border: 1px solid var(--dark-accent);
+    color: var(--dark-text-primary);
+    transition: all 0.4s ease;
+}
+
+/* Завершенные заказы */
+[data-theme="dark"] .in-section-two__box {
+    border: none;
+}
+
+[data-theme="dark"] .in-section-two__box_Child-1 {
+    border: 1px solid var(--dark-border);
+}
+
+[data-theme="dark"] .in-section-two__box_Child-1__info_time {
+    background: rgba(136, 136, 136, 0.3);
+    color: var(--dark-text-muted);
+}
+
+[data-theme="dark"] .in-section-two__box_Child-2,
+[data-theme="dark"] .in-section-two__box_Child-3,
+[data-theme="dark"] .in-section-two__box_Child-4 {
+    border: 1px solid var(--dark-border);
+}
+
+/* Переключатель темы */
+.theme-toggle {
+    cursor: pointer;
+    height: 48px;
+    width: 50px;
+    border-radius: 12px;
+    background: var(--dark-bg-secondary);
+    border: 2px solid #ECEFF1;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    order: 2;
+}
+
+.theme-toggle:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--hover-shadow);
+}
+
+.theme-toggle-icon {
+    width: 28px;
+    height: 28px;
+}
+
+[data-theme="dark"] .theme-toggle {
+    border: 1px solid #ecc206;
+}
+
+/* Адаптивность для мобильных */
+@media (max-width: 480px) {
+    .theme-toggle {
+        padding: 6px 12px;
+        margin-left: 10px;
+        width: 38px;
+        height: 38px;
+    }
+
+    .theme-toggle:hover {
+        transform: none;
+        box-shadow: none;
+    }
+
+    .theme-toggle-icon {
+        padding-top: 1px;
+        padding-left: 1px;
+        width: 21px;
+        height: 21px;
+    }
+
+    .section-two__nav_block-logout {
+        border: 1px solid #ff6b6b;
+    }
+    
+    [data-theme="dark"] .section-two__nav_button-1 {
+        border: 1px solid #ecc206;
+        color: var(--dark-text-secondary);
+    }
+
+    [data-theme="dark"] .section-two__nav_button-2 {
+        border: 1px solid #ecc206;
+    }
+
+    [data-theme="dark"] .section-two__nav_button-3 {
+        border: 1px solid #ecc206;
+    }
+
+    [data-theme="dark"] .section-two_line {
+        height: 1px;
+    }
+}
+
+/* Плавные переходы */
+[data-theme="dark"] * {
+    transition: all 0.3s ease;
+}

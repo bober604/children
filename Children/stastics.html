@@ -523,24 +523,29 @@
                         startDate.setHours(0, 0, 0, 0);
                         break;
                     case 'week':
-                        startDate.setDate(now.getDate() - 6);
+                        startDate = new Date(now);
+                        // Получаем день недели (0 - воскресенье, 1 - понедельник, ...)
+                        const dayOfWeek = startDate.getDay();
+                        // Вычисляем разницу до понедельника
+                        const diffToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+                        startDate.setDate(now.getDate() + diffToMonday);
                         startDate.setHours(0, 0, 0, 0);
                         break;
                     case 'month':
-                        startDate.setDate(now.getDate() - 29);
-                        startDate.setHours(0, 0, 0, 0);
+                        startDate = new Date(now.getFullYear(), now.getMonth(), 1);
                         break;
                     case 'year':
-                        startDate.setMonth(now.getMonth() - 11);
-                        startDate.setDate(1);
-                        startDate.setHours(0, 0, 0, 0);
+                        startDate = new Date(now.getFullYear(), 0, 1);
                         break;
                 }
                 
                 const formattedStartDate = formatDate(startDate);
                 const formattedEndDate = formatDate(now);
                 
+                console.log(`📅 Запрос данных за период: ${formattedStartDate} - ${formattedEndDate}`);
+                
                 const orders = await getOrdersRange(formattedStartDate, formattedEndDate);
+                console.log(`📦 Получено заказов: ${orders.length}`, orders);
                 
                 const ordersCount = orders.length;
                 const totalRevenue = orders.reduce((sum, order) => sum + (order.sum || 0), 0);
@@ -606,7 +611,16 @@
                 // Заполняем реальными данными
                 orders.forEach(order => {
                     if (order.time) {
-                        const hour = order.time.split(':')[0] + ':00';
+                        // Обрабатываем разные форматы времени
+                        let hour;
+                        if (order.time.includes('.')) {
+                            hour = order.time.split('.')[0] + ':00';
+                        } else if (order.time.includes(':')) {
+                            hour = order.time.split(':')[0] + ':00';
+                        } else {
+                            return; // Пропускаем некорректные форматы
+                        }
+                        
                         if (hourlyData[hour]) {
                             hourlyData[hour].orders += 1;
                             hourlyData[hour].revenue += order.sum || 0;
@@ -625,17 +639,24 @@
                     });
                 }
                 return result;
+                
             } else if (period === 'week') {
                 const dailyData = {};
                 const dayNames = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
                 
-                // Создаем все 7 дней недели с нулевыми значениями
+                // Создаем все 7 дней недели с нулевыми значениями (понедельник-воскресенье)
                 const today = new Date();
                 today.setHours(0, 0, 0, 0);
                 
-                for (let i = 6; i >= 0; i--) {
-                    const date = new Date(today);
-                    date.setDate(today.getDate() - i);
+                // Находим понедельник текущей недели
+                const dayOfWeek = today.getDay();
+                const diffToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+                const monday = new Date(today);
+                monday.setDate(today.getDate() + diffToMonday);
+                
+                for (let i = 0; i < 7; i++) {
+                    const date = new Date(monday);
+                    date.setDate(monday.getDate() + i);
                     const dateStr = formatDate(date);
                     const dateStrISO = formatDateISO(date);
                     
@@ -643,23 +664,17 @@
                         orders: 0, 
                         revenue: 0,
                         dayOfWeek: dayNames[date.getDay()],
-                        date: dateStr
+                        date: dateStr,
+                        fullDate: date
                     };
                 }
                 
                 // Заполняем реальными данными
                 orders.forEach(order => {
                     if (order.date) {
-                        let orderDateStr = order.date;
-                        
-                        if (order.date.match(/^\d{4}-\d{2}-\d{2}$/)) {
-                            const parts = order.date.split('-');
-                            orderDateStr = `${parts[2]}.${parts[1]}.${parts[0]}`;
-                        }
-                        
+                        // Ищем соответствие в dailyData по дате в формате DD.MM.YYYY
                         const foundDate = Object.keys(dailyData).find(key => 
-                            dailyData[key].date === orderDateStr || 
-                            key === order.date
+                            dailyData[key].date === order.date
                         );
                         
                         if (foundDate && dailyData[foundDate]) {
@@ -671,9 +686,9 @@
                 
                 // Преобразуем в массив с днями недели
                 const result = [];
-                for (let i = 6; i >= 0; i--) {
-                    const date = new Date(today);
-                    date.setDate(today.getDate() - i);
+                for (let i = 0; i < 7; i++) {
+                    const date = new Date(monday);
+                    date.setDate(monday.getDate() + i);
                     const dateStrISO = formatDateISO(date);
                     
                     if (dailyData[dateStrISO]) {
@@ -681,7 +696,8 @@
                             label: dailyData[dateStrISO].dayOfWeek,
                             orders: dailyData[dateStrISO].orders,
                             revenue: dailyData[dateStrISO].revenue,
-                            date: dailyData[dateStrISO].date
+                            date: dailyData[dateStrISO].date,
+                            fullDate: dailyData[dateStrISO].fullDate
                         });
                     }
                 }
@@ -699,20 +715,12 @@
                     dailyData[dateStr] = { orders: 0, revenue: 0 };
                 }
                 
-                // Заполняем реальными данными
+                // Заполняем реальными данными - ПРОСТАЯ ЛОГИКА
                 orders.forEach(order => {
-                    if (order.date) {
-                        let orderDateStr = order.date;
-                        
-                        if (order.date.match(/^\d{4}-\d{2}-\d{2}$/)) {
-                            const parts = order.date.split('-');
-                            orderDateStr = `${parts[2]}.${parts[1]}.${parts[0]}`;
-                        }
-                        
-                        if (dailyData[orderDateStr]) {
-                            dailyData[orderDateStr].orders += 1;
-                            dailyData[orderDateStr].revenue += order.sum || 0;
-                        }
+                    if (order.date && dailyData[order.date]) {
+                        // Просто увеличиваем счетчики для существующих дат
+                        dailyData[order.date].orders += 1;
+                        dailyData[order.date].revenue += order.sum || 0;
                     }
                 });
                 
@@ -720,13 +728,17 @@
                 const result = [];
                 for (let day = 1; day <= daysInMonth; day++) {
                     const dateStr = `${String(day).padStart(2, '0')}.${String(now.getMonth() + 1).padStart(2, '0')}.${now.getFullYear()}`;
+                    const dayData = dailyData[dateStr] || { orders: 0, revenue: 0 };
+                    
                     result.push({
                         label: `${day}`,
-                        orders: dailyData[dateStr]?.orders || 0,
-                        revenue: dailyData[dateStr]?.revenue || 0
+                        orders: dayData.orders,
+                        revenue: dayData.revenue,
+                        fullDate: dateStr
                     });
                 }
                 
+                console.log('📊 Итоговые данные за месяц:', result);
                 return result;
                 
             } else if (period === 'year') {
@@ -734,36 +746,50 @@
                 const now = new Date();
                 const result = [];
                 
-                for (let i = 0; i < 12; i++) {
-                    const date = new Date(now);
-                    date.setMonth(now.getMonth() - i);
-                    const monthIndex = date.getMonth();
-                    const year = date.getFullYear();
+                // Создаем данные для всех 12 месяцев текущего года
+                for (let month = 0; month < 12; month++) {
+                    const monthStr = `${String(month + 1).padStart(2, '0')}.${now.getFullYear()}`;
                     
-                    result.unshift({
-                        label: `${monthNames[monthIndex]} ${year}`,
-                        month: monthIndex + 1,
-                        year: year,
+                    result.push({
+                        label: `${monthNames[month]} ${now.getFullYear()}`,
+                        month: month + 1,
+                        year: now.getFullYear(),
+                        monthKey: monthStr,
                         orders: 0,
                         revenue: 0
                     });
                 }
                 
+                // Заполняем реальными данными
                 orders.forEach(order => {
                     if (order.date) {
                         try {
-                            const dateParts = order.date.split('-');
+                            let orderDateStr = order.date;
+                            
+                            // Нормализуем формат даты
+                            if (order.date.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                                const parts = order.date.split('-');
+                                orderDateStr = `${parts[2]}.${parts[1]}.${parts[0]}`;
+                            }
+                            
+                            const dateParts = orderDateStr.split('.');
                             if (dateParts.length === 3) {
-                                const year = parseInt(dateParts[0], 10);
+                                const day = parseInt(dateParts[0], 10);
                                 const month = parseInt(dateParts[1], 10);
+                                const year = parseInt(dateParts[2], 10);
                                 
-                                const monthData = result.find(item => 
-                                    item.month === month && item.year === year
-                                );
-                                
-                                if (monthData) {
-                                    monthData.orders += 1;
-                                    monthData.revenue += order.sum || 0;
+                                // Проверяем, что заказ относится к текущему году
+                                if (year === now.getFullYear()) {
+                                    const monthKey = `${String(month).padStart(2, '0')}.${year}`;
+                                    
+                                    const monthData = result.find(item => 
+                                        item.month === month && item.year === year
+                                    );
+                                    
+                                    if (monthData) {
+                                        monthData.orders += 1;
+                                        monthData.revenue += order.sum || 0;
+                                    }
                                 }
                             }
                         } catch (e) {
@@ -805,6 +831,7 @@
                 if (order.date) {
                     let orderDateStr = order.date;
                     
+                    // Нормализуем формат даты
                     if (order.date.match(/^\d{4}-\d{2}-\d{2}$/)) {
                         const parts = order.date.split('-');
                         orderDateStr = `${parts[2]}.${parts[1]}.${parts[0]}`;
@@ -823,10 +850,22 @@
             while (currentDate2 <= end) {
                 const dateStr = formatDate(currentDate2);
                 const day = dateStr.split('.')[0];
+                const month = dateStr.split('.')[1];
+                
+                // Для длительных периодов показываем дату полностью
+                const daysDiff = Math.floor((end - start) / (1000 * 60 * 60 * 24));
+                let label;
+                if (daysDiff > 30) {
+                    label = `${day}.${month}`;
+                } else {
+                    label = `${day}`;
+                }
+                
                 result.push({
-                    label: `${day}`,
+                    label: label,
                     orders: dailyData[dateStr]?.orders || 0,
-                    revenue: dailyData[dateStr]?.revenue || 0
+                    revenue: dailyData[dateStr]?.revenue || 0,
+                    fullDate: dateStr
                 });
                 currentDate2.setDate(currentDate2.getDate() + 1);
             }
@@ -844,7 +883,7 @@
             }, 5000);
         }
 
-        // Отрисовка графика
+        // Отрисовка графика (ОПТИМИЗИРОВАННАЯ версия)
         function updateChart(chartData, period, chartType) {
             const svg = document.querySelector('#sales-chart svg');
             const noDataMessage = document.getElementById('no-data-message');
@@ -857,7 +896,7 @@
             const gridGroup = svg.querySelector('.grid-lines');
             const yAxisLabel = svg.querySelector('.y-axis-label');
             
-            // Очищаем предыдущие элементы
+            // Быстрая очистка
             if (barsGroup) barsGroup.innerHTML = '';
             if (xAxisGroup) xAxisGroup.innerHTML = '';
             if (yAxisGroup) yAxisGroup.innerHTML = '';
@@ -884,142 +923,181 @@
             const dataKey = chartType === 'orders' ? 'orders' : 'revenue';
             const values = chartData.map(item => item[dataKey] || 0);
             
-            // Устанавливаем максимальные значения
+            // ОПРЕДЕЛЕНИЕ МАКСИМАЛЬНЫХ ЗНАЧЕНИЙ ПО ПЕРИОДУ И ТИПУ ДАННЫХ
             let maxValue;
-            if (chartType === 'orders') {
-                // Для количества заказов
-                maxValue = period === 'year' ? 500 : 50;
-            } else {
-                // Для выручки
-                switch(period) {
-                    case 'year':
-                        maxValue = 150000; // 150 тыс для года
-                        break;
-                    case 'day':
-                    case 'week':
-                    case 'month':
-                    case 'custom':
-                    default:
-                        maxValue = 20000; // 20 тыс для дня, недели, месяца и произвольного периода
+            
+            // Настройки максимальных значений по умолчанию
+            const maxValues = {
+                'week': {
+                    'orders': 50,
+                    'revenue': 10000
+                },
+                'month': {
+                    'orders': 50,
+                    'revenue': 10000
+                },
+                'year': {
+                    'orders': 500,
+                    'revenue': 100000
+                },
+                'day': {
+                    'orders': 20,
+                    'revenue': 5000
+                },
+                'custom': {
+                    'orders': 100,
+                    'revenue': 20000
                 }
+            };
+            
+            // Получаем максимальное значение из данных
+            const maxDataValue = Math.max(...values);
+            
+            // Определяем максимальное значение для оси Y
+            if (maxValues[period] && maxValues[period][chartType]) {
+                const presetMax = maxValues[period][chartType];
+                
+                // Если фактические данные превышают预设ное значение, увеличиваем максимум
+                if (maxDataValue > presetMax) {
+                    // Увеличиваем на 20% от максимального значения данных
+                    maxValue = Math.ceil(maxDataValue * 1.2);
+                    
+                    // Округляем до кратного 10, 50, 100 в зависимости от масштаба
+                    if (maxValue < 100) {
+                        maxValue = Math.ceil(maxValue / 10) * 10;
+                    } else if (maxValue < 1000) {
+                        maxValue = Math.ceil(maxValue / 50) * 50;
+                    } else {
+                        maxValue = Math.ceil(maxValue / 100) * 100;
+                    }
+                } else {
+                    // Используем预设ное значение
+                    maxValue = presetMax;
+                }
+            } else {
+                // Резервный вариант - автоматическое определение
+                maxValue = Math.max(maxDataValue * 1.2, 10);
             }
+            
+            // Для выручки обеспечиваем минимальное значение 1000
+            if (chartType === 'revenue' && maxValue < 1000) {
+                maxValue = 1000;
+            }
+            
+            console.log(`📊 Период: ${period}, Тип: ${chartType}, Макс. данные: ${maxDataValue}, Макс. ось Y: ${maxValue}`);
             
             const margin = { top: 60, right: 30, bottom: 60, left: 80 };
             const width = 900 - margin.left - margin.right;
             const height = 400 - margin.top - margin.bottom;
-            const barWidth = (width / chartData.length) * 0.6;
+            
+            // УМНОЕ ОПРЕДЕЛЕНИЕ ФОРМАТА ОСИ X
+            let barWidth;
+            let showAllLabels = true;
+            
+            // Если данных больше 31 (больше месяца) или период - год, группируем по месяцам
+            if (period === 'year' || chartData.length > 31) {
+                barWidth = Math.max((width / chartData.length) * 0.6, 3); // Уже столбцы
+                showAllLabels = false; // Показываем не все подписи
+                
+                console.log(`📅 Много данных (${chartData.length} точек), используем группировку`);
+            } else {
+                barWidth = Math.max((width / chartData.length) * 0.6, 5);
+                showAllLabels = true; // Показываем все подписи
+            }
             
             const scaleY = maxValue > 0 ? height / maxValue : 1;
             
-            // Рисуем сетку и ось Y
-            for (let i = 0; i <= 5; i++) {
-                const value = Math.round(maxValue / 5 * i);
-                const y = margin.top + height - (height / 5 * i);
+            // ОПТИМИЗАЦИЯ: Собираем все элементы в строки и вставляем за один раз
+            let gridHTML = '';
+            let yAxisHTML = '';
+            let barsHTML = '';
+            let xAxisHTML = '';
+            
+            // Рисуем сетку и ось Y (оптимизированно)
+            const gridLinesCount = 5;
+            for (let i = 0; i <= gridLinesCount; i++) {
+                const value = Math.round(maxValue / gridLinesCount * i);
+                const y = margin.top + height - (height / gridLinesCount * i);
                 
                 // Линии сетки
-                const gridLine = document.createElementNS("http://www.w3.org/2000/svg", "line");
-                gridLine.setAttribute('x1', margin.left);
-                gridLine.setAttribute('y1', y);
-                gridLine.setAttribute('x2', margin.left + width);
-                gridLine.setAttribute('y2', y);
-                gridLine.setAttribute('stroke', '#e9ecef');
-                gridLine.setAttribute('stroke-width', '1');
-                if (gridGroup) gridGroup.appendChild(gridLine);
+                gridHTML += `<line x1="${margin.left}" y1="${y}" x2="${margin.left + width}" y2="${y}" stroke="#e9ecef" stroke-width="1" />`;
                 
                 // Подписи значений на оси Y
-                const valueText = document.createElementNS("http://www.w3.org/2000/svg", "text");
-                valueText.setAttribute('x', margin.left - 10);
-                valueText.setAttribute('y', y + 4);
-                valueText.setAttribute('text-anchor', 'end');
-                valueText.setAttribute('font-size', '12');
-                valueText.setAttribute('fill', '#6c757d');
-                
-                // Форматируем значения для выручки
+                let displayValue;
                 if (chartType === 'revenue') {
                     if (value >= 1000000) {
-                        valueText.textContent = (value / 1000000).toFixed(1) + 'M';
+                        displayValue = (value / 1000000).toFixed(1) + 'M';
                     } else if (value >= 1000) {
-                        valueText.textContent = (value / 1000).toFixed(0) + 'K';
+                        displayValue = (value / 1000).toFixed(0) + 'K';
                     } else {
-                        valueText.textContent = formatNumber(value);
+                        displayValue = formatNumber(value);
                     }
                 } else {
-                    valueText.textContent = formatNumber(value);
+                    displayValue = formatNumber(value);
                 }
                 
-                if (yAxisGroup) yAxisGroup.appendChild(valueText);
+                yAxisHTML += `<text x="${margin.left - 10}" y="${y + 4}" text-anchor="end" font-size="12" fill="#6c757d">${displayValue}</text>`;
             }
             
             // Ось X
-            const xAxisLine = document.createElementNS("http://www.w3.org/2000/svg", "line");
-            xAxisLine.setAttribute('x1', margin.left);
-            xAxisLine.setAttribute('y1', margin.top + height);
-            xAxisLine.setAttribute('x2', margin.left + width);
-            xAxisLine.setAttribute('y2', margin.top + height);
-            xAxisLine.setAttribute('stroke', '#6c757d');
-            xAxisLine.setAttribute('stroke-width', '1');
-            if (xAxisGroup) xAxisGroup.appendChild(xAxisLine);
+            xAxisHTML += `<line x1="${margin.left}" y1="${margin.top + height}" x2="${margin.left + width}" y2="${margin.top + height}" stroke="#6c757d" stroke-width="1" />`;
             
-            // Рисуем столбцы и подписи оси X
+            // Рисуем столбцы и подписи оси X (оптимизированно)
             chartData.forEach((item, index) => {
                 const value = item[dataKey] || 0;
                 const barHeight = value * scaleY;
                 const x = margin.left + index * (width / chartData.length) + (width / chartData.length - barWidth) / 2;
                 const y = margin.top + height - barHeight;
+                const fillColor = value > 0 ? '#4361ee' : '#e9ecef';
                 
-                // Рисуем столбец только если есть заказы
+                // Рисуем столбец
+                barsHTML += `<rect class="bar" x="${x}" y="${y}" width="${barWidth}" height="${barHeight}" rx="3" fill="${fillColor}" opacity="1" />`;
+                
+                // Подписи значений над столбцами (только для ненулевых значений)
                 if (value > 0) {
-                    const bar = document.createElementNS("http://www.w3.org/2000/svg", "rect");
-                    bar.setAttribute('class', 'bar');
-                    bar.setAttribute('x', x);
-                    bar.setAttribute('y', y);
-                    bar.setAttribute('width', barWidth);
-                    bar.setAttribute('height', barHeight);
-                    bar.setAttribute('rx', '3');
-                    bar.setAttribute('fill', '#4361ee');
-                    
-                    bar.setAttribute('opacity', '0');
-                    setTimeout(() => {
-                        bar.setAttribute('opacity', '1');
-                    }, index * 100);
-                    
-                    if (barsGroup) barsGroup.appendChild(bar);
-                    
-                    const valueLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
-                    valueLabel.setAttribute('x', x + barWidth / 2);
-                    valueLabel.setAttribute('y', y - 8);
-                    valueLabel.setAttribute('text-anchor', 'middle');
-                    valueLabel.setAttribute('font-size', '11');
-                    valueLabel.setAttribute('fill', '#4361ee');
-                    valueLabel.setAttribute('font-weight', 'bold');
-                    
-                    // Форматируем значения над столбцами для выручки
+                    let displayValue;
                     if (chartType === 'revenue') {
                         if (value >= 1000000) {
-                            valueLabel.textContent = (value / 1000000).toFixed(1) + 'M';
+                            displayValue = (value / 1000000).toFixed(1) + 'M';
                         } else if (value >= 1000) {
-                            valueLabel.textContent = (value / 1000).toFixed(0) + 'K';
+                            displayValue = (value / 1000).toFixed(0) + 'K';
                         } else {
-                            valueLabel.textContent = formatNumber(value);
+                            displayValue = formatNumber(value);
                         }
                     } else {
-                        valueLabel.textContent = formatNumber(value);
+                        displayValue = formatNumber(value);
                     }
                     
-                    if (barsGroup) barsGroup.appendChild(valueLabel);
+                    barsHTML += `<text x="${x + barWidth / 2}" y="${y - 8}" text-anchor="middle" font-size="11" fill="#4361ee" font-weight="bold">${displayValue}</text>`;
                 }
                 
-                // Подписи на оси X - всегда ровно
-                const categoryLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
-                categoryLabel.setAttribute('x', x + barWidth / 2);
-                categoryLabel.setAttribute('y', margin.top + height + 20);
-                categoryLabel.setAttribute('text-anchor', 'middle');
-                categoryLabel.setAttribute('font-size', '12');
-                categoryLabel.setAttribute('fill', '#6c757d');
-                categoryLabel.textContent = item.label;
+                // УМНЫЕ ПОДПИСИ ОСИ X - показываем не все, если данных много
+                let shouldShowLabel = true;
                 
-                if (xAxisGroup) xAxisGroup.appendChild(categoryLabel);
+                if (!showAllLabels) {
+                    // Для больших периодов показываем подписи через одну или реже
+                    if (chartData.length > 60) {
+                        // Более 60 точек - показываем каждую 5-ю
+                        shouldShowLabel = (index % 5 === 0);
+                    } else if (chartData.length > 31) {
+                        // Более 31 точки - показываем каждую 3-ю
+                        shouldShowLabel = (index % 3 === 0);
+                    } else if (chartData.length > 20) {
+                        // Более 20 точек - показываем каждую 2-ю
+                        shouldShowLabel = (index % 2 === 0);
+                    }
+                }
+                
+                if (shouldShowLabel) {
+                    xAxisHTML += `<text x="${x + barWidth / 2}" y="${margin.top + height + 20}" text-anchor="middle" font-size="12" fill="#6c757d">${item.label}</text>`;
+                }
             });
+            
+            // ОПТИМИЗАЦИЯ: Единовременная вставка всех элементов
+            if (gridGroup) gridGroup.innerHTML = gridHTML;
+            if (yAxisGroup) yAxisGroup.innerHTML = yAxisHTML;
+            if (barsGroup) barsGroup.innerHTML = barsHTML;
+            if (xAxisGroup) xAxisGroup.innerHTML = xAxisHTML;
             
             // Обновляем легенду
             document.getElementById('legend-text').textContent = 

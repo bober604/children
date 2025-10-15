@@ -143,6 +143,23 @@ def get_order_by_id(db: Session, order_id: int):
     """Получить заказ по ID"""
     return db.query(models.Order).filter(models.Order.id == order_id).first()
 
+def update_order_timer_auto(db: Session, order_id: int):
+    """Автоматическое обновление таймера заказа (уменьшение времени)"""
+    db_order = db.query(models.Order).filter(models.Order.id == order_id).first()
+    if db_order and not db_order.is_paused and not db_order.is_completed and db_order.remaining_seconds > 0:
+        db_order.remaining_seconds = max(0, db_order.remaining_seconds - 1)
+        db.commit()
+        db.refresh(db_order)
+    return db_order
+
+def get_orders_needing_timer_update(db: Session):
+    """Получить заказы, которым нужно обновить таймер"""
+    return db.query(models.Order).filter(
+        models.Order.is_completed == False,
+        models.Order.is_paused == False,
+        models.Order.remaining_seconds > 0
+    ).all()
+
 def update_order_full(db: Session, order_id: int, update_data: dict):
     """Полное обновление заказа"""
     db_order = get_order_by_id(db, order_id)

@@ -12,32 +12,38 @@ if (typeof GuestMode === 'undefined') {
 
         // Метод для периодической синхронизации
         startPeriodicSync() {
-            // Синхронизируем каждую секунду
+            // Синхронизируем каждую секунду, но используем сегодняшние заказы
             this.syncInterval = setInterval(() => {
-                this.loadOrdersFromAPI().then(success => {
+                this.loadTodayOrdersFromAPI().then(success => {
                 });
             }, 1000);
         }
-
+        
         async loadTodayOrdersFromAPI() {
             try {
                 const today = new Date();
-                const day = String(today.getDate()).padStart(2, '0');
-                const month = String(today.getMonth() + 1).padStart(2, '0');
-                const year = today.getFullYear();
-                const dateStr = `${day}.${month}.${year}`;
+                const dateStr = this.formatDateString(today);
                 
-                const response = await fetch(`http://127.0.0.1:8000/orders/${dateStr}`);
+                // Используем эндпоинт активных заказов
+                const response = await fetch('http://127.0.0.1:8000/orders/active');
                 if (response.ok) {
                     const orders = await response.json();
-                    // Фильтруем только активные заказы
-                    const activeOrders = orders.filter(order => !order.is_completed);
-                    this.syncOrders(activeOrders);
+
+                    // Фильтруем только заказы за сегодня
+                    const todayOrders = orders.filter(order => {
+                        const isToday = order.date === dateStr;
+                        
+                        if (!isToday) {
+                        }
+                        
+                        return isToday;
+                    });                    
+                    this.syncOrders(todayOrders);
                     return true;
                 }
                 return false;
             } catch (error) {
-                console.error('Ошибка загрузки сегодняшних заказов из API:', error);
+                console.error('Ошибка загрузки активных заказов из API:', error);
                 return false;
             }
         }
@@ -49,17 +55,48 @@ if (typeof GuestMode === 'undefined') {
             }, 3000);
         }
 
+        formatDateString(date) {
+            const day = String(date.getDate()).padStart(2, '0');
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const year = date.getFullYear();
+            return `${day}.${month}.${year}`;
+        }
+
         // Метод для синхронизации данных заказов
         async syncOrderDataFromAPI() {
             try {
+                const today = new Date();
+                const dateStr = this.formatDateString(today);
+                
                 const response = await fetch('http://127.0.0.1:8000/orders/active');
                 if (response.ok) {
                     const orders = await response.json();
-                    this.updateOrderData(orders);
+                    
+                    // Фильтруем только заказы за сегодня
+                    const todayOrders = orders.filter(order => order.date === dateStr);
+                    
+                    this.updateOrderData(todayOrders);
                 }
             } catch (error) {
                 console.error('Ошибка синхронизации данных заказов:', error);
             }
+        }
+
+        setupDayChangeCheck() {
+            // Проверяем смену дня каждые 5 секунд для большей точности
+            setInterval(() => {
+                const now = new Date();
+                if (now.getHours() === 0 && now.getMinutes() === 0 && now.getSeconds() <= 10) {
+                    this.orders.clear();
+                    this.saveToStorage();
+                    this.updateDisplay();
+                    
+                    // Также перезагружаем данные из API для сегодняшнего дня
+                    setTimeout(() => {
+                        this.loadTodayOrdersFromAPI();
+                    }, 2000);
+                }
+            }, 5000);
         }
 
         // Метод для обновления данных существующих заказов
@@ -75,7 +112,6 @@ if (typeof GuestMode === 'undefined') {
                         existingOrder.remaining_seconds !== apiOrder.remaining_seconds;
                     
                     if (isDataChanged) {
-                        console.log('🔄 Обновление данных заказа:', apiOrder.id);
                         
                         // Обновляем только необходимые поля
                         existingOrder.child_names = apiOrder.child_names;
@@ -115,9 +151,9 @@ if (typeof GuestMode === 'undefined') {
         }
 
         init() {
-            console.log('Инициализация гостевого режима...');
             this.setupBroadcastChannel();
             this.setupEventListeners();
+            this.setupDayChangeCheck();
             
             // Пытаемся загрузить из API только сегодняшние заказы
             this.loadTodayOrdersFromAPI().then(success => {
@@ -135,7 +171,6 @@ if (typeof GuestMode === 'undefined') {
                 this.channel = new BroadcastChannel('guest_orders_channel');
                 
                 this.channel.onmessage = (event) => {
-                    console.log('Получено сообщение:', event.data);
                     this.isConnected = true;
                     this.handleMessage(event.data);
                 };
@@ -224,6 +259,13 @@ if (typeof GuestMode === 'undefined') {
                     console.log('✏️ Заказ обновлен:', message.order);
                     this.updateOrderData([message.order]);
                     break;
+
+                case 'CLEAR_ALL_ORDERS':
+                    console.log('🔄 Получена команда очистки всех заказов');
+                    this.orders.clear();
+                    this.saveToStorage();
+                    this.updateDisplay();
+                    break;
                     
                 default:
                     console.warn('⚠️ Неизвестный тип сообщения:', message.type);
@@ -302,13 +344,13 @@ if (typeof GuestMode === 'undefined') {
         }
 
         syncOrders(ordersArray) {
+            // Очищаем только если это совершенно новые данные
             this.orders.clear();
             
             ordersArray.forEach(order => {
-                // Используем remaining_seconds из БД для отображения текущего времени
                 const orderWithCorrectTime = {
                     ...order,
-                    remaining_seconds: order.remaining_seconds // ← используем актуальное оставшееся время
+                    remaining_seconds: order.remaining_seconds
                 };
                 this.orders.set(order.id, orderWithCorrectTime);
             });
@@ -455,15 +497,57 @@ if (typeof GuestMode === 'undefined') {
 
         updateOrderElement(order) {
             const orderElement = document.querySelector(`[data-order-id="${order.id}"]`);
-            if (orderElement) {
-                // Полностью заменяем HTML элемента
-                orderElement.outerHTML = this.getOrderHTML(order);
-                
-                // Перезапускаем таймер только если заказ активен, время осталось и НЕ на паузе
-                const newOrderElement = document.querySelector(`[data-order-id="${order.id}"]`);
-                if (order.status === 'active' && order.remaining_seconds > 0 && !order.is_paused) {
-                    this.startTimer(newOrderElement, order.remaining_seconds);
+            if (!orderElement) {
+                this.createOrderElement(order);
+                return;
+            }
+
+            // Обновляем ТОЛЬКО изменяющиеся элементы без пересоздания HTML
+            this.updateOnlyChangedParts(orderElement, order);
+            
+            // Таймер перезапускаем только если нужно
+            if (order.status === 'active' && order.remaining_seconds > 0 && !order.is_paused) {
+                const existingTimer = orderElement.dataset.timerId;
+                if (existingTimer) {
+                    clearInterval(parseInt(existingTimer));
                 }
+                this.startTimer(orderElement, order.remaining_seconds);
+            }
+        }
+
+        updateOnlyChangedParts(orderElement, order) {
+            // 1. Таймер (оставшееся время) - ОБНОВЛЯЕТСЯ
+            const timerElement = orderElement.querySelector('.section-two__box_Child-1__info_time');
+            if (timerElement) {
+                timerElement.textContent = this.formatTimeFromSeconds(order.remaining_seconds);
+                timerElement.classList.toggle('timer-paused', order.is_paused);
+            }
+            
+            // 2. Статус - ОБНОВЛЯЕТСЯ
+            const statusElement = orderElement.querySelector('.order-status');
+            if (statusElement) {
+                if (order.status === 'completed' || order.remaining_seconds <= 0) {
+                    statusElement.className = 'order-status status-completed';
+                    statusElement.textContent = 'завершено';
+                } else if (order.is_paused) {
+                    statusElement.className = 'order-status status-paused';
+                    statusElement.textContent = 'на паузе';
+                } else {
+                    statusElement.className = 'order-status status-active';
+                    statusElement.textContent = 'активно';
+                }
+            }
+            
+            // 3. Длительность посещения - ОБНОВЛЯЕТСЯ (это "1 час", "2 часа" и т.д.)
+            const durationElement = orderElement.querySelector('.section-two__box_Child-1__nav_section:nth-child(2) .section-two__box_Child-1__nav_section_par-2');
+            if (durationElement) {
+                durationElement.textContent = this.getDurationText(order.duration);
+            }
+            
+            // 4. Имя ребенка - ОБНОВЛЯЕТСЯ
+            const nameElement = orderElement.querySelector('.section-two__box_Child-1__info_container-sag_name');
+            if (nameElement) {
+                nameElement.textContent = this.escapeHtml(order.child_names);
             }
         }
 
@@ -484,25 +568,27 @@ if (typeof GuestMode === 'undefined') {
             if (this.orders.size === 0) {
                 if (noOrdersBlock) noOrdersBlock.style.display = 'block';
                 if (ordersBlock) ordersBlock.style.display = 'none';
-            } else {
-                if (noOrdersBlock) noOrdersBlock.style.display = 'none';
-                if (ordersBlock) {
-                    ordersBlock.style.display = 'block';
-                    ordersBlock.innerHTML = '';
-                    
-                    // Сортируем заказы: сначала новые (по created_at или id)
+                return;
+            }
+
+            if (noOrdersBlock) noOrdersBlock.style.display = 'none';
+            if (ordersBlock) {
+                ordersBlock.style.display = 'block';
+                
+                // Если блок пустой - создаем все элементы
+                if (ordersBlock.children.length === 0) {
                     const sortedOrders = Array.from(this.orders.values()).sort((a, b) => {
-                        // Сначала по дате создания (новые первыми)
-                        if (a.created_at && b.created_at) {
-                            return b.created_at - a.created_at;
-                        }
-                        // Или по ID (больший ID = новее заказ)
+                        if (a.created_at && b.created_at) return b.created_at - a.created_at;
                         return b.id - a.id;
                     });
                     
-                    // Добавляем заказы в отсортированном порядке
                     sortedOrders.forEach(order => {
                         this.createOrderElement(order);
+                    });
+                } else {
+                    // Если элементы уже есть - просто обновляем их содержимое
+                    this.orders.forEach(order => {
+                        this.updateOrderElement(order);
                     });
                 }
             }
@@ -561,7 +647,7 @@ if (typeof GuestMode === 'undefined') {
             }
             
             // Также пытаемся загрузить напрямую из API
-            this.loadOrdersFromAPI().then(success => {
+            this.loadTodayOrdersFromAPI().then(success => {
                 if (success) {
                     console.log('✅ Синхронизация через API успешна');
                 }

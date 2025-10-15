@@ -28,6 +28,57 @@ app.add_middleware(
 
 LOCAL_TZ = zoneinfo.ZoneInfo("Asia/Yekaterinburg")
 
+async def timer_update_loop():
+    """Фоновая задача для автоматического обновления таймеров"""
+    while True:
+        try:
+            from .database import SessionLocal
+            db = SessionLocal()
+            try:
+                # Получаем заказы, которым нужно обновить таймер
+                orders_to_update = crud.get_orders_needing_timer_update(db)
+                
+                for order in orders_to_update:
+                    # Обновляем таймер
+                    updated_order = crud.update_order_timer_auto(db, order.id)
+                    if updated_order and updated_order.remaining_seconds == 0:
+                        # Если время вышло, автоматически завершаем заказ
+                        crud.complete_order(db, order.id)
+                        print(f"Заказ {order.id} автоматически завершен")
+                
+                if orders_to_update:
+                    # Рассылаем обновления всем подключенным клиентам
+                    await broadcast_active_orders()
+                    await broadcast_today_stats()
+                    
+            finally:
+                db.close()
+        except Exception as e:
+            print(f"Ошибка в timer_update_loop: {e}")
+        
+        # Ждем 1 секунду перед следующим обновлением
+        await asyncio.sleep(1)
+
+async def periodic_timer_broadcast():
+    """Периодическая рассылка обновлений таймеров"""
+    while True:
+        try:
+            from .database import SessionLocal
+            db = SessionLocal()
+            try:
+                # Получаем активные заказы
+                active_orders = crud.get_active_orders(db)
+                if active_orders:
+                    # Рассылаем обновленные активные заказы
+                    await broadcast_active_orders()
+            finally:
+                db.close()
+        except Exception as e:
+            print(f"Ошибка в periodic_timer_broadcast: {e}")
+        
+        # Рассылаем обновления каждую секунду
+        await asyncio.sleep(1)
+
 # ----------------------
 # КОНФИГУРАЦИЯ АДМИНИСТРАТОРА
 # ----------------------
@@ -364,3 +415,5 @@ async def midnight_notifier_loop():
 async def startup_event():
     loop = asyncio.get_event_loop()
     loop.create_task(midnight_notifier_loop())
+    loop.create_task(timer_update_loop())
+    loop.create_task(periodic_timer_broadcast())
