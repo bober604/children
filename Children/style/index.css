@@ -579,6 +579,7 @@
   color: var(--dark);
   transition: var(--transition);
 }
+
 .section-two__nav_block_sag-2 {
   font-weight: 700;
   font-size: 18px;
@@ -1319,6 +1320,7 @@
     width: 24px;
     height: 24px;
     cursor: pointer;
+    content: url(../img/back.svg);
   }
 
   .section-one__mobile__container_sag {
@@ -1377,6 +1379,7 @@
   }
 
   .section-one__orderChange_img {
+    content: url(../img/back.svg);
     display: block;
     width: 24px;
     height: 24px;
@@ -1460,12 +1463,16 @@
     display: flex;
     width: 38px;
     height: 38px;
-    margin-left: 20px;
+    margin-left: 12px;
     order: 3;
   }
 
   .section-two__nav_block_sag-1 {
     display: none;
+  }
+
+  .section-two__nav_block_img {
+    transform: scale(1.5);
   }
 
   .section-two__nav_button {
@@ -1510,6 +1517,7 @@
     margin-left: 0;
     height: 24px;
     width: 24px;
+    content: url('../img/statistics-mobile.png');
   }
   .section-two__nav_button-3 {
     width: 38px;
@@ -1524,6 +1532,7 @@
   .section-two__nav_button-3_img {
     width: 28px;
     height: 28px;
+    content: url('../img/instruction-mobile.png');
   }
 
   .section-two_line {
@@ -1553,6 +1562,7 @@
     width: 310px;
     min-height: auto;
     padding: 16px;
+    border-radius: 16px;
   }
 
   .section-two__box_Child-1__nav {
@@ -1652,6 +1662,7 @@
 
   .section-two__box_Child-1__info_burger {
     display: block;
+    content: url(../img/burger.svg);
     order: 7;
     width: 30px;
     height: 30px;

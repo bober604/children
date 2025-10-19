@@ -42,6 +42,8 @@
             width: 30px;
             height: 30px;
             padding-top: 5px;
+            filter: invert(0);
+            transition: filter 0.3s ease;
         }
 
         .dashboard {
@@ -287,7 +289,139 @@
             transform: translateY(-2px);
         }
 
+        [data-theme="dark"] body {
+            background-color: #1a1a1a;
+            color: #ffffff;
+        }
+
+        [data-theme="dark"] .back-img {
+            filter: invert(1);
+        }
+
+        [data-theme="dark"] .dashboard {
+            background: #1a1a1a;
+        }
+
+        [data-theme="dark"] .back-a {
+            filter: invert(1);
+        }
+
+        [data-theme="dark"] h1 {
+            color: #ffffff;
+        }
+
+        [data-theme="dark"] .stat-card {
+            background: #2d2d2d;
+            color: #ffffff;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        [data-theme="dark"] .stat-card::before {
+            background: #ecc206;
+        }
+
+        [data-theme="dark"] .stat-title {
+            color: #b0b0b0;
+        }
+
+        [data-theme="dark"] .stat-value {
+            color: #ffffff;
+        }
+
+        [data-theme="dark"] select {
+            background: #2d2d2d;
+            border: 1px solid #404040;
+            color: #ffffff;
+        }
+
+        [data-theme="dark"] select:focus {
+            border-color: #ecc206;
+            box-shadow: 0 0 0 2px rgba(236, 194, 6, 0.2);
+        }
+
+        [data-theme="dark"] .period-selector::after {
+            color: #ecc206;
+        }
+
+        [data-theme="dark"] .chart-container {
+            background: #2d2d2d;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        [data-theme="dark"] .chart-title {
+            color: #ffffff;
+        }
+
+        [data-theme="dark"] .legend-color {
+            background-color: #ecc206 !important;
+        }
+
+        [data-theme="dark"] .axis text {
+            fill: #b0b0b0;
+        }
+
+        [data-theme="dark"] .axis path,
+        [data-theme="dark"] .axis line {
+            stroke: #404040;
+        }
+
+        [data-theme="dark"] .y-axis-label {
+            fill: #b0b0b0;
+        }
+
+        [data-theme="dark"] .bar {
+            fill: #ecc206;
+        }
+
+        [data-theme="dark"] .bar:hover {
+            fill: #ffd700;
+        }
+
+        [data-theme="dark"] .grid-lines line {
+            stroke: #404040;
+        }
+
+        [data-theme="dark"] #custom-period-container {
+            background: #2d2d2d;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        [data-theme="dark"] #custom-period-container input[type="date"] {
+            background: #2d2d2d;
+            border: 1px solid #404040;
+            color: #ffffff;
+        }
+
+        [data-theme="dark"] #custom-period-container input[type="date"]:focus {
+            border-color: #ecc206;
+            box-shadow: 0 0 0 2px rgba(236, 194, 6, 0.2);
+        }
+
+        [data-theme="dark"] #apply-custom-period {
+            background-color: #ecc206;
+            color: #000000;
+        }
+
+        [data-theme="dark"] #apply-custom-period:hover {
+            background-color: #ffd700;
+        }
+
+        [data-theme="dark"] .error-message {
+            background: #3a1a1a;
+            border: 1px solid #5c2a2a;
+            color: #ff6b6b;
+        }
+
+        [data-theme="dark"] .no-data {
+            color: #888888;
+        }
+
         @media (max-width: 768px) {
+            [data-theme="dark"] body {
+                background-color: #1a1a1a;
+                padding: 10px 25px 25px 5px;
+            }
+
             .back-a {
                 position: relative;
                 padding-right: 15px;
@@ -1190,6 +1324,20 @@
                 updateData('day');
             } catch (error) {
                 showError('Не удалось подключиться к серверу. Проверьте подключение и попробуйте снова.');
+            }
+        });
+
+        // Загрузка темы из Local Storage
+        document.addEventListener('DOMContentLoaded', function() {
+            const currentTheme = localStorage.getItem('adminTheme') || 'light';
+            document.documentElement.setAttribute('data-theme', currentTheme);
+            
+            // Применяем инвертирование для иконок в темной теме
+            if (currentTheme === 'dark') {
+                const backImages = document.querySelectorAll('.back-img');
+                backImages.forEach(img => {
+                    img.style.filter = 'invert(0)';
+                });
             }
         });
     </script>

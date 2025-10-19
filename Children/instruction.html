@@ -81,7 +81,73 @@
             margin: 10px 0;
         }
 
+        [data-theme="dark"] body {
+            background-color: #1a1a1a;
+            color: #ffffff;
+        }
+
+        [data-theme="dark"] a {
+            filter: invert(1);
+        }
+
+        [data-theme="dark"] .container {
+            background: #2d2d2d;
+            color: #ffffff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+        }
+
+        [data-theme="dark"] h1, 
+        [data-theme="dark"] h2 {
+            color: #ecc206;
+        }
+
+        [data-theme="dark"] .section {
+            border-top: 2px solid #404040;
+        }
+
+        [data-theme="dark"] .highlight {
+            background: #ecc206;
+            color: #000000;
+            padding: 2px 5px;
+            border-radius: 5px;
+        }
+
+        [data-theme="dark"] .button {
+            background: #ecc206;
+            color: #000000;
+        }
+
+        [data-theme="dark"] .button:hover {
+            background: #ffd700;
+        }
+
+        [data-theme="dark"] .warning {
+            background: #332b00;
+            border: 1px solid #665800;
+            color: #ffd700;
+        }
+
+        [data-theme="dark"] .info-box {
+            background: #003332;
+            border: 1px solid #006665;
+            color: #00ffff;
+        }
+
+        [data-theme="dark"] ul {
+            color: #ffffff;
+        }
+
         @media (max-width: 480px) {
+            [data-theme="dark"] body {
+                background-color: #1a1a1a;
+                padding: 10px 25px 25px 5px;
+            }
+
+            [data-theme="dark"] .container {
+                background: transparent;
+                box-shadow: none;
+            }
+
             body {
                 padding: 10px 25px 25px 5px;
                 background-color: #fff;
@@ -251,5 +317,21 @@
             </ul>
         </div>
     </div>
+
+    <script>
+        // Загрузка темы из Local Storage
+        document.addEventListener('DOMContentLoaded', function() {
+            const currentTheme = localStorage.getItem('adminTheme') || 'light';
+            document.documentElement.setAttribute('data-theme', currentTheme);
+            
+            // Применяем инвертирование для иконок в темной теме
+            if (currentTheme === 'dark') {
+                const backImages = document.querySelectorAll('.back-img');
+                backImages.forEach(img => {
+                    img.style.filter = 'invert(1)';
+                });
+            }
+        });
+    </script>
 </body>
 </html>

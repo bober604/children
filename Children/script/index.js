@@ -1339,7 +1339,7 @@ function recreateOrderFromAPI(orderData) {
                 <h3 class="${timeClass}">${timeString}</h3>
                 <div class="${pauseClass} ${orderData.is_paused ? 'section-two__box_Child-1__info_img-active' : ''}"></div>
                 <div class="section-two__box_Child-1__info_line-3-mobile"></div>
-                <img class="section-two__box_Child-1__info_burger" src="./img/burger.svg" alt="burger">
+                <img class="section-two__box_Child-1__info_burger" alt="burger">
             </div>
         </div>
         
@@ -1601,7 +1601,7 @@ function addEditOrderFunctionality(orderContainer) {
                 <div class="section-one__orderChange">
                     <div class="section-one__orderChange_line"></div> <!-- линия -->
                     <div class="section-one__orderChange_header">
-                        <img class="section-one__orderChange_img" src="./img/back.svg" alt="back">
+                        <img class="section-one__orderChange_img" alt="back">
                         <h1 class="section-one__orderChange_sag">Изменить заказ</h1>
                     </div>
                     <div class="section-one__orderChange_line-mobile"></div> <!-- линия -->
