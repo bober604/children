@@ -948,6 +948,87 @@ function countNames(nameString) {
     return nameString.split(/\s+/).filter(name => name.length > 0).length;
 }
 
+// Функция для расчета стоимости аэрохоккея
+function calculateHockeyPrice() {
+    const hockeyInput = document.getElementById('hockeyGamesInput');
+    const gamesCount = parseInt(hockeyInput.value) || 0;
+    return gamesCount * 30; // 30 рублей за игру
+}
+
+// Обработчики для поля ввода аэрохоккея
+function setupHockeyInputHandlers() {
+    // Обработчик для основного поля аэрохоккея
+    const hockeyInput = document.getElementById('hockeyGamesInput');
+    if (hockeyInput) {
+        setupSingleHockeyInput(hockeyInput);
+    }
+    
+    // Обработчик для поля аэрохоккея в блоке изменения заказа
+    document.addEventListener('click', function(event) {
+        if (event.target.closest('.section-one__orderChange')) {
+            const editHockeyInput = document.getElementById('order-hockey');
+            if (editHockeyInput && !editHockeyInput.dataset.handlersSet) {
+                setupSingleHockeyInput(editHockeyInput);
+                editHockeyInput.dataset.handlersSet = 'true';
+            }
+        }
+    });
+}
+
+// Вспомогательная функция для настройки одного поля ввода
+function setupSingleHockeyInput(inputElement) {
+    // Предотвращаем ввод отрицательных значений
+    inputElement.addEventListener('input', function() {
+        if (this.value < 0) {
+            this.value = 0;
+        }
+    });
+
+    // Обработчик для фокуса - выделяем только числовую часть
+    inputElement.addEventListener('focus', function() {
+        this.select();
+    });
+
+    // Обработчик для потери фокуса - устанавливаем 0 если пусто
+    inputElement.addEventListener('blur', function() {
+        if (this.value === '' || this.value < 0) {
+            this.value = '0';
+        }
+    });
+
+    // Предотвращаем ввод текста (только цифры)
+    inputElement.addEventListener('keydown', function(e) {
+        // Разрешаем: backspace, delete, tab, escape, enter, точки, запятые
+        if ([46, 8, 9, 27, 13, 110, 190].includes(e.keyCode) || 
+            // Разрешаем: Ctrl+A, Ctrl+C, Ctrl+V, Ctrl+X
+            (e.keyCode === 65 && e.ctrlKey === true) || 
+            (e.keyCode === 67 && e.ctrlKey === true) ||
+            (e.keyCode === 86 && e.ctrlKey === true) ||
+            (e.keyCode === 88 && e.ctrlKey === true) ||
+            // Разрешаем: цифры на основной клавиатуре и numpad
+            (e.keyCode >= 48 && e.keyCode <= 57) ||
+            (e.keyCode >= 96 && e.keyCode <= 105)) {
+            return;
+        }
+        e.preventDefault();
+    });
+}
+
+// Функция для извлечения количества игр из текста телефона
+function extractHockeyGames(phoneText) {
+    if (!phoneText) return '0';
+    
+    // Ищем паттерн "Количество игр в аэрохоккей: X"
+    const match = phoneText.match(/Количество игр в аэрохоккей:\s*(\d+)/);
+    if (match && match[1]) {
+        return match[1];
+    }
+    
+    // Если паттерн не найден, пробуем извлечь просто число
+    const numberMatch = phoneText.match(/\d+/);
+    return numberMatch ? numberMatch[0] : '0';
+}
+
 // ==================== ФУНКЦИИ ДЛЯ LOCALSTORAGE ====================
 
 // Функции для работы с LocalStorage
@@ -1517,82 +1598,82 @@ function addEditOrderFunctionality(orderContainer) {
                 existingOrderChangeBlock.remove();
             }
 
-                // Функция для преобразования времени из формата "1 час", "30 мин.", "Аренда" в "HH:MM:SS"
-                function formatDurationToHHMMSS(duration) {
-                    let totalMinutes = 0;
-                
-                    if (duration.includes("Аренда")) {
-                        if (duration.includes("1 час")) {
-                            totalMinutes = 60; // Аренда 1 час
-                        } else if (duration.includes("2 часа")) {
-                            totalMinutes = 120; // Аренда 2 часа
-                        } else {
-                            console.error("Неподдерживаемый формат аренды:", duration);
-                            return "00:00:00";
-                        }
+            // Функция для преобразования времени из формата "1 час", "30 мин.", "Аренда" в "HH:MM:SS"
+            function formatDurationToHHMMSS(duration) {
+                let totalMinutes = 0;
+            
+                if (duration.includes("Аренда")) {
+                    if (duration.includes("1 час")) {
+                        totalMinutes = 60; // Аренда 1 час
+                    } else if (duration.includes("2 часа")) {
+                        totalMinutes = 120; // Аренда 2 часа
                     } else {
-                        if (duration.includes("час")) {
-                            totalMinutes += parseInt(duration) * 60;
-                        }
-                        if (duration.includes("мин")) {
-                            totalMinutes += parseInt(duration);
-                        }
+                        console.error("Неподдерживаемый формат аренды:", duration);
+                        return "00:00:00";
                     }
-                    
-                    const hours = Math.floor(totalMinutes / 60);
-                    const minutes = totalMinutes % 60;
-                    return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}:00`;
-                }
-        
-
-                // Функция для вычисления прошедшего времени
-                const calculateElapsedTime = (initialDuration, currentCountdown) => {
-                    const initialSeconds = timeToSeconds(initialDuration); // Преобразуем начальное время в секунды
-                    const currentSeconds = timeToSeconds(currentCountdown); // Преобразуем текущее оставшееся время в секунды
-                    const elapsedSeconds = initialSeconds - currentSeconds; // Вычисляем разницу
-                    return Math.max(elapsedSeconds, 0); // Убеждаемся, что результат не отрицательный
-                };
-
-                // Функция для преобразования времени в секунды
-                function timeToSeconds(time) {
-                    const [hours, minutes, seconds] = time.split(":").map(Number);
-                    return (hours * 3600) + (minutes * 60) + seconds;
-                }
-
-                // Проверка и преобразование `durationValue`
-                function validateAndFormatDuration(duration) {
-                    if (duration.includes("час") || duration.includes("мин")) {
-                        return formatDurationToHHMMSS(duration);
+                } else {
+                    if (duration.includes("час")) {
+                        totalMinutes += parseInt(duration) * 60;
                     }
-                    console.error("Неверный формат времени:", duration);
-                    return "00:00:00"; // Значение по умолчанию для некорректных данных
+                    if (duration.includes("мин")) {
+                        totalMinutes += parseInt(duration);
+                    }
                 }
-        
-        
-                const sectionOne = document.querySelector(".section-one");
-
-                // Находим родительский блок заказа
-                const parentOrder = editOrderButton.closest(".section-two__box");
-
-                // Извлекаем данные из текущего заказа
-                const nameValue = parentOrder.querySelector(".section-two__box_Child-1__info_container-sag_name").textContent.trim();
-                const phoneValue = parentOrder.querySelector(".section-two__box_Child-1__info_parents_number").textContent.trim();
-                const noteValue = parentOrder.querySelector(".section-two__box_Child-1__info_parents_par").textContent.trim();
-                const durationValue = parentOrder.querySelector(".section-two__box_Child-1__nav_section_par-3").textContent.trim();
-
-                const countdownElement = document.querySelector(".section-two__box_Child-1__info_time");
-                const currentCountdown = countdownElement.textContent.trim();
-
-                // Преобразуем и проверяем значения времени
-                const formattedDuration = validateAndFormatDuration(durationValue);
-                const elapsedSeconds = calculateElapsedTime(formattedDuration, currentCountdown);
-
-                console.log("Duration Value (Initial):", durationValue);
-                console.log("Current Countdown (Remaining):", currentCountdown);
-                console.log("Formatted Duration:", formattedDuration);
-                console.log("Прошедшее время в секундах:", elapsedSeconds);
                 
+                const hours = Math.floor(totalMinutes / 60);
+                const minutes = totalMinutes % 60;
+                return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}:00`;
+            }
 
+            // Функция для вычисления прошедшего времени
+            const calculateElapsedTime = (initialDuration, currentCountdown) => {
+                const initialSeconds = timeToSeconds(initialDuration); // Преобразуем начальное время в секунды
+                const currentSeconds = timeToSeconds(currentCountdown); // Преобразуем текущее оставшееся время в секунды
+                const elapsedSeconds = initialSeconds - currentSeconds; // Вычисляем разницу
+                return Math.max(elapsedSeconds, 0); // Убеждаемся, что результат не отрицательный
+            };
+
+            // Функция для преобразования времени в секунды
+            function timeToSeconds(time) {
+                const [hours, minutes, seconds] = time.split(":").map(Number);
+                return (hours * 3600) + (minutes * 60) + seconds;
+            }
+
+            // Проверка и преобразование `durationValue`
+            function validateAndFormatDuration(duration) {
+                if (duration.includes("час") || duration.includes("мин")) {
+                    return formatDurationToHHMMSS(duration);
+                }
+                console.error("Неверный формат времени:", duration);
+                return "00:00:00"; // Значение по умолчанию для некорректных данных
+            }
+    
+            const sectionOne = document.querySelector(".section-one");
+
+            // Находим родительский блок заказа
+            const parentOrder = editOrderButton.closest(".section-two__box");
+
+            // Извлекаем данные из текущего заказа
+            const nameValue = parentOrder.querySelector(".section-two__box_Child-1__info_container-sag_name").textContent.trim();
+            const phoneValue = parentOrder.querySelector(".section-two__box_Child-1__info_parents_number").textContent.trim();
+            const noteValue = parentOrder.querySelector(".section-two__box_Child-1__info_parents_par").textContent.trim();
+            const durationValue = parentOrder.querySelector(".section-two__box_Child-1__nav_section_par-3").textContent.trim();
+
+            const countdownElement = parentOrder.querySelector(".section-two__box_Child-1__info_time");
+            const currentCountdown = countdownElement ? countdownElement.textContent.trim() : "00:00:00";
+
+            // Извлекаем количество игр в аэрохоккей из текста телефона
+            const hockeyGames = extractHockeyGames(phoneValue);
+
+            // Преобразуем и проверяем значения времени
+            const formattedDuration = validateAndFormatDuration(durationValue);
+            const elapsedSeconds = calculateElapsedTime(formattedDuration, currentCountdown);
+
+            console.log("Duration Value (Initial):", durationValue);
+            console.log("Current Countdown (Remaining):", currentCountdown);
+            console.log("Formatted Duration:", formattedDuration);
+            console.log("Прошедшее время в секундах:", elapsedSeconds);
+            
             // Создаём блок для изменения заказа
             const newOrderBlock = document.createElement("div");
             newOrderBlock.classList.add("section-one__orderChange__box__buttons_block-1__counter");
@@ -1608,7 +1689,10 @@ function addEditOrderFunctionality(orderContainer) {
                     <div class="section-one__orderChange__box">
                         <div class="section-one__orderChange__box__input">
                             <input id="order-1" class="section-one__orderChange__box__input_item" placeholder="Имя" type="text" value="${nameValue}">
-                            <input id="order-2" class="section-one__orderChange__box__input_item" placeholder="Номер телефона" type="tel" value="${phoneValue}">
+                            <div class="section-one__container_hockey-wrapper">
+                                <span class="section-one__container_hockey-prefix">Количество игр в аэрохоккей: </span>
+                                <input id="order-hockey" class="section-one__orderChange__box__input_item" type="number" min="0" value="${hockeyGames}">
+                            </div>
                             <input id="order-3" class="section-one__orderChange__box__input_item section-one__orderChange__box__input_item-mobile" placeholder="Примечание" type="text" value="${noteValue}">
                         </div>
 
@@ -1713,8 +1797,11 @@ function addEditOrderFunctionality(orderContainer) {
                 const basePriceForOneName = calculatePriceFromDuration(timeText);
                 
                 const newName = document.getElementById("order-1").value;
-                const newPhone = document.getElementById("order-2").value;
+                const newHockeyGames = document.getElementById("order-hockey").value;
                 const newNote = document.getElementById("order-3").value;
+
+                // Создаем текст для поля телефона с информацией об аэрохоккее
+                const hockeyPhoneText = `Аэрохоккей: ${newHockeyGames}`;
 
                 // Подсчитываем количество имен из поля ввода
                 const newNames = newName.split(/\s+/).filter(name => name.length > 0);
@@ -1723,8 +1810,12 @@ function addEditOrderFunctionality(orderContainer) {
                 // Проверяем, выбрана ли аренда (цена аренды не умножается на кол-во имен)
                 const isRental = timeText.includes('Аренда');
                 
-                // Рассчитываем итоговую цену
-                const newPrice = isRental ? basePriceForOneName : basePriceForOneName * nameCount;
+                // Рассчитываем базовую цену времени
+                let baseTimePrice = isRental ? basePriceForOneName : basePriceForOneName * nameCount;
+
+                // Добавляем стоимость аэрохоккея
+                const hockeyPrice = parseInt(newHockeyGames) * 30;
+                const newPrice = baseTimePrice + hockeyPrice;
 
                 // Получаем оставшееся время из текущего таймера
                 const remainingSeconds = getRemainingTime(parentOrder);
@@ -1743,7 +1834,7 @@ function addEditOrderFunctionality(orderContainer) {
 
                 // Обновляем данные в DOM
                 parentOrder.querySelector(".section-two__box_Child-1__info_container-sag_name").textContent = newName;
-                parentOrder.querySelector(".section-two__box_Child-1__info_parents_number").textContent = newPhone;
+                parentOrder.querySelector(".section-two__box_Child-1__info_parents_number").textContent = hockeyPhoneText;
                 parentOrder.querySelector(".section-two__box_Child-1__info_parents_par").textContent = newNote;
                 parentOrder.querySelector(".section-two__box_Child-1__nav_section_par-3").textContent = timeText;
                     
@@ -1769,7 +1860,7 @@ function addEditOrderFunctionality(orderContainer) {
                             },
                             body: JSON.stringify({
                                 child_names: newName,
-                                phone: newPhone,
+                                phone: hockeyPhoneText,
                                 note: newNote,
                                 duration: timeText,
                                 sum: newPrice,
@@ -1837,7 +1928,7 @@ function addEditOrderFunctionality(orderContainer) {
     }, 100);
 
     // Добавляем интерактивность для удаления блока
-    addDeleteFunctionality(orderContainer,);
+    addDeleteFunctionality(orderContainer);
 }
 
 // ==================== КОНЕЦ ФУНКЦИЙ ДЛЯ LOCALSTORAGE ====================
@@ -1875,6 +1966,24 @@ document.addEventListener("DOMContentLoaded", function() {
 
     // Настраиваем ежедневную очистку заказов
     setupDailyClear();
+
+    const hockeyInput = document.getElementById('hockeyGamesInput');
+    if (hockeyInput) {
+        hockeyInput.addEventListener('focus', function() {
+            if (this.value === '0') {
+                this.value = '';
+            }
+        });
+        
+        hockeyInput.addEventListener('blur', function() {
+            if (this.value === '') {
+                this.value = '0';
+            }
+        });
+    }
+
+    // Настройка обработчиков для поля аэрохоккея
+    setupHockeyInputHandlers();
 
     // Находим все ваши поля ввода
     var inputs = document.querySelectorAll(".section-one__container_1, .section-one__container_4, .section-one__container__parent_2.section-one__container_3");
@@ -1988,6 +2097,9 @@ document.addEventListener("DOMContentLoaded", function() {
             button.classList.remove("selected");
         });
 
+        // Добавляем стоимость аэрохоккея
+        currentOrderTotal += calculateHockeyPrice();
+
         // Подсчёт количества имён
         var nameInput = document.querySelector("#namesInput").value.trim();
         var names = nameInput.split(/\s+/); // Убираем лишние пробелы и разделяем текст на слова
@@ -2034,7 +2146,7 @@ document.addEventListener("DOMContentLoaded", function() {
     
                 <div class="section-two__box_Child-1__info">
                     <div class="section-two__box_Child-1__info_parents">
-                        <h5 class="section-two__box_Child-1__info_parents_number">${capitalizeFirstLetter(document.querySelector('.section-one__container_4').value)}</h5>
+                        <h5 class="section-two__box_Child-1__info_parents_number">Аэрохоккей: ${document.getElementById('hockeyGamesInput').value || 0}</h5>
                         <p class="section-two__box_Child-1__info_parents_par">${document.querySelector('.section-one__container_3').value}</p>
                     </div>
                     <div class="section-two__box_Child-1__info_line-1"><!-- Линия --></div>
@@ -2091,7 +2203,7 @@ document.addEventListener("DOMContentLoaded", function() {
                 date: dateStr,
                 time: timeStr,
                 child_names: document.querySelector('.section-one__container_1').value,
-                phone: document.querySelector('.section-one__container_4').value,
+                phone: `Аэрохоккей: ${document.getElementById('hockeyGamesInput').value || 0}`,
                 note: document.querySelector('.section-one__container_3').value,
                 duration: getDuration(selectedButtons),
                 total_seconds: totalSeconds,

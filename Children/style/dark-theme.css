@@ -57,6 +57,10 @@
     color: var(--dark-text-primary);
 }
 
+[data-theme="dark"] .section-one__container_hockey-wrapper {
+    background: var(--dark-bg-tertiary);
+}
+
 [data-theme="dark"] .section-one__container__parent_2 {
     background: var(--dark-bg-tertiary);
     border: 1px solid var(--dark-border);
