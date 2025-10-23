@@ -2040,7 +2040,7 @@ document.addEventListener("DOMContentLoaded", function() {
     // Настройка обработчиков для поля аэрохоккея
     setupHockeyInputHandlers();
 
-    // Находим все ваши поля ввода
+    // Находим все поля ввода
     var inputs = document.querySelectorAll(".section-one__container_1, .section-one__container_4, .section-one__container__parent_2.section-one__container_3");
 
     // Находим кнопку "Добавить"
@@ -2052,7 +2052,15 @@ document.addEventListener("DOMContentLoaded", function() {
             if (event.key === "Enter") {
                 event.preventDefault(); // Отменяем стандартное поведение
                 
-                // Если есть следующее поле, перемещаем фокус на него
+                // Shift+Enter - всегда нажимает кнопку "Добавить"
+                if (event.shiftKey) {
+                    if (addButton) {
+                        addButton.click();
+                    }
+                    return;
+                }
+                
+                // Обычный Enter - переходит к следующему полю или добавляет заказ
                 if (index < inputs.length - 1) {
                     inputs[index + 1].focus();
                 } else {
