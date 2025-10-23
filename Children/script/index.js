@@ -11,7 +11,6 @@ function startPeriodicSync() {
 }
 
 // Функция для синхронизации заказов из API
-// Функция для синхронизации заказов из API
 async function syncOrdersFromAPI() {
     try {
         const today = new Date();
@@ -63,11 +62,21 @@ function updateLocalOrders(ordersFromAPI) {
 
 // Функция для обновления элемента заказа
 function updateOrderElement(orderElement, apiOrder) {
+    console.log('🔄 updateOrderElement для заказа:', apiOrder.id, 'remaining_seconds:', apiOrder.remaining_seconds, 'is_completed:', apiOrder.is_completed);
+    
     // Обновляем оставшееся время
     const timeElement = orderElement.querySelector('.section-two__box_Child-1__info_time');
     if (timeElement) {
         const timeString = formatTimeFromSeconds(apiOrder.remaining_seconds);
         timeElement.textContent = timeString;
+        
+        // ВАЖНО: Добавляем красную обводку при истечении времени
+        if (apiOrder.remaining_seconds <= 0) {
+            orderElement.classList.add('order-expired');
+            console.log('🔴 Добавляем красную обводку для заказа:', apiOrder.id);
+        } else {
+            orderElement.classList.remove('order-expired');
+        }
     }
     
     // Обновляем состояние паузы
@@ -80,13 +89,17 @@ function updateOrderElement(orderElement, apiOrder) {
         }
     }
     
-    // Обновляем состояние завершения
+    // ВАЖНОЕ ИСПРАВЛЕНИЕ: Обновляем состояние завершения ТОЛЬКО на основе данных из API
+    // Но игнорируем is_completed если время истекло (оставляем заказ активным)
     if (apiOrder.is_completed && !orderElement.classList.contains('in-section-two__box')) {
-        // Если заказ завершен в БД, но не в интерфейсе
-        completeOrderInInterface(orderElement);
+        console.log('✅ Заказ завершен на сервере - применяем стили');
+        // Убираем красную обводку перед применением стилей завершения
+        orderElement.classList.remove('order-expired');
+        applyCompletedStyles(orderElement);
     } else if (!apiOrder.is_completed && orderElement.classList.contains('in-section-two__box')) {
-        // Если заказ возобновлен в БД, но не в интерфейсе
-        resumeOrderInInterface(orderElement);
+        // Если заказ возобновлен в БД - убираем серый стиль
+        console.log('🔄 Возобновляем заказ');
+        removeCompletedStyles(orderElement);
     }
     
     // Обновляем данные в локальном таймере
@@ -128,7 +141,50 @@ function completeOrderInInterface(orderElement) {
     if (orderId && activeTimers.has(orderId)) {
         stopTimer(orderId);
     }
+
+    // ВАЖНОЕ ИСПРАВЛЕНИЕ: Убираем красную обводку ПЕРЕД применением стилей завершения
+    orderElement.classList.remove('order-expired');
     
+    // Применяем стили завершенного заказа
+    applyCompletedStyles(orderElement);
+}
+
+// Функция для возобновления заказа в интерфейсе
+function resumeOrderInInterface(orderElement) {
+    if (!orderElement.classList.contains('in-section-two__box')) return;
+    
+    // ВАЖНОЕ ИСПРАВЛЕНИЕ: Убираем красную обводку
+    orderElement.classList.remove('order-expired');
+    
+    // Убираем стили завершенного заказа
+    removeCompletedStyles(orderElement);
+    
+    // Перезапускаем таймер
+    const durationElement = orderElement.querySelector('.section-two__box_Child-1__nav_section_par-3');
+    if (durationElement) {
+        const durationText = durationElement.textContent.trim();
+        const fakeButtons = [{
+            textContent: durationText,
+            querySelector: () => ({ textContent: durationText })
+        }];
+        
+        // Получаем актуальное оставшееся время из элемента
+        const remainingSeconds = getRemainingTime(orderElement);
+        const newTimerId = startCountdown(fakeButtons, orderContainer, remainingSeconds);
+        orderElement.dataset.timerId = newTimerId;
+    }
+}
+
+// Вспомогательная функция для применения стилей завершенного заказа
+function applyCompletedStyles(orderElement) {
+    if (orderElement.classList.contains('in-section-two__box')) return;
+    
+    // Останавливаем таймер
+    const orderId = orderElement.dataset.timerId;
+    if (orderId && activeTimers.has(orderId)) {
+        stopTimer(orderId);
+    }
+
     // Применяем стили завершенного заказа
     orderElement.classList.add("in-section-two__box");
     
@@ -153,8 +209,8 @@ function completeOrderInInterface(orderElement) {
     });
 }
 
-// Функция для возобновления заказа в интерфейсе
-function resumeOrderInInterface(orderElement) {
+// Вспомогательная функция для удаления стилей завершенного заказа
+function removeCompletedStyles(orderElement) {
     if (!orderElement.classList.contains('in-section-two__box')) return;
     
     // Убираем стили завершенного заказа
@@ -179,21 +235,6 @@ function resumeOrderInInterface(orderElement) {
         const element = orderElement.querySelector(selector);
         if (element) element.classList.remove(className);
     });
-    
-    // Перезапускаем таймер
-    const durationElement = orderElement.querySelector('.section-two__box_Child-1__nav_section_par-3');
-    if (durationElement) {
-        const durationText = durationElement.textContent.trim();
-        const fakeButtons = [{
-            textContent: durationText,
-            querySelector: () => ({ textContent: durationText })
-        }];
-        
-        // Получаем актуальное оставшееся время из элемента
-        const remainingSeconds = getRemainingTime(orderElement);
-        const newTimerId = startCountdown(fakeButtons, orderElement, remainingSeconds);
-        orderElement.dataset.timerId = newTimerId;
-    }
 }
 
 // Функция для получения всех активных заказов
@@ -213,33 +254,51 @@ async function loadActiveOrdersFromAPI() {
 // Функция для обновления таймера на сервере
 async function updateTimerOnServer(orderId, remainingSeconds, isPaused) {
     try {
+        // ВАЖНО: НЕ обновляем состояние завершения при истечении времени
+        // Заказ должен оставаться активным до ручного подтверждения
+        const updateData = {
+            remaining_seconds: remainingSeconds,
+            is_paused: isPaused
+        };
+        
+        // Если время истекло, НЕ помечаем заказ как завершенный
+        if (remainingSeconds <= 0) {
+            console.log('⏰ Время истекло, но НЕ помечаем заказ как завершенный на сервере');
+            // Явно устанавливаем is_completed в false
+            updateData.is_completed = false;
+        }
+        
         const response = await fetch(`${API_BASE_URL}/order/${orderId}/timer`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({
-                remaining_seconds: remainingSeconds,
-                is_paused: isPaused
-            })
+            body: JSON.stringify(updateData)
         });
         
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
         
-        console.log(`✅ Таймер заказа ${orderId} обновлен на сервере: ${remainingSeconds}с, пауза: ${isPaused}`);
+        console.log(`✅ Таймер заказа ${orderId} обновлен на сервере: ${remainingSeconds}с, пауза: ${isPaused}, завершен: ${remainingSeconds <= 0 ? 'НЕТ' : 'нет'}`);
     } catch (error) {
         console.error('❌ Ошибка обновления таймера:', error);
     }
 }
 
 // Функция для отметки заказа как выполненного на сервере
-async function completeOrderOnServer(orderId) {
+async function completeOrderOnServer(orderId, isCompleted) {
     try {
         await fetch(`${API_BASE_URL}/order/${orderId}/complete`, {
-            method: 'PUT'
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                is_completed: isCompleted
+            })
         });
+        console.log(`✅ Статус заказа ${orderId} обновлен на сервере: ${isCompleted ? 'завершен' : 'активен'}`);
     } catch (error) {
         console.error('Ошибка завершения заказа:', error);
     }
@@ -289,10 +348,10 @@ function syncAllOrders() {
         }
     });
     
-    sendToGuest({
-        type: 'SYNC_ALL_ORDERS',
-        orders: orders
-    });
+    // sendToGuest({
+    //     type: 'SYNC_ALL_ORDERS',
+    //     orders: orders
+    // });
     
     console.log('✅ Синхронизировано заказов:', orders.length);
 }
@@ -444,12 +503,12 @@ function addDeleteFunctionality(orderContainer) {
                     deleteByLegacyMethod(sum, date, time, orderContainer);
                 }
 
-                // Отправляем уведомление в гостевой режим
-                const deleteData = {
-                    type: 'ORDER_DELETED', 
-                    order_id: orderId || orderContainer.dataset.timerId
-                };
-                sendToGuest(deleteData);
+                // // Отправляем уведомление в гостевой режим
+                // const deleteData = {
+                //     type: 'ORDER_DELETED', 
+                //     order_id: orderId || orderContainer.dataset.timerId
+                // };
+                // sendToGuest(deleteData);
             }
         }
     });
@@ -744,11 +803,11 @@ function clearDailyOrders() {
     
     console.log('Все заказы очищены (ежедневная очистка)');
     
-    // Отправляем уведомление в гостевой режим о сбросе
-    sendToGuest({
-        type: 'SYNC_ALL_ORDERS',
-        orders: [] // Пустой массив = очистить все
-    });
+    // // Отправляем уведомление в гостевой режим о сбросе
+    // sendToGuest({
+    //     type: 'SYNC_ALL_ORDERS',
+    //     orders: [] // Пустой массив = очистить все
+    // });
 }
 
 function checkAndClearDailyOrders() {
@@ -879,6 +938,17 @@ function startCountdown(selectedButtons, orderContainer, initialSeconds = null) 
         const secondsLeft = seconds % 60;
         
         countdownElement.textContent = formatTime(hours) + ":" + formatTime(minutes) + ":" + formatTime(secondsLeft);
+        
+        // ВАЖНО: Добавляем красную обводку при истечении времени только для активных заказов
+        if (seconds <= 0 && !orderContainer.classList.contains('in-section-two__box')) {
+            orderContainer.classList.add('order-expired');
+            console.log('🔴 Таймер истек - добавляем красную обводку');
+            
+            // ВАЖНО: НЕ отправляем запрос на завершение заказа!
+            // Только визуальная индикация - красная обводка
+        } else if (seconds > 0) {
+            orderContainer.classList.remove('order-expired');
+        }
     }
 
     // Инициализируем отображение
@@ -926,13 +996,13 @@ function startCountdown(selectedButtons, orderContainer, initialSeconds = null) 
                 const currentRemaining = getRemainingTime(orderContainer);
                 await updateTimerOnServer(orderContainer.dataset.orderId, currentRemaining, isPaused);
                 
-                // Отправляем уведомление в гостевой режим
-                sendToGuest({
-                    type: 'TIMER_UPDATED',
-                    order_id: orderContainer.dataset.orderId,
-                    is_paused: isPaused,
-                    remaining_seconds: currentRemaining
-                });
+                // // Отправляем уведомление в гостевой режим
+                // sendToGuest({
+                //     type: 'TIMER_UPDATED',
+                //     order_id: orderContainer.dataset.orderId,
+                //     is_paused: isPaused,
+                //     remaining_seconds: currentRemaining
+                // });
             }
             
             console.log(`Таймер ${orderId} ${isPaused ? 'приостановлен' : 'возобновлен'}`);
@@ -1530,45 +1600,47 @@ function addOrderCompletedFunctionality(orderContainer) {
                     stopTimer(timerId);
                 }
                 
-                const response = await fetch(`${API_BASE_URL}/order/${orderId}/complete`, {
-                    method: 'PUT'
+                // ВАЖНО: Определяем новое состояние - инвертируем текущее
+                const willBeCompleted = !targetBlock.classList.contains('in-section-two__box');
+                
+                // Обновляем состояние на сервере
+                await completeOrderOnServer(orderId, willBeCompleted);
+                
+                // ВАЖНОЕ ИСПРАВЛЕНИЕ: Переключаем стили напрямую
+                if (targetBlock.classList.contains('in-section-two__box')) {
+                    // Если заказ уже завершен - возобновляем
+                    removeCompletedStyles(targetBlock);
+                    
+                    // Перезапускаем таймер с текущим временем
+                    const durationElement = targetBlock.querySelector('.section-two__box_Child-1__nav_section_par-3');
+                    if (durationElement) {
+                        const durationText = durationElement.textContent.trim();
+                        const fakeButtons = [{
+                            textContent: durationText,
+                            querySelector: () => ({ textContent: durationText })
+                        }];
+                        
+                        const newTimerId = startCountdown(fakeButtons, targetBlock, currentRemainingSeconds);
+                        targetBlock.dataset.timerId = newTimerId;
+                    }
+                } else {
+                    // Если заказ активен - завершаем
+                    targetBlock.classList.remove('order-expired'); // Убираем красную обводку
+                    applyCompletedStyles(targetBlock);
+                }
+                
+                // Обновляем счетчики
+                updateCounters();
+                
+                console.log('✅ Статус заказа переключен на:', willBeCompleted ? 'завершен' : 'активен');
+                
+                // Отправляем уведомление в гостевой режим
+                sendToGuest({
+                    type: 'ORDER_COMPLETED',
+                    order_id: orderId,
+                    is_completed: willBeCompleted
                 });
                 
-                if (response.ok) {
-                    // ПЕРЕКЛЮЧАЕМ СТИЛИ (не удаляем заказ)
-                    if (targetBlock.classList.contains('in-section-two__box')) {
-                        // Если заказ уже завершен - возобновляем
-                        resumeOrderInInterface(targetBlock);
-                        
-                        // Перезапускаем таймер с текущим временем
-                        const durationElement = targetBlock.querySelector('.section-two__box_Child-1__nav_section_par-3');
-                        if (durationElement) {
-                            const durationText = durationElement.textContent.trim();
-                            const fakeButtons = [{
-                                textContent: durationText,
-                                querySelector: () => ({ textContent: durationText })
-                            }];
-                            
-                            const newTimerId = startCountdown(fakeButtons, targetBlock, currentRemainingSeconds);
-                            targetBlock.dataset.timerId = newTimerId;
-                        }
-                    } else {
-                        // Если заказ активен - завершаем
-                        completeOrderInInterface(targetBlock);
-                    }
-                    
-                    // Обновляем счетчики
-                    updateCounters();
-                    
-                    console.log('✅ Статус заказа переключен');
-                    
-                    // Отправляем уведомление в гостевой режим
-                    sendToGuest({
-                        type: 'ORDER_COMPLETED',
-                        order_id: orderId,
-                        is_completed: targetBlock.classList.contains('in-section-two__box')
-                    });
-                }
             } catch (error) {
                 console.error('❌ Ошибка сети при переключении статуса заказа:', error);
                 alert('Ошибка сети при изменении статуса заказа');
@@ -1576,9 +1648,10 @@ function addOrderCompletedFunctionality(orderContainer) {
         } else {
             // Fallback для заказов без ID (старые заказы)
             if (targetBlock.classList.contains('in-section-two__box')) {
-                resumeOrderInInterface(targetBlock);
+                removeCompletedStyles(targetBlock);
             } else {
-                completeOrderInInterface(targetBlock);
+                targetBlock.classList.remove('order-expired');
+                applyCompletedStyles(targetBlock);
             }
             updateCounters();
         }
@@ -2227,29 +2300,29 @@ document.addEventListener("DOMContentLoaded", function() {
             saveOrdersToStorage();
         }
 
-        const guestOrderData = {
-            type: 'NEW_ORDER',
-            order: {
-                id: orderContainer.dataset.timerId,
-                child_name: capitalizeFirstLetter(document.querySelector('.section-one__container_1').value),
-                phone: document.querySelector('.section-one__container_4').value,
-                note: document.querySelector('.section-one__container_3').value,
-                sum: currentOrderTotal,
-                duration: getDuration(selectedButtons),
-                start_time: getCurrentTime(),
-                remaining_seconds: getTotalDurationInSeconds(selectedButtons),
-                status: 'active'
-            }
-        };
-        sendToGuest(guestOrderData);
+        // const guestOrderData = {
+        //     type: 'NEW_ORDER',
+        //     order: {
+        //         id: orderContainer.dataset.timerId,
+        //         child_name: capitalizeFirstLetter(document.querySelector('.section-one__container_1').value),
+        //         phone: document.querySelector('.section-one__container_4').value,
+        //         note: document.querySelector('.section-one__container_3').value,
+        //         sum: currentOrderTotal,
+        //         duration: getDuration(selectedButtons),
+        //         start_time: getCurrentTime(),
+        //         remaining_seconds: getTotalDurationInSeconds(selectedButtons),
+        //         status: 'active'
+        //     }
+        // };
+        // sendToGuest(guestOrderData);
 
-        // Добавим обработчик для запросов синхронизации
-        guestChannel.onmessage = (event) => {
-            if (event.data.type === 'REQUEST_SYNC') {
-                console.log('📥 Запрос синхронизации от гостевого режима');
-                syncAllOrders();
-            }
-        };
+        // // Добавим обработчик для запросов синхронизации
+        // guestChannel.onmessage = (event) => {
+        //     if (event.data.type === 'REQUEST_SYNC') {
+        //         console.log('📥 Запрос синхронизации от гостевого режима');
+        //         syncAllOrders();
+        //     }
+        // };
 
         // Функция синхронизации всех заказов
         function syncAllOrders() {
@@ -2277,12 +2350,10 @@ document.addEventListener("DOMContentLoaded", function() {
                 }
             });
             
-            sendToGuest({
-                type: 'SYNC_ALL_ORDERS',
-                orders: orders
-            });
-            
-            console.log('✅ Синхронизировано заказов:', orders.length);
+            // sendToGuest({
+            //     type: 'SYNC_ALL_ORDERS',
+            //     orders: orders
+            // });
         }
 
         // Вызовем синхронизацию при загрузке

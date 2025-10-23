@@ -1093,6 +1093,16 @@
   padding: 0 12px;
 }
 
+/* Стиль для заказов с истекшим временем - ТОЛЬКО для активных заказов */
+.section-two__box.order-expired:not(.in-section-two__box) {
+    border-left: 4px solid #EF5350;
+}
+
+/* Для завершенных заказов с истекшим временем - убираем красный край */
+.in-section-two__box.order-expired {
+    border-left: 4px solid var(--gray);
+}
+
 .in-section-two__box {
   display: flex;
   gap: 16px;
@@ -1379,7 +1389,6 @@
   padding: 0 12px;
 }
 
-/* Адаптивность */
 /* МОБИЛЬНАЯ ВЕРСИЯ (480px и меньше) */
 @media (max-width: 480px) {
   .body {
@@ -1911,8 +1920,6 @@
   .section-two__box_Child-1__info_burger.rotated {
     transform: rotate(90deg);
   }
-
-  /* ... аналогичные стили для .in-section-two__box как для .section-two__box ... */
 }
 
 /* Дополнительные медиа-запросы для очень маленьких устройств */

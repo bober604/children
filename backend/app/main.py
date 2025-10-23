@@ -41,10 +41,10 @@ async def timer_update_loop():
                 for order in orders_to_update:
                     # Обновляем таймер
                     updated_order = crud.update_order_timer_auto(db, order.id)
-                    if updated_order and updated_order.remaining_seconds == 0:
-                        # Если время вышло, автоматически завершаем заказ
-                        crud.complete_order(db, order.id)
-                        print(f"Заказ {order.id} автоматически завершен")
+                    # if updated_order and updated_order.remaining_seconds == 0:
+                    #     # Если время вышло, автоматически завершаем заказ
+                    #     crud.complete_order(db, order.id)
+                    #     print(f"Заказ {order.id} автоматически завершен")
                 
                 if orders_to_update:
                     # Рассылаем обновления всем подключенным клиентам
@@ -85,8 +85,8 @@ async def periodic_timer_broadcast():
 
 # Для генерации хэшей используйте: https://emn178.github.io/online-tools/sha256.html
 ADMIN_CREDENTIALS = {
-    "username_hash": "8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918",  # admin
-    "password_hash": "1d7d1f63300144a76270d9616c386f48da2902bccc311501e5318e1aa67502a3"  # 2025bober2006
+    "username_hash": "8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918",
+    "password_hash": "1d7d1f63300144a76270d9616c386f48da2902bccc311501e5318e1aa67502a3"
 }
 
 def hash_string(text: str) -> str:

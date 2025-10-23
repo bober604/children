@@ -275,6 +275,27 @@
     border: 1px solid #ecc206;
 }
 
+/* Стиль для заказов с истекшим временем в темной теме
+[data-theme="dark"] .section-two__box_Child-1.order-expired {
+    border: 1px solid #EF5350 !important;
+}
+
+[data-theme="dark"] .section-two__box_Child-2.order-expired {
+    border: 1px solid #EF5350 !important;
+}
+
+[data-theme="dark"] .section-two__box_Child-3.order-expired {
+    border: 1px solid #EF5350 !important;
+}
+
+[data-theme="dark"] .section-two__box_Child-4.order-expired {
+    border: 1px solid #EF5350 !important;
+}
+
+[data-theme="dark"] .in-section-two__box_Child-1.order-expired {
+    border: 1px solid #EF5350 !important;
+} */
+
 /* Адаптивность для мобильных */
 @media (max-width: 480px) {
     [data-theme="dark"] .section-one {
@@ -380,4 +401,28 @@
 /* Плавные переходы */
 [data-theme="dark"] * {
     transition: all 0.3s ease;
+}
+
+/* Красная рамка для заказов с истекшим временем в темной теме */
+
+[data-theme="dark"] .section-two__box.order-expired:not(.in-section-two__box) {
+    border-left: none !important;
+}
+
+[data-theme="dark"] .section-two__box.order-expired:not(.in-section-two__box) .section-two__box_Child-1 {
+    border: 1px solid #EF5350 !important;
+}
+
+[data-theme="dark"] .section-two__box.order-expired:not(.in-section-two__box) .section-two__box_Child-2,
+[data-theme="dark"] .section-two__box.order-expired:not(.in-section-two__box) .section-two__box_Child-3,
+[data-theme="dark"] .section-two__box.order-expired:not(.in-section-two__box) .section-two__box_Child-4 {
+    border: 1px solid #EF5350 !important;
+}
+
+/* Убираем красную обводку для завершенных заказов в темной теме */
+[data-theme="dark"] .in-section-two__box.order-expired .in-section-two__box_Child-1,
+[data-theme="dark"] .in-section-two__box.order-expired .in-section-two__box_Child-2,
+[data-theme="dark"] .in-section-two__box.order-expired .in-section-two__box_Child-3,
+[data-theme="dark"] .in-section-two__box.order-expired .in-section-two__box_Child-4 {
+    border: 1px solid var(--dark-border) !important;
 }
