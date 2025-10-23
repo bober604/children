@@ -62,7 +62,6 @@ function updateLocalOrders(ordersFromAPI) {
 
 // Функция для обновления элемента заказа
 function updateOrderElement(orderElement, apiOrder) {
-    console.log('🔄 updateOrderElement для заказа:', apiOrder.id, 'remaining_seconds:', apiOrder.remaining_seconds, 'is_completed:', apiOrder.is_completed);
     
     // Обновляем оставшееся время
     const timeElement = orderElement.querySelector('.section-two__box_Child-1__info_time');
@@ -73,7 +72,6 @@ function updateOrderElement(orderElement, apiOrder) {
         // ВАЖНО: Добавляем красную обводку при истечении времени
         if (apiOrder.remaining_seconds <= 0) {
             orderElement.classList.add('order-expired');
-            console.log('🔴 Добавляем красную обводку для заказа:', apiOrder.id);
         } else {
             orderElement.classList.remove('order-expired');
         }
@@ -92,13 +90,11 @@ function updateOrderElement(orderElement, apiOrder) {
     // ВАЖНОЕ ИСПРАВЛЕНИЕ: Обновляем состояние завершения ТОЛЬКО на основе данных из API
     // Но игнорируем is_completed если время истекло (оставляем заказ активным)
     if (apiOrder.is_completed && !orderElement.classList.contains('in-section-two__box')) {
-        console.log('✅ Заказ завершен на сервере - применяем стили');
         // Убираем красную обводку перед применением стилей завершения
         orderElement.classList.remove('order-expired');
         applyCompletedStyles(orderElement);
     } else if (!apiOrder.is_completed && orderElement.classList.contains('in-section-two__box')) {
         // Если заказ возобновлен в БД - убираем серый стиль
-        console.log('🔄 Возобновляем заказ');
         removeCompletedStyles(orderElement);
     }
     
@@ -263,7 +259,6 @@ async function updateTimerOnServer(orderId, remainingSeconds, isPaused) {
         
         // Если время истекло, НЕ помечаем заказ как завершенный
         if (remainingSeconds <= 0) {
-            console.log('⏰ Время истекло, но НЕ помечаем заказ как завершенный на сервере');
             // Явно устанавливаем is_completed в false
             updateData.is_completed = false;
         }
@@ -279,11 +274,7 @@ async function updateTimerOnServer(orderId, remainingSeconds, isPaused) {
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
-        
-        console.log(`✅ Таймер заказа ${orderId} обновлен на сервере: ${remainingSeconds}с, пауза: ${isPaused}, завершен: ${remainingSeconds <= 0 ? 'НЕТ' : 'нет'}`);
-    } catch (error) {
-        console.error('❌ Ошибка обновления таймера:', error);
-    }
+    } catch (error) {}
 }
 
 // Функция для отметки заказа как выполненного на сервере
@@ -298,7 +289,6 @@ async function completeOrderOnServer(orderId, isCompleted) {
                 is_completed: isCompleted
             })
         });
-        console.log(`✅ Статус заказа ${orderId} обновлен на сервере: ${isCompleted ? 'завершен' : 'активен'}`);
     } catch (error) {
         console.error('Ошибка завершения заказа:', error);
     }
@@ -942,7 +932,6 @@ function startCountdown(selectedButtons, orderContainer, initialSeconds = null) 
         // ВАЖНО: Добавляем красную обводку при истечении времени только для активных заказов
         if (seconds <= 0 && !orderContainer.classList.contains('in-section-two__box')) {
             orderContainer.classList.add('order-expired');
-            console.log('🔴 Таймер истек - добавляем красную обводку');
             
             // ВАЖНО: НЕ отправляем запрос на завершение заказа!
             // Только визуальная индикация - красная обводка
@@ -1004,8 +993,6 @@ function startCountdown(selectedButtons, orderContainer, initialSeconds = null) 
                 //     remaining_seconds: currentRemaining
                 // });
             }
-            
-            console.log(`Таймер ${orderId} ${isPaused ? 'приостановлен' : 'возобновлен'}`);
         });
     }
     
@@ -1588,11 +1575,8 @@ function addOrderCompletedFunctionality(orderContainer) {
         
         if (orderId) {
             try {
-                console.log('📡 Отправка запроса на переключение статуса заказа:', orderId);
-                
                 // Получаем текущее значение таймера
                 const currentRemainingSeconds = getRemainingTime(targetBlock);
-                console.log('⏱️ Текущее оставшееся время:', currentRemainingSeconds);
                 
                 // ОСТАНАВЛИВАЕМ ЛОКАЛЬНЫЙ ТАЙМЕР
                 const timerId = targetBlock.dataset.timerId;
@@ -1631,8 +1615,6 @@ function addOrderCompletedFunctionality(orderContainer) {
                 
                 // Обновляем счетчики
                 updateCounters();
-                
-                console.log('✅ Статус заказа переключен на:', willBeCompleted ? 'завершен' : 'активен');
                 
                 // Отправляем уведомление в гостевой режим
                 sendToGuest({
