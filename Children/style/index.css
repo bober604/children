@@ -1685,7 +1685,21 @@
   }
 
   .section-two__box_Child-1__nav {
-    display: none;
+    gap: 30px;
+    margin-bottom: 4px;
+  }
+
+  .section-two__box_Child-1__nav_section {
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .section-two__box_Child-1__nav_section_par-1 {
+    border-bottom: 1px solid var(--gray);
+  }
+
+  .section-two__box_Child-1__nav_section_par-2 {
+    color: var(--gray);
   }
 
   .section-two__box_Child-1_line {
