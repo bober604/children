@@ -1990,6 +1990,113 @@ function addEditOrderFunctionality(orderContainer) {
 
 // ==================== ОСНОВНОЙ КОД ====================
 document.addEventListener("DOMContentLoaded", function() {
+
+    // ==================== СИСТЕМА ГОРЯЧИХ КЛАВИШ ====================
+    function setupHotkeys() {
+        document.addEventListener('keydown', function(event) {
+            // Определяем приоритеты обработки
+            
+            // 1. ВЫСШИЙ ПРИОРИТЕТ: Окно редактирования заказа
+            const orderChangeBlock = document.querySelector('.section-one__orderChange');
+            if (orderChangeBlock) {
+                // Esc - отмена редактирования
+                if (event.key === 'Escape') {
+                    const cancelButton = orderChangeBlock.querySelector('.section-one__orderChange__box_cancellation');
+                    if (cancelButton) {
+                        cancelButton.click();
+                        event.preventDefault();
+                        event.stopPropagation();
+                    }
+                    return;
+                }
+                
+                // Enter - сохранение редактирования
+                if (event.key === 'Enter' && !event.shiftKey) {
+                    const saveButton = orderChangeBlock.querySelector('.section-one__orderChange__box_save');
+                    if (saveButton) {
+                        saveButton.click();
+                        event.preventDefault();
+                        event.stopPropagation();
+                    }
+                    return;
+                }
+            }
+            
+            // 2. СРЕДНИЙ ПРИОРИТЕТ: Форма создания заказа (Alt+1 до Alt+5)
+            const sectionOne = document.querySelector('.section-one');
+            if (sectionOne && sectionOne.style.display !== 'none' && !orderChangeBlock) {
+                if (event.altKey && event.key >= '1' && event.key <= '5') {
+                    const buttonIndex = parseInt(event.key) - 1;
+                    
+                    // Получаем кнопки в правильном порядке как они отображаются:
+                    // 0: 30 мин. (section-one__box__buttonMobile-3)
+                    // 1: 1 час (section-one__box__buttonMobile-1)  
+                    // 2: 2 часа (section-one__box__buttonMobile-4)
+                    // 3: Аренда 1 час (section-one__box__buttonMobile-2)
+                    // 4: Аренда 2 часа (section-one__box__buttonMobile-5)
+                    const timeButtons = [
+                        document.querySelector('.section-one__box__buttonMobile-3'), // 30 мин.
+                        document.querySelector('.section-one__box__buttonMobile-1'), // 1 час
+                        document.querySelector('.section-one__box__buttonMobile-4'), // 2 часа
+                        document.querySelector('.section-one__box__buttonMobile-2'), // Аренда 1 час
+                        document.querySelector('.section-one__box__buttonMobile-5')  // Аренда 2 часа
+                    ].filter(button => button !== null);
+                    
+                    if (buttonIndex < timeButtons.length && timeButtons[buttonIndex]) {
+                        // Снимаем выделение со всех кнопок
+                        document.querySelectorAll('.section-one__box__button-1, .section-one__box__button-2').forEach(button => {
+                            button.classList.remove('selected');
+                            button.classList.remove('scaled');
+                        });
+                        
+                        // Выделяем выбранную кнопку
+                        const selectedButton = timeButtons[buttonIndex];
+                        selectedButton.classList.add('selected');
+                        selectedButton.classList.add('scaled');
+                        
+                        event.preventDefault();
+                        event.stopPropagation();
+                        
+                        // Фокус на поле имен для продолжения ввода
+                        const namesInput = document.querySelector('#namesInput');
+                        if (namesInput) {
+                            setTimeout(() => namesInput.focus(), 100);
+                        }
+                    }
+                    return;
+                }
+            }
+            
+            // 3. НИЗКИЙ ПРИОРИТЕТ: Глобальные горячие клавиши (если не сработали выше)
+            
+            // Enter - фокус на первое поле ввода (только если не в поле ввода)
+            if (event.key === 'Enter' && !event.shiftKey && !event.altKey) {
+                const activeElement = document.activeElement;
+                const isInputFocused = activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA';
+                
+                if (!isInputFocused && !orderChangeBlock) {
+                    const firstInput = document.querySelector('#namesInput');
+                    if (firstInput) {
+                        firstInput.focus();
+                        event.preventDefault();
+                    }
+                }
+            }
+            
+            // Shift+Enter - добавление заказа (глобально)
+            if (event.key === 'Enter' && event.shiftKey && !event.altKey) {
+                const addButton = document.querySelector('.section-one__button');
+                if (addButton && !orderChangeBlock) {
+                    addButton.click();
+                    event.preventDefault();
+                }
+            }
+        });
+    }
+
+    // Инициализация горячих клавиш
+    setupHotkeys();
+
     cleanupAllTimers();
 
     setupLogoutHandler();
