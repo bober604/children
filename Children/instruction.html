@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Инструкция</title>
+    <link rel="shortcut icon" href="./img/logo-pizza_color.png" />
+
     <style>
         * {
             margin: 0;
@@ -360,6 +362,9 @@
     </div>
 
     <script>
+        // Изменяет URL без перезагрузки страницы
+        window.history.pushState(null, null, '#Инструкция');
+
         // Загрузка темы из Local Storage
         document.addEventListener('DOMContentLoaded', function() {
             const currentTheme = localStorage.getItem('adminTheme') || 'light';

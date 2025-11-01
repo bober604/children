@@ -57,9 +57,24 @@ def get_average_check_by_date(db: Session, date_obj):
 def get_orders_by_range(db: Session, start_date, end_date):
     start_str = start_date.strftime("%d.%m.%Y") if hasattr(start_date, 'strftime') else start_date
     end_str = end_date.strftime("%d.%m.%Y") if hasattr(end_date, 'strftime') else end_date
-    return db.query(models.Order).filter(
-        and_(models.Order.date >= start_str, models.Order.date <= end_str)
-    ).order_by(models.Order.date, models.Order.time).all()
+    
+    # Получаем все заказы и фильтруем на Python-стороне
+    all_orders = db.query(models.Order).order_by(models.Order.date, models.Order.time).all()
+    
+    filtered_orders = []
+    for order in all_orders:
+        try:
+            # Парсим дату из строки DD.MM.YYYY
+            day, month, year = order.date.split('.')
+            order_date = date_cls(int(year), int(month), int(day))
+            
+            # Сравниваем с диапазоном
+            if start_date <= order_date <= end_date:
+                filtered_orders.append(order)
+        except (ValueError, AttributeError):
+            continue
+    
+    return filtered_orders
 
 def delete_order(db: Session, order_id: int):
     db_order = db.query(models.Order).filter(models.Order.id == order_id).first()

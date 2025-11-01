@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Гостевой режим - Детская комната</title>
+    <link rel="shortcut icon" href="./img/logo-pizza_color.png" />
     <link rel="stylesheet" href="style/index.css">
     <style>
         /* Чёрно-желтая цветовая схема */
@@ -489,6 +490,9 @@
             
             document.head.appendChild(script);
         });
+
+        // Изменяет URL без перезагрузки страницы
+        window.history.pushState(null, null, '#Гостевой-режим');
     </script>
 </body>
 </html>

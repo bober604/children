@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Статистика сайта</title>
+    <link rel="shortcut icon" href="./img/logo-pizza_color.png" />
+
     <style>
         :root {
             --primary-color: #4361ee;
@@ -575,6 +577,9 @@
     </div>
 
     <script>
+        // Изменяет URL без перезагрузки страницы
+        window.history.pushState(null, null, '#Статистика');
+
         // Базовый URL бэкенда
         const API_BASE_URL = 'http://127.0.0.1:8000';
         let currentChartType = 'orders';
