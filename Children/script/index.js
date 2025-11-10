@@ -62,7 +62,6 @@ function updateLocalOrders(ordersFromAPI) {
 
 // Функция для обновления элемента заказа
 function updateOrderElement(orderElement, apiOrder) {
-    
     // Обновляем оставшееся время
     const timeElement = orderElement.querySelector('.section-two__box_Child-1__info_time');
     if (timeElement) {
@@ -100,6 +99,13 @@ function updateOrderElement(orderElement, apiOrder) {
     
     // Обновляем данные в локальном таймере
     updateLocalTimer(orderElement, apiOrder.remaining_seconds, apiOrder.is_paused);
+    
+    // ВАЖНОЕ ИСПРАВЛЕНИЕ: Переинициализируем обработчики бургер-меню для истекших заказов
+    if (apiOrder.remaining_seconds <= 0) {
+        setTimeout(() => {
+            setupBurgerMenuHandlers();
+        }, 100);
+    }
 }
 
 // Функция для обновления локального таймера
@@ -681,6 +687,18 @@ function handleBurgerMenuClick(event) {
     if (event.target.closest('.in-section-two__box_Child-1__info_burger')) {
         const burger = event.target.closest('.in-section-two__box_Child-1__info_burger');
         const container = burger.closest('.in-section-two__box');
+        
+        if (container) {
+            toggleBurgerMenu(container, burger);
+            event.stopPropagation();
+        }
+        return;
+    }
+    
+    // ВАЖНОЕ ИСПРАВЛЕНИЕ: Обработка клика по бургер-меню для истекших заказов
+    if (event.target.closest('.section-two__box.order-expired .section-two__box_Child-1__info_burger')) {
+        const burger = event.target.closest('.section-two__box_Child-1__info_burger');
+        const container = burger.closest('.section-two__box');
         
         if (container) {
             toggleBurgerMenu(container, burger);
@@ -2043,16 +2061,20 @@ document.addEventListener("DOMContentLoaded", function() {
                     ].filter(button => button !== null);
                     
                     if (buttonIndex < timeButtons.length && timeButtons[buttonIndex]) {
+                        const selectedButton = timeButtons[buttonIndex];
+                        const isCurrentlySelected = selectedButton.classList.contains('selected');
+                        
                         // Снимаем выделение со всех кнопок
                         document.querySelectorAll('.section-one__box__button-1, .section-one__box__button-2').forEach(button => {
                             button.classList.remove('selected');
                             button.classList.remove('scaled');
                         });
                         
-                        // Выделяем выбранную кнопку
-                        const selectedButton = timeButtons[buttonIndex];
-                        selectedButton.classList.add('selected');
-                        selectedButton.classList.add('scaled');
+                        // Если кнопка уже была выбрана - отжимаем её, иначе выбираем
+                        if (!isCurrentlySelected) {
+                            selectedButton.classList.add('selected');
+                            selectedButton.classList.add('scaled');
+                        }
                         
                         event.preventDefault();
                         event.stopPropagation();

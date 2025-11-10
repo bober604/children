@@ -889,7 +889,7 @@
   display: none;
 }
 .section-two__box_Child-1__info_img {
-  width: 36px;
+  width: 50px;
   height: 36px;
   cursor: pointer;
   background-image: url(../img/pause-white.svg);
@@ -905,7 +905,7 @@
   background-image: url(../img/pause-black.svg);
 }
 .section-two__box_Child-1__info_img-active {
-  width: 30px;
+  width: 50px;
   height: 30px;
   cursor: pointer;
   background-image: url(../img/play-white.svg);
@@ -1196,7 +1196,7 @@
   border-radius: 10px;
 }
 .in-section-two__box_Child-1__info_img {
-  width: 30px;
+  width: 50px;
   height: 30px;
   cursor: pointer;
   background-position: center;

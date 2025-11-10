@@ -381,6 +381,11 @@
         height: 1px;
     }
 
+    [data-theme="dark"] .section-two__box_Child-1__nav_section_par-2 {
+            color: var(--dark-text-secondary);
+            font-size: 13px;
+    }
+
     [data-theme="dark"] .section-two__box_Child-2 {
         background-image: url(../img/dark_child-2.png);
     }
