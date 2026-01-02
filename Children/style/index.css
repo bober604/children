@@ -48,7 +48,7 @@
 
 .section-one {
   width: 407px;
-  height: 95vh; /* 95% высоты viewport */
+  height: 94vh; /* 94% высоты viewport */
   padding: 24px;
   background: white;
   border-right: 1px solid var(--gray-light);
@@ -624,7 +624,7 @@
 
 .section-two {
   width: 1113px;
-  height: 95vh; /* 95% высоты viewport */
+  height: 94vh; /* 94% высоты viewport */
   padding: 24px;
 
   background: white;
