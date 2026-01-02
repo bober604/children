@@ -150,10 +150,6 @@
     color: var(--dark-text-primary);
 }
 
-[data-theme="dark"] .section-two__nav_button-1:hover {
-    background: var(--dark-accent-hover);
-}
-
 [data-theme="dark"] .section-two_line {
     background: #5a5a5a;
 }
@@ -388,9 +384,18 @@
         height: 1px;
     }
 
+    [data-theme="dark"] .section-two__box_Child-1__nav {
+        background: none;
+        border-color: var(--dark-border);
+    }
+/* 
+    [data-theme="dark"] .section-two__box_Child-1__nav_section_par-2.price {
+        color: var(--dark-accent);
+    } */
+
     [data-theme="dark"] .section-two__box_Child-1__nav_section_par-2 {
-            color: var(--dark-text-secondary);
-            font-size: 13px;
+        color: var(--dark-text-secondary);
+        font-size: 13px;
     }
 
     [data-theme="dark"] .section-two__box_Child-2 {
