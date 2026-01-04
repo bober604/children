@@ -720,7 +720,7 @@ function handleBurgerMenuClick(event) {
 function toggleBurgerMenu(container, burger) {
     const isActive = burger.classList.contains('section-two__box_Child-1__info_burger-active');
     
-    // Сначала закрываем все другие открытые меню
+    // Сначала закрываем все другие открытые меню с анимацией
     document.querySelectorAll('.section-two__box_Child-1__info_burger.section-two__box_Child-1__info_burger-active').forEach(otherBurger => {
         if (otherBurger !== burger) {
             const otherContainer = otherBurger.closest('.section-two__box');
@@ -738,26 +738,50 @@ function toggleBurgerMenu(container, burger) {
 
 function openBurgerMenu(container, burger) {
     burger.classList.add('section-two__box_Child-1__info_burger-active');
-    burger.classList.add('rotated'); // Добавляем класс поворота
+    burger.classList.add('rotated');
     
     const children = container.querySelectorAll('.section-two__box_Child-2, .section-two__box_Child-3, .section-two__box_Child-4');
     
     children.forEach((child, index) => {
         child.classList.add('active');
+        
+        // Устанавливаем top для каждой кнопки (анимация из сверху)
+        // Используем задержку для эффекта последовательного появления
         if (window.innerWidth < 480) {
-            child.style.marginTop = `${60 + 50 * index}px`;
+            child.style.top = `${60 + 50 * index}px`;
+            
+            // Добавляем задержку для последовательной анимации
+            child.style.transition = `all 0.3s ease ${index * 0.05}s`;
         }
     });
 }
 
 function closeBurgerMenu(container, burger) {
     burger.classList.remove('section-two__box_Child-1__info_burger-active');
-    burger.classList.remove('rotated'); // Убираем класс поворота
+    burger.classList.remove('rotated');
     
     const children = container.querySelectorAll('.section-two__box_Child-2, .section-two__box_Child-3, .section-two__box_Child-4');
-    children.forEach(child => {
+    children.forEach((child, index) => {
         child.classList.remove('active');
-        child.style.marginTop = '0';
+        
+        // Анимация закрытия - кнопки уезжают вверх
+        if (window.innerWidth < 480) {
+            child.style.transform = 'translateY(-20px)';
+            child.style.opacity = '0';
+            
+            // Задержка для обратного порядка закрытия
+            child.style.transition = `all 0.3s ease ${(children.length - 1 - index) * 0.05}s`;
+        }
+        
+        // Через время сбрасываем стили
+        setTimeout(() => {
+            if (!child.classList.contains('active')) {
+                child.style.top = '';
+                child.style.transform = '';
+                child.style.opacity = '';
+                child.style.transition = '';
+            }
+        }, 300);
     });
 }
 
