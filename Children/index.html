@@ -8,9 +8,7 @@
     <script>
         // Конфигурация авторизации - хранится в админской странице
         const ADMIN_CREDENTIALS = {
-            login: "admin",
-            password: "admin", // Рекомендуется сменить на более сложный пароль
-            sessionTimeout: 8 * 60 * 60 * 1000 // 8 часов в миллисекундах
+            sessionTimeout: 12 * 60 * 60 * 1000 // 12 часов в миллисекундах
         };
 
         // Функция проверки авторизации
@@ -18,8 +16,8 @@
             const isAuthenticated = sessionStorage.getItem('adminAuthenticated');
             const authTimestamp = sessionStorage.getItem('adminAuthTimestamp');
             
-            // Проверяем, что авторизация была не более 8 часов назад
-            const isExpired = authTimestamp && (Date.now() - parseInt(authTimestamp)) > 8 * 60 * 60 * 1000;
+            // Проверяем, что авторизация была не более 12 часов назад
+            const isExpired = authTimestamp && (Date.now() - parseInt(authTimestamp)) > 12 * 60 * 60 * 1000;
             
             if (!isAuthenticated || isExpired) {
                 // Перенаправляем на страницу авторизации

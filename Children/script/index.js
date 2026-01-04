@@ -2742,11 +2742,11 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     }
 
-    // Автоматический выход при бездействии (8 часов)
+    // Автоматический выход при бездействии (12 часов)
     function setupAutoLogout() {
         setInterval(() => {
             const authTimestamp = sessionStorage.getItem('adminAuthTimestamp');
-            if (authTimestamp && (Date.now() - parseInt(authTimestamp)) > 8 * 60 * 60 * 1000) {
+            if (authTimestamp && (Date.now() - parseInt(authTimestamp)) > 12 * 60 * 60 * 1000) {
                 sessionStorage.removeItem('adminAuthenticated');
                 sessionStorage.removeItem('adminAuthTimestamp');
                 alert('Сессия истекла. Пожалуйста, войдите снова.');
