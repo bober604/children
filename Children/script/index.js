@@ -295,6 +295,17 @@ async function completeOrderOnServer(orderId, isCompleted) {
                 is_completed: isCompleted
             })
         });
+        
+        // ВАЖНО: Отправляем правильное сообщение в гостевой режим
+        sendToGuest({
+            type: 'ORDER_COMPLETED',
+            order_id: orderId.toString(), // Убедитесь, что это строка
+            is_completed: isCompleted,
+            timestamp: Date.now()
+        });
+        
+        console.log(`📤 Отправлено ORDER_COMPLETED для заказа ${orderId}, завершен: ${isCompleted}`);
+        
     } catch (error) {
         console.error('Ошибка завершения заказа:', error);
     }
@@ -514,7 +525,6 @@ function addDeleteFunctionality(orderContainer) {
 function deleteByLegacyMethod(sum, date, time, orderContainer) {
     if (!date || !time) {
         console.error('❌ Недостаточно данных для legacy удаления:', {sum, date, time});
-        // Все равно удаляем локально
         removeOrderFromInterface(orderContainer);
         return false;
     }
@@ -526,17 +536,27 @@ function deleteByLegacyMethod(sum, date, time, orderContainer) {
     }).then(result => {
         if (result && result.message) {
             console.log('✅ Заказ успешно удален из БД (legacy метод)');
+            
+            // Отправляем уведомление в гостевой режим
+            const orderId = orderContainer.dataset.orderId || orderContainer.dataset.timerId;
+            if (orderId) {
+                sendToGuest({
+                    type: 'ORDER_DELETED',
+                    order_id: orderId.toString(),
+                    timestamp: Date.now()
+                });
+                console.log(`📤 Отправлено ORDER_DELETED для заказа ${orderId}`);
+            }
+            
             removeOrderFromInterface(orderContainer);
             return true;
         } else {
             console.log('❌ Ошибка при удалении заказа (legacy метод)');
-            // Удаляем локально даже при ошибке сервера
             removeOrderFromInterface(orderContainer);
             return false;
         }
     }).catch(error => {
         console.log('❌ Ошибка сети при удалении заказа (legacy метод):', error);
-        // Удаляем локально при ошибке сети
         removeOrderFromInterface(orderContainer);
         return false;
     });
@@ -2115,6 +2135,30 @@ document.addEventListener("DOMContentLoaded", function() {
             
             // 3. НИЗКИЙ ПРИОРИТЕТ: Глобальные горячие клавиши (если не сработали выше)
             
+            // Shift+Enter - добавление заказа (с проверкой выбранного времени)
+            if (event.key === 'Enter' && event.shiftKey && !event.altKey) {
+                const addButton = document.querySelector('.section-one__button');
+                const orderChangeBlock = document.querySelector('.section-one__orderChange');
+                
+                if (addButton && !orderChangeBlock) {
+                    // ПРЕЖДЕ чем нажать кнопку "Добавить", проверяем выбранное время
+                    const selectedButtons = document.querySelectorAll(".section-one__box__button-1.selected, .section-one__box__button-2.selected");
+                    
+                    if (selectedButtons.length === 0) {
+                        // Если время не выбрано, показываем сообщение
+                        alert("Пожалуйста, укажите время посещения.");
+                        event.preventDefault();
+                        event.stopPropagation();
+                        return;
+                    }
+                    
+                    // Если время выбрано, нажимаем кнопку "Добавить"
+                    addButton.click();
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+            }
+            
             // Enter - фокус на первое поле ввода (только если не в поле ввода)
             if (event.key === 'Enter' && !event.shiftKey && !event.altKey) {
                 const activeElement = document.activeElement;
@@ -2126,15 +2170,6 @@ document.addEventListener("DOMContentLoaded", function() {
                         firstInput.focus();
                         event.preventDefault();
                     }
-                }
-            }
-            
-            // Shift+Enter - добавление заказа (глобально)
-            if (event.key === 'Enter' && event.shiftKey && !event.altKey) {
-                const addButton = document.querySelector('.section-one__button');
-                if (addButton && !orderChangeBlock) {
-                    addButton.click();
-                    event.preventDefault();
                 }
             }
         });
@@ -2205,9 +2240,17 @@ document.addEventListener("DOMContentLoaded", function() {
             if (event.key === "Enter") {
                 event.preventDefault(); // Отменяем стандартное поведение
                 
-                // Shift+Enter - всегда нажимает кнопку "Добавить"
+                // Shift+Enter - проверяем наличие выбранного времени перед добавлением
                 if (event.shiftKey) {
                     if (addButton) {
+                        // ПЕРЕД нажатием кнопки проверяем выбранное время
+                        const selectedButtons = getAllSelectedTimeButtons();
+                        
+                        if (selectedButtons.length === 0) {
+                            alert("Пожалуйста, укажите время посещения.");
+                            return;
+                        }
+                        
                         addButton.click();
                     }
                     return;
@@ -2217,7 +2260,15 @@ document.addEventListener("DOMContentLoaded", function() {
                 if (index < inputs.length - 1) {
                     inputs[index + 1].focus();
                 } else {
-                    // Если это последнее поле, нажимаем кнопку "Добавить"
+                    // Если это последнее поле, проверяем наличие времени перед добавлением
+                    const selectedButtons = getAllSelectedTimeButtons();
+                    
+                    if (selectedButtons.length === 0) {
+                        alert("Пожалуйста, укажите время посещения.");
+                        return;
+                    }
+                    
+                    // Только если время выбрано - добавляем заказ
                     if (addButton) {
                         addButton.click();
                     }

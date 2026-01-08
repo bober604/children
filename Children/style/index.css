@@ -1052,7 +1052,7 @@
   align-items: center;
 }
 .section-two__box_Child-3_img {
-  background-image: url(../img/free-icon-delete-1214428\ 3.svg);
+  background-image: url(../img/icon-delete.png);
   background-position: center;
   background-repeat: no-repeat;
   background-size: cover;
@@ -1349,7 +1349,7 @@
   align-items: center;
 }
 .in-section-two__box_Child-3_img {
-  background-image: url(../img/free-icon-delete-1214428\ 3.svg);
+  background-image: url(../img/icon-delete.png);
   background-position: center;
   background-repeat: no-repeat;
   background-size: cover;
@@ -1880,7 +1880,7 @@
 
   .section-two__box_Child-3 {
     background: white;
-    background-image: url(../img/free-icon-delete-1214428\ 3.svg);
+    background-image: url(../img/icon-delete.png);
     background-repeat: no-repeat;
     background-position: 6px 2px;
     background-size: 36px 36px;
@@ -1897,7 +1897,7 @@
 
   .section-two__box_Child-3:hover {
     background: white;
-    background-image: url(../img/free-icon-delete-1214428\ 3.svg);
+    background-image: url(../img/icon-delete.png);
     background-repeat: no-repeat;
     background-position: 6px 2px;
     background-size: 36px 36px;
