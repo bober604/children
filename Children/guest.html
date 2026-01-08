@@ -6,6 +6,7 @@
     <title>Гостевой режим - Детская комната</title>
     <link rel="shortcut icon" href="./img/logo-pizza_color.png" />
     <link rel="stylesheet" href="style/index.css">
+    <link rel="stylesheet" href="style/guest.css">
     <style>
         /* Чёрно-желтая цветовая схема */
         :root {
@@ -122,12 +123,18 @@
             background: var(--guest-light);
         }
 
+        .section-two__box_Child-1__nav {
+            background: transparent;
+        }
+
         .guest-order .section-two__box_Child-1__nav_section_par-1 {
             color: var(--guest-primary);
+            overflow: visible;
         }
 
         .guest-order .section-two__box_Child-1__nav_section_par-2 {
             color: var(--guest-white);
+            overflow: visible;
         }
 
         .guest-order .section-two__box_Child-1_line {
@@ -239,17 +246,15 @@
             }
             
             .section-two__box_Child-1__nav {
-                gap: 0;
                 display: flex;
                 flex-direction: row;
                 justify-content: space-between;
+                width: 73%;
             }
             
             .section-two__box_Child-1__nav_section {
                 flex-direction: row;
                 justify-content: space-between;
-                max-width: 100%;
-                min-width: 10%;
             }
 
             .section-two__box_Child-1__nav_section_par-1 {
@@ -332,11 +337,6 @@
                 border-radius: 12px;
             }
 
-            /* Адаптация контента внутри заказов для мобильных */
-            .guest-order .section-two__box_Child-1__nav {
-                gap: 0;
-            }
-
             .guest-order .section-two__box_Child-1__nav_section {
                 flex-direction: row;
                 justify-content: space-between;
@@ -356,6 +356,7 @@
                 margin-left: 8px;
                 padding: 4px 10px;
                 font-size: 11px;
+                text-wrap: nowrap;
             }
 
             .section-two__box_Child-1_line {
@@ -363,32 +364,9 @@
             }
 
             .status-paused {
-                margin-left: 4px;
+                margin-left: 25px;
                 padding: 3px 8px;
                 font-size: 10px;
-            }
-        }
-
-        /* Для очень маленьких устройств */
-        @media (max-width: 350px) {
-            .guest-header h1 {
-                font-size: 20px;
-            }
-
-            .guest-header p {
-                font-size: 13px;
-            }
-
-            .refresh-button {
-                bottom: 15px;
-                right: 15px;
-                width: 45px;
-                height: 45px;
-            }
-
-            #loadingBlock {
-                padding: 30px 10px;
-                margin: 10px;
             }
         }
     </style>

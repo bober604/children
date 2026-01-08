@@ -6,17 +6,19 @@ if (typeof GuestMode === 'undefined') {
             this.orders = new Map();
             this.channel = null;
             this.isConnected = false;
+            this.syncErrorCount = 0;
+            this.maxSyncErrors = 3;
             this.init();
             this.syncInterval = null;
         }
 
         // Метод для периодической синхронизации
         startPeriodicSync() {
-            // Синхронизируем каждую секунду, но используем сегодняшние заказы
+            // Синхронизируем каждые 0,5 секунды, но используем сегодняшние заказы
             this.syncInterval = setInterval(() => {
                 this.loadTodayOrdersFromAPI().then(success => {
                 });
-            }, 1000);
+            }, 500);
         }
         
         async loadTodayOrdersFromAPI() {
@@ -27,25 +29,169 @@ if (typeof GuestMode === 'undefined') {
                 // Используем эндпоинт активных заказов
                 const response = await fetch('http://127.0.0.1:8000/orders/active');
                 if (response.ok) {
-                    const orders = await response.json();
-
+                    const allOrders = await response.json();
+                    
+                    // Сбрасываем счетчик ошибок при успешном запросе
+                    this.syncErrorCount = 0;
+                    
                     // Фильтруем только заказы за сегодня
-                    const todayOrders = orders.filter(order => {
-                        const isToday = order.date === dateStr;
-                        
-                        if (!isToday) {
-                        }
-                        
-                        return isToday;
-                    });                    
-                    this.syncOrders(todayOrders);
+                    const todayOrders = allOrders.filter(order => {
+                        return order.date === dateStr;
+                    });
+                    
+                    // ВАЖНО: Теперь синхронизируем ВСЕ заказы за сегодня
+                    // Удаление завершенных заказов будет происходить в syncOrdersWithServer
+                    this.syncOrdersWithServer(todayOrders);
                     return true;
                 }
+                
+                this.handleSyncError('Ошибка HTTP: ' + response.status);
                 return false;
+                
             } catch (error) {
-                console.error('Ошибка загрузки активных заказов из API:', error);
+                this.handleSyncError('Ошибка сети: ' + error.message);
                 return false;
             }
+        }
+
+        // Новый метод для синхронизации с сервером:
+        syncOrdersWithServer(serverOrders) {
+            const serverOrderIds = new Set(serverOrders.map(order => order.id));
+            
+            // Удаляем локальные заказы, которых нет на сервере или которые завершены
+            this.orders.forEach((order, orderId) => {
+                if (!serverOrderIds.has(orderId) || order.is_completed) {
+                    this.orders.delete(orderId);
+                    this.removeOrderElement(orderId);
+                }
+            });
+            
+            // Добавляем или обновляем заказы из сервера
+            serverOrders.forEach(serverOrder => {
+                // Если заказ уже существует, обновляем его
+                if (this.orders.has(serverOrder.id)) {
+                    const existingOrder = this.orders.get(serverOrder.id);
+                    this.updateOrderFromServer(existingOrder, serverOrder);
+                } else {
+                    // Если заказ новый, добавляем его
+                    this.addOrderFromServer(serverOrder);
+                }
+            });
+            
+            // Обновляем отображение
+            this.updateDisplay();
+        }
+
+        // Метод для обновления заказа из данных сервера:
+        updateOrderFromServer(localOrder, serverOrder) {
+            // Обновляем все поля из сервера
+            const updatedOrder = {
+                ...localOrder,
+                child_names: serverOrder.child_names,
+                phone: serverOrder.phone,
+                note: serverOrder.note,
+                duration: serverOrder.duration,
+                sum: serverOrder.sum,
+                total_seconds: serverOrder.total_seconds,
+                remaining_seconds: serverOrder.remaining_seconds,
+                is_paused: serverOrder.is_paused,
+                is_completed: serverOrder.is_completed,
+                status: serverOrder.is_completed ? 'completed' : 'active'
+            };
+            
+            this.orders.set(serverOrder.id, updatedOrder);
+            this.updateOrderElement(updatedOrder);
+        }
+
+        addOrderFromServer(serverOrder) {
+            const newOrder = {
+                id: serverOrder.id,
+                child_names: serverOrder.child_names,
+                phone: serverOrder.phone,
+                note: serverOrder.note,
+                duration: serverOrder.duration,
+                sum: serverOrder.sum,
+                total_seconds: serverOrder.total_seconds,
+                remaining_seconds: serverOrder.remaining_seconds,
+                is_paused: serverOrder.is_paused,
+                is_completed: serverOrder.is_completed,
+                status: serverOrder.is_completed ? 'completed' : 'active',
+                created_at: serverOrder.created_at || Date.now(),
+                date: serverOrder.date,
+                time: serverOrder.time
+            };
+            
+            this.orders.set(serverOrder.id, newOrder);
+        }
+
+        updateOrderFromServer(localOrder, serverOrder) {
+            // Обновляем все поля из сервера
+            const updatedOrder = {
+                ...localOrder,
+                child_names: serverOrder.child_names,
+                phone: serverOrder.phone,
+                note: serverOrder.note,
+                duration: serverOrder.duration,
+                sum: serverOrder.sum,
+                total_seconds: serverOrder.total_seconds,
+                remaining_seconds: serverOrder.remaining_seconds,
+                is_paused: serverOrder.is_paused,
+                is_completed: serverOrder.is_completed,
+                status: serverOrder.is_completed ? 'completed' : 'active'
+            };
+            
+            this.orders.set(serverOrder.id, updatedOrder);
+            this.updateOrderElement(updatedOrder);
+        }
+
+        syncOrdersWithServer(serverOrders) {
+            const serverOrderIds = new Set(serverOrders.map(order => order.id));
+            
+            // Удаляем локальные заказы, которых нет на сервере или которые завершены
+            this.orders.forEach((order, orderId) => {
+                if (!serverOrderIds.has(orderId)) {
+                    this.orders.delete(orderId);
+                    this.removeOrderElement(orderId);
+                }
+            });
+            
+            // Добавляем или обновляем заказы из сервера
+            serverOrders.forEach(serverOrder => {
+                // Если заказ уже существует, обновляем его
+                if (this.orders.has(serverOrder.id)) {
+                    const existingOrder = this.orders.get(serverOrder.id);
+                    this.updateOrderFromServer(existingOrder, serverOrder);
+                } else {
+                    // Если заказ новый, добавляем его
+                    this.addOrderFromServer(serverOrder);
+                }
+            });
+            
+            // Обновляем отображение
+            this.updateDisplay();
+        }
+
+        handleSyncError(errorMessage) {
+            console.error('Ошибка синхронизации:', errorMessage);
+            this.syncErrorCount++;
+            
+            // Если слишком много ошибок подряд, перезапускаем синхронизацию
+            if (this.syncErrorCount >= this.maxSyncErrors) {
+                console.warn('Слишком много ошибок синхронизации. Перезапуск...');
+                this.restartSync();
+            }
+        }
+
+        restartSync() {
+            if (this.syncInterval) {
+                clearInterval(this.syncInterval);
+            }
+            
+            this.syncErrorCount = 0;
+            this.startPeriodicSync();
+            
+            // Показываем уведомление о переподключении
+            this.showNotification('Переподключение к серверу...');
         }
 
         startDataSync() {
@@ -94,7 +240,7 @@ if (typeof GuestMode === 'undefined') {
                     // Также перезагружаем данные из API для сегодняшнего дня
                     setTimeout(() => {
                         this.loadTodayOrdersFromAPI();
-                    }, 2000);
+                    }, 3000);
                 }
             }, 5000);
         }
@@ -218,9 +364,7 @@ if (typeof GuestMode === 'undefined') {
             }
         }
 
-        handleMessage(message) {
-            console.log('📨 ПОЛУЧЕНО сообщение:', message.type, message);
-            
+        handleMessage(message) {            
             if (!message || !message.type) {
                 console.warn('⚠️ Получено пустое или некорректное сообщение');
                 return;
@@ -526,9 +670,14 @@ if (typeof GuestMode === 'undefined') {
             // 2. Статус - ОБНОВЛЯЕТСЯ
             const statusElement = orderElement.querySelector('.order-status');
             if (statusElement) {
-                if (order.status === 'completed' || order.remaining_seconds <= 0) {
+                if (order.is_completed || order.status === 'completed') {
                     statusElement.className = 'order-status status-completed';
                     statusElement.textContent = 'завершено';
+                    
+                    // Если заказ завершен, удаляем его из интерфейса через 1 секунду
+                    setTimeout(() => {
+                        this.deleteOrder(order.id);
+                    }, 1000);
                 } else if (order.is_paused) {
                     statusElement.className = 'order-status status-paused';
                     statusElement.textContent = 'на паузе';
@@ -538,7 +687,7 @@ if (typeof GuestMode === 'undefined') {
                 }
             }
             
-            // 3. Длительность посещения - ОБНОВЛЯЕТСЯ (это "1 час", "2 часа" и т.д.)
+            // 3. Длительность посещения - ОБНОВЛЯЕТСЯ
             const durationElement = orderElement.querySelector('.section-two__box_Child-1__nav_section:nth-child(2) .section-two__box_Child-1__nav_section_par-2');
             if (durationElement) {
                 durationElement.textContent = this.getDurationText(order.duration);

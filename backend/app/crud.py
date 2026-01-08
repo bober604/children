@@ -120,7 +120,14 @@ def update_order(db: Session, old_sum, date_obj, time_obj, new_sum):
 
 # Новые CRUD методы
 def get_active_orders(db: Session):
-    return db.query(models.Order).filter(models.Order.is_completed == False).all()
+    # Получаем текущую дату
+    from datetime import date
+    today_str = date.today().strftime("%d.%m.%Y")
+    
+    return db.query(models.Order).filter(
+        models.Order.date == today_str,
+        models.Order.is_completed == False
+    ).order_by(models.Order.time).all()
 
 def update_order_timer(db: Session, order_id: int, remaining_seconds: int, is_paused: bool):
     db_order = db.query(models.Order).filter(models.Order.id == order_id).first()

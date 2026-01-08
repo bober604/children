@@ -95,4 +95,25 @@
         max-height: 200px;
         padding: 12px;
     }
+
+    .section-two__box_Child-1__nav {
+        border: none;
+        margin-bottom: 0;
+        gap: 20px;
+        padding: 7px 0;
+    }
+
+    .section-two__box_Child-1__nav_section {
+        width: 80px;
+        max-width: 100px;
+        
+    }
+
+    .section-two__box_Child-1__nav_section_par-1 {
+        width: 60px;
+    }
+
+    .section-two__box_Child-1__nav_section_par-2 {
+        width: 40px;
+    }
 }
